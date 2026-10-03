@@ -26,6 +26,8 @@
    * ۳٫۲۳ بند ۱: بخش ui با تم فعلی (localStorage) اضافه شد + counts.settings —
    * تعداد کلیدهای appSettings (تنظیمات/وضعیت‌های ماندگار: عرض ستون‌ها،
    * پنهان‌سازی، مرتب‌سازی‌ها، وضعیت چارت‌ها، ویرایش‌های نمایشی و…).
+   * ۳٫۲۴ بند ۱: appVersion (نسخهٔ سازندهٔ فایل) اضافه شد — نمایش در پنجرهٔ
+   * تأیید بازیابی؛ فایل‌های قدیمی فاقد آن‌اند و بی‌خطر بازیابی می‌شوند.
    */
   Backup.build = async function () {
     const [setupRolls, standardLengthRules, appSettings, importMetadata, rolls, archivedRolls, rollEdits, pallets] =
@@ -46,6 +48,7 @@
 
     return {
       app: RM.config.APP_NAME,
+      appVersion: RM.config.APP_VERSION,   // ۳٫۲۴ بند ۱ — نسخهٔ سازندهٔ فایل پشتیبان
       schemaVersion: 2,
       exportedAt: Date.now(),
       counts: {

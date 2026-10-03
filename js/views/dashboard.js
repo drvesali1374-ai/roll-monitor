@@ -498,27 +498,25 @@
        دو ستون × دو ردیف — دقیقاً چیدمان خواسته‌شدهٔ کاربر:
          ستون‌ها: «رول‌های موجود» (مانده زمان موجودی — کهربایی، هماهنگ با چارت)
                   «رول‌های ستاپ»  (مانده زمان ستاپ — فیروزه‌ای، هماهنگ با چارت)
-         ردیف‌ها: «کمترین مانده زمان» (دستگاه دارای کمترین مانده زمان موجودی)
-                  «میانگین دستگاه‌ها» (انتخاب دستگاه‌ها + کمترین‌ها — ۳٫۲۳)
+         ردیف‌ها: «کمترین مانده زمان» (کمترینِ هر ستونِ جدول ستاپ‌ها — ۳٫۲۴)
+                  «میانگین دستگاه‌ها» (جمع ÷ تعداد دستگاه‌های روشن)
        هر سلول: مقدار [H]:mm درشت + «معادل روزانه: X روز» — طراحی کارت‌ماتریسی
        کاربرپسند با هدرهای رنگی و اعداد فارسی خوانا در یک نگاه.
        نسخهٔ ۳٫۵ — تغییر ۴: در ردیف «میانگین دستگاه‌ها» آیکون‌های ریز کلیک‌پذیر
-       دستگاه‌ها درج شد — دامنهٔ محاسبه فقط دستگاه‌های روشن است. انتخاب ماندگار
-       است (appSettings: matrixAvgMachines).
-       نسخهٔ ۳٫۲۳ — بند ۳: سلول‌های ردیف «میانگین دستگاه‌ها» از میانگینِ سطح
-       دستگاه به «کمترین مانده زمان از ستاپ‌های دستگاه‌های روشن» تغییر کرد —
-       مقدارها دقیقاً از همان فرمول ستون‌های «مانده زمان موجودی» و «مانده زمان
-       ستاپ» جدول ستاپ‌ها (گزارش تولید ستاپ‌ها) خوانده می‌شوند؛ ستاپ‌های تمام‌شده
-       (مقدار ۰) از کمترین‌گیری خارج‌اند تا عدد همیشه صفر نشود؛ اگر هیچ ستاپ
-       مثبتی نباشد ۰:۰۰ نمایش داده می‌شود. تولتیپ هر سلول شمارهٔ ستاپِ صاحب
-       کمترین را نشان می‌دهد. ردیف «کمترین مانده زمان» (سطح دستگاه) دست‌نخورده است. */
+       دستگاه‌ها درج شد — میانگین هر دو ستون فقط از دستگاه‌های روشن محاسبه
+       می‌شود. انتخاب ماندگار است (appSettings: matrixAvgMachines).
+       نسخهٔ ۳٫۲۴ — بند ۳: ردیف «کمترین مانده زمان» از «دستگاهِ دارای کمترینِ
+       موجودی با هر دو مقدارش» به «کمترینِ مستقلِ هر ستونِ جدول ستاپ‌ها» تغییر
+       کرد — ستون «رول‌های موجود» = کمترینِ ستون «مانده زمان موجودی» و ستون
+       «رول‌های ستاپ» = کمترینِ ستون «مانده زمان ستاپ» گزارش تولید ستاپ‌ها
+       (ستاپ‌های تمام‌شده/بی‌قانون لحاظ نمی‌شوند؛ اگر مثبتی نباشد ۰:۰۰). زیرنویس
+       «دستگاه شماره n» حذف شد چون صاحبِ هر دو کمترین می‌تواند متفاوت باشد —
+       تولتیپ هر سلول ستاپ/دستگاهِ صاحبِ همان کمترین را نشان می‌دهد. ردیف
+       «میانگین دستگاه‌ها» به منطق اصلی خود (میانگینِ سطح دستگاه از دستگاه‌های
+       روشن) بازگشت — کمترین‌یابیِ ۳٫۲۳ که به‌اشتباه در این ردیف پیاده شده بود
+       به ردیف «کمترین مانده زمان» منتقل شد. */
     const producedOf = (m) => (s.machineTime[m] ? s.machineTime[m].produced : 0);
     const setupOf = (m) => (s.machineTime[m] ? s.machineTime[m].setup : 0);
-    let minMachine = machines[0];
-    let minProduced = Infinity;
-    for (const m of machines) {
-      if (producedOf(m) < minProduced) { minProduced = producedOf(m); minMachine = m; }
-    }
 
     const mtCell = (minutes, cls, title) => `
       <div class="mtx-cell ${cls}"${title ? ` title="${title}"` : ''}>
@@ -526,23 +524,30 @@
         <span class="mtx-days">معادل روزانه: ${U.faDaysOf(minutes)}</span>
       </div>`;
 
-    /* ماتریس با آیکون‌های دستگاه + کمترین‌های ستاپ‌های دستگاه‌های روشن (۳٫۲۳) */
+    /* ماتریس: کمترینِ مستقلِ هر ستون + میانگینِ دستگاه‌های روشن (۳٫۲۴) */
     const renderMatrix = () => {
+      /* ردیف «میانگین دستگاه‌ها» — منطق ۳٫۵ تا ۳٫۲۲ (بازگشت در ۳٫۲۴):
+         میانگینِ سطح دستگاه از دستگاه‌های روشن (جمع ÷ تعداد). */
       const avgOn = Dashboard._avgMachines && Dashboard._avgMachines.length
         ? Dashboard._avgMachines.filter((m) => machines.includes(m))
         : [...machines];   // پیش‌فرض: همهٔ دستگاه‌ها روشن
       const machineCount = avgOn.length;
+      const sumProduced = avgOn.reduce((acc, m) => acc + producedOf(m), 0);
+      const sumSetup = avgOn.reduce((acc, m) => acc + setupOf(m), 0);
+      const avgProduced = machineCount ? sumProduced / machineCount : 0;
+      const avgSetup = machineCount ? sumSetup / machineCount : 0;
 
-      /* ۳٫۲۳ بند ۳ — کمترین مانده زمان‌ها از ستاپ‌های دستگاه‌های روشن:
-         مقدارها از همان فرمول ستون‌های «مانده زمان موجودی» و «مانده زمان
-         ستاپ» جدول ستاپ‌ها (state.setupReport) خوانده می‌شوند؛ ستاپ‌های
-         تمام‌شده (مقدار ۰) لحاظ نمی‌شوند. */
-      const setupsOn = (state.setupReport || []).filter((r) =>
-        r && avgOn.includes(r.machineNumber) &&
-        r.remainingSetupTime !== null && r.remainingSetupTime !== undefined);
+      /* ۳٫۲۴ بند ۳ — ردیف «کمترین مانده زمان»: کمترینِ مستقلِ هر ستون از
+         جدول ستاپ‌ها (state.setupReport — همان فرمول ستون‌های «مانده زمان
+         موجودی» و «مانده زمان ستاپ» گزارش تولید ستاپ‌ها)؛ ستاپ‌های تمام‌شده
+         (مقدار ۰) و بی‌قانون زمان (null) لحاظ نمی‌شوند تا عدد همیشه صفر
+         نشود؛ اگر مثبتی نباشد ۰:۰۰ است. دامنه: همهٔ ستاپ‌ها (بدون فیلتر
+         دستگاه) — صاحبِ دو کمترین می‌تواند متفاوت باشد (تولتیپ هر سلول). */
+      const setupsAll = (state.setupReport || []).filter((r) =>
+        r && r.remainingSetupTime !== null && r.remainingSetupTime !== undefined);
       let minInvTime = 0, minInvRow = null;
       let minSetupTime = 0, minSetupRow = null;
-      for (const r of setupsOn) {
+      for (const r of setupsAll) {
         if ((r.remainingProducedTime || 0) > 0 &&
             (minInvRow === null || r.remainingProducedTime < minInvTime)) {
           minInvTime = r.remainingProducedTime; minInvRow = r;
@@ -552,12 +557,12 @@
           minSetupTime = r.remainingSetupTime; minSetupRow = r;
         }
       }
-      const invTitle = minInvRow
-        ? `کمترین «مانده زمان موجودی» از ستاپ‌های دستگاه‌های روشن — ستاپ ${U.faNum(minInvRow.setupNumber)} (دستگاه ${U.faNum(minInvRow.machineNumber)})`
-        : 'ستاپی با مانده زمان موجودی مثبت در دستگاه‌های روشن نیست';
-      const setupTitle = minSetupRow
-        ? `کمترین «مانده زمان ستاپ» از ستاپ‌های دستگاه‌های روشن — ستاپ ${U.faNum(minSetupRow.setupNumber)} (دستگاه ${U.faNum(minSetupRow.machineNumber)})`
-        : 'ستاپی با مانده زمان ستاپ مثبت در دستگاه‌های روشن نیست';
+      const minInvTitle = minInvRow
+        ? `کمترینِ ستون «مانده زمان موجودی» جدول ستاپ‌ها — ستاپ ${U.faNum(minInvRow.setupNumber)} (دستگاه ${U.faNum(minInvRow.machineNumber)})`
+        : 'ستاپی با «مانده زمان موجودی» مثبت وجود ندارد';
+      const minSetupTitle = minSetupRow
+        ? `کمترینِ ستون «مانده زمان ستاپ» جدول ستاپ‌ها — ستاپ ${U.faNum(minSetupRow.setupNumber)} (دستگاه ${U.faNum(minSetupRow.machineNumber)})`
+        : 'ستاپی با «مانده زمان ستاپ» مثبت وجود ندارد';
 
       document.getElementById('machine-time-footer').innerHTML = `
         <div class="mt-matrix" role="table" aria-label="مانده زمان متالایز — کمترین و میانگین به تفکیک رول‌های موجود و رول‌های ستاپ">
@@ -571,32 +576,32 @@
             </span>
           </div>
           <div class="mtx-row" role="row">
-            <span class="mtx-rowhead" role="rowheader">
+            <span class="mtx-rowhead" role="rowheader" title="کمترینِ مستقلِ هر ستون از جدول گزارش تولید ستاپ‌ها — صاحبِ هر کمترین در تولتیپ همان سلول (۳٫۲۴)">
               کمترین مانده زمان
-              <!-- ۳٫۱۰ — تغییر ۲: «دستگاه شماره n» — شمارهٔ دستگاهِ دارای کمترین
-                   مانده زمان موجودی (در ۳٫۹: «تعداد N دستگاه» بود) -->
-              <span class="mtx-sub" title="دستگاه دارای کمترین مانده زمان موجودی — کمترین مقدار میان دستگاه‌های دارای داده">دستگاه شماره ${U.faNum(minMachine)}</span>
+              <!-- ۳٫۲۴ بند ۳ — زیرنویس «دستگاه شماره n» حذف شد: کمترینِ دو
+                   ستون می‌تواند متعلق به دستگاه‌های متفاوت باشد -->
+              <span class="mtx-sub">کمترینِ ستون‌های جدول ستاپ‌ها</span>
             </span>
-            ${mtCell(producedOf(minMachine), 'mtx-inv')}
-            ${mtCell(setupOf(minMachine), 'mtx-setup')}
+            ${mtCell(minInvTime, 'mtx-inv', minInvTitle)}
+            ${mtCell(minSetupTime, 'mtx-setup', minSetupTitle)}
           </div>
           <div class="mtx-row" role="row">
-            <span class="mtx-rowhead" role="rowheader" title="کمترین مانده زمانِ موجودی و ستاپ از ستاپ‌های دستگاه‌های روشن (ستون‌های «مانده زمان موجودی» و «مانده زمان ستاپ» جدول ستاپ‌ها — ۳٫۲۳)">
+            <span class="mtx-rowhead" role="rowheader" title="میانگین مانده زمان موجودی و ستاپِ دستگاه‌های روشن (جمع ÷ تعداد دستگاه‌ها)">
               میانگین دستگاه‌ها
-              <span class="mtx-sub">${machineCount ? `${U.faNum(machineCount)} دستگاه · کمترین ستاپ‌ها` : 'دستگاهی انتخاب نشده'}</span>
-              <span class="mtx-mach-btns" role="group" aria-label="انتخاب دستگاه‌های شرکت‌کننده در محاسبهٔ کمترین‌ها">
+              <span class="mtx-sub">${machineCount ? `${U.faNum(machineCount)} دستگاه` : 'دستگاهی انتخاب نشده'}</span>
+              <span class="mtx-mach-btns" role="group" aria-label="انتخاب دستگاه‌های شرکت‌کننده در میانگین">
                 ${machines.map((m) => `
                   <button type="button" class="mtx-mach${avgOn.includes(m) ? ' on' : ''}" data-mtx-mach="${m}"
                           aria-pressed="${avgOn.includes(m) ? 'true' : 'false'}"
                           title="${avgOn.includes(m)
-                            ? `ستاپ‌های دستگاه ${U.faNum(m)} در کمترین‌ها لحاظ می‌شود — برای حذف کلیک کنید`
-                            : `ستاپ‌های دستگاه ${U.faNum(m)} در کمترین‌ها لحاظ نمی‌شود — برای افزودن کلیک کنید`}">
+                            ? `دستگاه ${U.faNum(m)} در میانگین است — برای حذف از میانگین کلیک کنید`
+                            : `دستگاه ${U.faNum(m)} در میانگین نیست — برای افزودن به میانگین کلیک کنید`}">
                     <span class="mtx-mach-num">${U.faNum(m)}</span>
                   </button>`).join('')}
               </span>
             </span>
             ${machineCount
-              ? mtCell(minInvTime, 'mtx-inv', invTitle) + mtCell(minSetupTime, 'mtx-setup', setupTitle)
+              ? mtCell(avgProduced, 'mtx-inv') + mtCell(avgSetup, 'mtx-setup')
               : `<div class="mtx-cell mtx-inv"><span class="mtx-value muted">—</span><span class="mtx-days">دستگاهی روشن نیست</span></div>
                  <div class="mtx-cell mtx-setup"><span class="mtx-value muted">—</span><span class="mtx-days">دستگاهی روشن نیست</span></div>`}
           </div>
@@ -617,8 +622,8 @@
           renderMatrix();
           UI.toast(
             current.includes(m)
-              ? `ستاپ‌های دستگاه ${U.faNum(m)} به محاسبهٔ کمترین‌ها اضافه شد.`
-              : `ستاپ‌های دستگاه ${U.faNum(m)} از محاسبهٔ کمترین‌ها حذف شد.`,
+              ? `دستگاه ${U.faNum(m)} به میانگین اضافه شد.`
+              : `دستگاه ${U.faNum(m)} از میانگین حذف شد.`,
             'info', 1800
           );
         });

@@ -547,6 +547,17 @@
     }
   };
 
+  /**
+   * بازیابی Backup + بارگذاری مجدد برنامه (۳٫۲۴ بند ۱).
+   * ریشه‌یابی ۳٫۲۴: فایل پشتیبان از قبل همهٔ تنظیمات/وضعیت‌ها را ذخیره می‌کرد،
+   * اما نماها این وضعیت‌ها را فقط یک‌بار در init() (راه‌اندازی) از Dexie
+   * می‌خوانند — پس با «refreshAll» جداول با وضعیت کهنهٔ حافظه رندر می‌شدند و
+   * جزئیات (عرض ستون/پنهان‌سازی/مرتب‌سازی/…) اعمال نمی‌شد؛ بدتر: با اولین
+   * تعامل، وضعیت کهنه روی فایل بازیابی‌شده بازنویسی می‌شد. راه‌حل قطعی:
+   * پس از جایگزینی تراکنشی، برنامه یک‌بار دوباره بارگذاری می‌شود تا همهٔ
+   * نماها دقیقاً از محتوای فایل ساخته شوند (فلگ rm-restore-reload در
+   * sessionStorage → پس از راه‌اندازی: بازگشت به تب تنظیمات + پیام موفقیت).
+   */
   SettingsView.restoreBackup = async function (file) {
     try {
       // خواندن و اعتبارسنجی ساختار (§72: Backup Corrupted)
@@ -567,16 +578,18 @@
 
       const c = payload.counts;
 
-      // تأیید بازیابی (§70 — عملیات خطرناک) + شمارش تنظیمات (۳٫۲۳ بند ۱)
+      // تأیید بازیابی (§70 — عملیات خطرناک) + شمارش تنظیمات (۳٫۲۳ بند ۱) +
+      // نسخهٔ سازندهٔ فایل و اطلاع‌رسانی بارگذاری مجدد (۳٫۲۴ بند ۱)
       const ok = await UI.confirm({
         title: 'تأیید بازیابی Backup',
         html: `<div class="confirm-stats">
           <div>ستاپ‌ها: <b>${U.faNum(c.setupRolls)}</b> · قوانین: <b>${U.faNum(c.standardLengthRules)}</b></div>
           <div>رکوردهای rolls: <b>${U.faNum(c.rolls)}</b> · آرشیو: <b>${U.faNum(c.archivedRolls)}</b></div>
           <div>تنظیمات و وضعیت‌ها: <b>${U.faNum(c.settings || 0)}</b> مورد · تم: <b>${payload.ui && payload.ui.theme === 'dark' ? 'تاریک' : 'روشن'}</b></div>
+          ${payload.appVersion ? `<div>ساخته‌شده با نسخهٔ: <b>${U.faNum(Number(payload.appVersion))}</b></div>` : ''}
           <div>تاریخ پشتیبان: <b>${U.faDate(payload.exportedAt)}</b></div>
         </div>`,
-        message: 'تمام داده‌های فعلی برنامه با محتوای این فایل جایگزین خواهد شد. ادامه می‌دهید؟',
+        message: 'تمام داده‌های فعلی برنامه با محتوای این فایل جایگزین می‌شود و برای اعمال کامل همهٔ داده‌ها و تنظیمات (شامل جزئیات جداول)، برنامه یک‌بار دوباره بارگذاری خواهد شد. ادامه می‌دهید؟',
         confirmText: 'بله، بازیابی کن',
         danger: true,
       });
@@ -590,20 +603,27 @@
 
       /* ۳٫۲۳ بند ۱ — تم پشتیبان فوری اعمال می‌شود (فایل‌های قدیمی بدون بخش ui
          → تم فعلی دست‌نخورده می‌ماند) */
-      let themeApplied = false;
       if (payload.ui && (payload.ui.theme === 'dark' || payload.ui.theme === 'light')) {
         SettingsView.applyThemeValue(payload.ui.theme, { persist: true });
-        themeApplied = true;
       }
 
+      /* ۳٫۲۴ بند ۱ — بارگذاری مجدد خودکار: تنها راه قطعی اعمالِ «همهٔ»
+         تنظیمات و وضعیت‌های ماندگار (عرض ستون‌ها، ترتیب/پنهان‌سازی،
+         مرتب‌سازی‌ها، وضعیت چارت‌ها و…) که نماها فقط در init() می‌خوانند.
+         فلگ جلسه‌ای → پس از راه‌اندازی: بازگشت به تب تنظیمات + پیام موفقیت. */
+      try { sessionStorage.setItem('rm-restore-reload', '1'); } catch { /* حالت خصوصی */ }
       UI.toast(
-        themeApplied
-          ? 'بازیابی با موفقیت انجام شد — داده‌ها، تنظیمات و تم به‌روزرسانی گردید.'
-          : 'بازیابی با موفقیت انجام شد — همهٔ محاسبات به‌روزرسانی گردید.',
-        'success'
+        'بازیابی با موفقیت انجام شد — برنامه برای اعمال همهٔ داده‌ها و تنظیمات دوباره بارگذاری می‌شود…',
+        'success',
+        3200
       );
-      await RM.refreshAll();
-      await SettingsView.renderAll();
+      setTimeout(() => {
+        try { window.location.reload(); }
+        catch (err) {   // fallback: بارگذاری نرم (مرورگرهای بسیار قدیمی)
+          console.warn('[RestoreReload]', err);
+          RM.refreshAll();
+        }
+      }, 1200);
     } catch (err) {
       console.error('[Restore]', err);
       UI.toast('خطا در خواندن فایل پشتیبان.', 'error');
