@@ -1,0 +1,5084 @@
+/* =========================================================================
+   سامانهٔ مانیتورینگ صنعتی رول‌ها — استایل اصلی (نسخهٔ ۲٫۱)
+   تم روشن صنعتی | RTL | واکنش‌گرا | فونت لوکال وزیرمتن
+   -------------------------------------------------------------------------
+   همان سیستم CSS Variable نسخهٔ قبل — با پالت روشن حرفه‌ای:
+   پس‌زمینهٔ خاکستری-کرم ملایم، کارت‌های روشن (نه سفید مطلق)،
+   متن اصلی با کنتراست بالا، خاکستری خوانا برای متن ثانویه،
+   Borderهای ظریف و رنگ‌های مستقل Success/Warning/Error/Info.
+   ========================================================================= */
+
+/* ---------- ۱) فونت فارسی (لوکال — آفلاین) ---------- */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('lib/fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('lib/fonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('lib/fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ---------- ۲) متغیرها (تم روشن صنعتی — پیش‌فرض) ---------- */
+:root {
+  color-scheme: light;
+
+  /* سطوح روشن — بدون سفید مطلق گسترده */
+  --bg: #f1f2ec;
+  --bg-soft: #e9eae2;
+  --surface: #fcfcfa;
+  --surface-2: #f5f6f0;
+  --border: #dcded2;
+  --border-strong: #c5c9ba;
+
+  /* متن — کنتراست بالا + خاکستری خوانا */
+  --text: #21262b;
+  --text-muted: #575e66;
+  --text-faint: #878e95;
+
+  /* رنگ‌های وضعیت — مستقل و قابل‌تمییز روی زمینهٔ روشن */
+  --raw: #047857;                    /* Success — زمردی تیره */
+  --raw-soft: rgba(4, 120, 87, 0.09);
+  --metal: #b45309;                  /* Warning — کهربایی تیره */
+  --metal-soft: rgba(180, 83, 9, 0.09);
+  --setup: #0f766e;                  /* Info/Accent — فیروزه‌ای تیره */
+  --setup-soft: rgba(15, 118, 110, 0.09);
+  --uncut: #be123c;                  /* خطر/برش‌نشده — رز تیره */
+  --uncut-soft: rgba(190, 18, 60, 0.08);
+  --danger: #dc2626;                 /* Error — قرمز */
+  --danger-text: #b91c1c;            /* متن خطا روی زمینهٔ روشن */
+
+  /* متن دکمهٔ اصلی — روی رنگ تأکیدی */
+  --accent-contrast: #ffffff;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 10px 28px rgba(35, 42, 36, 0.12);
+  --shadow-soft: 0 2px 10px rgba(35, 42, 36, 0.07);
+  --font: 'Vazirmatn', 'Tahoma', 'Segoe UI', sans-serif;
+
+  /* اجزای وابسته به تم (توسط تم تاریک بازنویسی می‌شوند) */
+  --header-bg: rgba(252, 252, 250, 0.88);
+  --scrollbar-thumb: #c9cdbf;
+  --input-hover-border: #b3b8a8;
+  --gantt-grid: rgba(120, 128, 118, 0.22);
+}
+
+/* ---------- ۲-ب) تم تاریک (قابل انتخاب در تنظیمات — تم روشن دست‌نخورده) ----------
+   همان سیستم CSS Variable؛ فقط مقادیر بازنویسی می‌شوند. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #16181b;
+  --bg-soft: #1d2023;
+  --surface: #22262a;
+  --surface-2: #292e33;
+  --border: #343a40;
+  --border-strong: #454c54;
+
+  --text: #eceded;
+  --text-muted: #b4b9bd;
+  --text-faint: #84898e;
+
+  /* نسخهٔ روشن‌تر رنگ‌های وضعیت برای کنتراست بالا روی زمینهٔ تیره */
+  --raw: #34d399;                    /* Success — زمردی روشن */
+  --raw-soft: rgba(52, 211, 153, 0.13);
+  --metal: #fbbf24;                  /* Warning — کهربایی روشن */
+  --metal-soft: rgba(251, 191, 36, 0.12);
+  --setup: #2dd4bf;                  /* Info/Accent — فیروزه‌ای روشن */
+  --setup-soft: rgba(45, 212, 191, 0.13);
+  --uncut: #fb7185;                  /* خطر/برش‌نشده — رز روشن */
+  --uncut-soft: rgba(251, 113, 133, 0.13);
+  --danger: #f87171;
+  --danger-text: #fca5a5;
+
+  --accent-contrast: #062622;        /* متن تیره روی تأکید روشن */
+
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.4);
+
+  --header-bg: rgba(34, 38, 42, 0.92);
+  --scrollbar-thumb: #3c4247;
+  --input-hover-border: #565d64;
+  --gantt-grid: rgba(140, 148, 158, 0.16);
+}
+
+/* ---------- ۳) ریست و پایه ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* مهم: ویژگی hidden بر هر display غلبه کند (پنجره‌های بسته پنهان بمانند) */
+[hidden] { display: none !important; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(15, 118, 110, 0.05), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(180, 83, 9, 0.04), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-soft); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  font-size: 0.85em;
+  color: var(--metal);
+  direction: ltr;
+  display: inline-block;
+}
+
+.muted { color: var(--text-faint); }
+
+:focus-visible {
+  outline: 2px solid var(--setup);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- ۴) قالب کلی + پاصفحهٔ چسبیده ---------- */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+/* ---------- ۵) سربرگ ---------- */
+.app-header {
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand-icon {
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  color: var(--setup);
+  background: var(--setup-soft);
+  border: 1px solid rgba(15, 118, 110, 0.25);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.brand-icon svg { width: 26px; height: 26px; }
+/* لوگوی پروژه (نسخهٔ ۳٫۵ — تغییر ۶): تصویر یکدست با خود کادر */
+.brand-icon img {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-text h1 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.brand-text p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+
+.status-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+.badge-offline { color: var(--raw); border-color: rgba(4, 120, 87, 0.3); background: var(--raw-soft); }
+.badge-db.ok { color: var(--raw); border-color: rgba(4, 120, 87, 0.3); }
+.badge-db.err { color: var(--danger); border-color: rgba(220, 38, 38, 0.35); }
+
+/* ---------- ۶) تب‌های اصلی و داخلی ---------- */
+.tabs {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.tab-btn svg { width: 16px; height: 16px; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--setup); border-bottom-color: var(--setup); }
+
+.subtabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.subtab-btn {
+  padding: 8px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.subtab-btn.active { color: var(--raw); border-bottom-color: var(--raw); }
+
+.subview { display: none; animation: fadeIn 0.3s ease; }
+.subview.active { display: block; }
+
+.view { display: none; animation: fadeIn 0.35s ease; }
+.view.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- ۷) کارت‌های KPI ---------- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;            /* نسخهٔ ۳٫۶ — تغییر ۱: ردیف‌های کلیک‌پذیر تمام‌عرض کارت */
+  gap: 14px 16px;
+  align-items: flex-start;
+  align-content: flex-start;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: var(--shadow-soft);
+  container-type: inline-size; /* برای مخفی‌کردن تمیز hint در کارت‌های باریک */
+}
+.kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--border-strong); }
+.kpi-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px; }
+
+.kpi-raw::before        { background: var(--raw); }
+.kpi-metallized::before { background: var(--metal); }
+.kpi-setup::before      { background: var(--setup); }
+.kpi-uncut::before      { background: var(--uncut); }
+
+.kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+.kpi-icon svg { width: 25px; height: 25px; }
+
+.kpi-raw .kpi-icon        { color: var(--raw);   background: var(--raw-soft); }
+.kpi-metallized .kpi-icon { color: var(--metal); background: var(--metal-soft); }
+.kpi-setup .kpi-icon      { color: var(--setup); background: var(--setup-soft); }
+.kpi-uncut .kpi-icon      { color: var(--uncut); background: var(--uncut-soft); }
+
+.kpi-body { min-width: 0; flex: 1; }
+.kpi-title { margin: 0 0 2px; font-size: 0.88rem; font-weight: 500; color: var(--text-muted); }
+.kpi-value { font-size: 2.5rem; font-weight: 700; line-height: 1.25; letter-spacing: -1px; color: var(--text); }
+
+.kpi-raw .kpi-value        { color: var(--raw); }
+.kpi-metallized .kpi-value { color: var(--metal); }
+.kpi-setup .kpi-value      { color: var(--setup); }
+.kpi-uncut .kpi-value      { color: var(--uncut); }
+
+.kpi-desc { margin: 4px 0 0; font-size: 0.72rem; color: var(--text-faint); }
+.kpi-meta {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+}
+.kpi-file { margin: 4px 0 0; font-size: 0.68rem; color: var(--text-faint); }
+
+/* ---------- ردیف‌های کلیک‌پذیر کارت‌های «رول‌های خام» و «رول‌های برش‌نشده» ----------
+   نسخهٔ ۳٫۶ — تغییر ۱: تمام‌عرض کارت (با فاصلهٔ استاندارد از لبه‌ها) +
+   عنوان‌های کوتاه‌شده که دیگر هرگز بریده نمی‌شوند (flex-shrink: 0) */
+
+.kpi-actions {
+  flex: 1 0 100%;             /* تمام‌عرض کارت — زیر ردیف آیکون+عنوان */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}
+
+.kpi-act-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: var(--font);   /* نسخهٔ ۳٫۵ — تغییر ۱: دکمه‌ها فونت را به ارث نمی‌برند */
+  cursor: pointer;
+  text-align: right;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.15s ease;
+  min-width: 0;
+}
+.kpi-act-row:hover {
+  border-color: var(--raw);
+  background: var(--raw-soft);
+  transform: translateY(-1px);
+}
+.kpi-act-row:focus-visible {
+  outline: 2px solid var(--raw);
+  outline-offset: 2px;
+}
+
+.kpi-act-row svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+.kpi-act-row .kpi-act-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--setup-soft);
+  color: var(--setup);
+  font-size: 0.72rem;
+  font-weight: 800;
+  direction: ltr;
+}
+.kpi-act-warn svg { color: var(--metal); }
+
+.kpi-act-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  flex-shrink: 0;             /* نسخهٔ ۳٫۶ — تغییر ۱: عنوان هرگز بریده نمی‌شود */
+}
+.kpi-act-value {
+  margin-inline-start: auto;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--raw);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;             /* شمارنده همیشه دیده می‌شود */
+}
+.kpi-act-warn .kpi-act-value { color: var(--metal); }
+.kpi-act-hint {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  white-space: nowrap;
+  flex-shrink: 1;             /* در کارت‌های باریک، hint فدای عنوان می‌شود */
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* کارت‌های باریک: hint کاملاً حذف می‌شود تا عنوان کامل و تمیز بماند
+   (کوئری روی content-box کارت است؛ مرورگرهای قدیمی بدون container-query:
+   hint با overflow:hidden به‌نرم کوچک می‌شود — عنوان هرگز بریده نمی‌شود) */
+@container (max-width: 249px) {
+  .kpi-act-hint { display: none; }
+}
+.kpi-act-row:hover .kpi-act-hint { color: var(--raw); }
+.kpi-act-warn:hover .kpi-act-hint { color: var(--metal); }
+
+.kpi-card.negative { border-color: rgba(220, 38, 38, 0.45); }
+.kpi-card.negative::before { background: var(--danger); }
+.kpi-card.negative .kpi-value { color: var(--danger-text); animation: pulse 1.6s ease infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ---------- ۸) پنل‌ها ---------- */
+.panel, .notice-panel, .alerts-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex-wrap: wrap;
+  color: var(--text);
+}
+.section-title svg { width: 18px; height: 18px; color: var(--text-muted); }
+
+.formula-box {
+  background: var(--bg-soft);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--setup);
+  margin-bottom: 12px;
+}
+.formula-box.negative { color: var(--danger-text); border-color: rgba(220, 38, 38, 0.45); }
+
+.formula-notes, .tips-list {
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  display: grid;
+  gap: 6px;
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+/* آیتم‌های گرید نباید با min-content خودشان ستون را عریض کنند
+   (نسخهٔ ۳٫۵ — رفع سرریز افقی موبایل در صفحهٔ تنظیمات: جدول‌های
+   سابقهٔ Import و پشتیبان‌گیری داخل پنل اسکرول افقی می‌گیرند) */
+.settings-grid > * { min-width: 0; }
+.settings-grid .table-wrap { overflow-x: auto; }
+
+/* پنل تمام‌عرض در Settings (Mapping) */
+.panel-wide { grid-column: 1 / -1; }
+
+.panel-head { margin-bottom: 14px; }
+.panel-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panel-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  flex-wrap: wrap;
+  color: var(--text);
+}
+
+.panel-icon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
+.panel-icon svg { width: 18px; height: 18px; }
+.icon-raw   { color: var(--raw);   background: var(--raw-soft); }
+.icon-metal { color: var(--metal); background: var(--metal-soft); }
+.icon-setup { color: var(--setup); background: var(--setup-soft); }
+
+.panel-desc { margin: 6px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+.file-hint { font-size: 0.7rem; padding: 2px 8px; }
+
+/* ---------- ۹) مرکز هشدار (§52) ---------- */
+.alerts-list { display: grid; gap: 10px; max-height: 340px; overflow-y: auto; padding-inline-end: 4px; }
+
+/* ---------- ۹-ب) کادر جداگانهٔ کنترل‌های کیفیت داده (نسخهٔ ۲٫۸ → ۲٫۹) ----------
+   نسخهٔ ۲٫۹ (تغییر ۲ کاربر): کادر مستقل از لیست (article.quality-panel)
+   با قابلیت نمایش/مخفی — هدر کادر همیشه دیده می‌شود و چیپ تعداد مشکل دارد. */
+.quality-panel { margin-bottom: 14px; }
+
+.quality-panel .panel-head-row { align-items: center; }
+
+.quality-area {
+  margin: 0 0 6px;
+  padding: 12px 14px;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  border-inline-start: 4px solid var(--metal);
+  border-radius: var(--radius-sm);
+  background: var(--metal-soft);
+}
+
+.quality-area[hidden] { display: none !important; }
+
+.quality-ok {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+}
+
+.quality-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+
+.quality-block { margin-top: 12px; }
+.quality-block:first-child { margin-top: 0; }
+
+.quality-block-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.quality-area .quality-scroll { max-height: 340px; overflow: auto; }
+.quality-area .data-table { background: var(--surface); }
+.quality-area .q-desc { font-size: 0.74rem; color: var(--text-muted); }
+.quality-area .q-roll { font-family: 'Consolas', monospace; font-size: 0.72rem; direction: ltr; unicode-bidi: embed; }
+
+[data-theme="dark"] .quality-area {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(180, 83, 9, 0.14);
+}
+
+/* نشان خط تولید ستاپ (نسخهٔ ۲٫۹) — BOPP سبز · CPP بنفش‌مایل */
+.line-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  direction: ltr;
+  letter-spacing: 0.3px;
+}
+.line-badge.line-bopp { background: rgba(130, 200, 54, 0.18); color: #4d7c0f; border: 1px solid rgba(130, 200, 54, 0.45); }
+.line-badge.line-cpp  { background: rgba(192, 38, 211, 0.14); color: #a21caf; border: 1px solid rgba(192, 38, 211, 0.4); }
+[data-theme="dark"] .line-badge.line-bopp { background: rgba(130, 200, 54, 0.16); color: #a3e635; }
+[data-theme="dark"] .line-badge.line-cpp  { background: rgba(192, 38, 211, 0.2); color: #e879f9; }
+
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  background: var(--bg-soft);
+  animation: fadeIn 0.3s ease;
+}
+.alert-item .alert-body { flex: 1; min-width: 0; }
+.alert-item b { display: block; font-size: 0.82rem; color: var(--text); }
+.alert-item p { margin: 2px 0 0; font-size: 0.75rem; color: var(--text-muted); }
+
+.alert-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.alert-error   { border-color: rgba(220, 38, 38, 0.4); background: rgba(220, 38, 38, 0.04); }
+.alert-error .alert-badge   { background: rgba(220, 38, 38, 0.12); color: var(--danger-text); }
+.alert-warning { border-color: rgba(180, 83, 9, 0.35); background: rgba(180, 83, 9, 0.04); }
+.alert-warning .alert-badge { background: var(--metal-soft); color: var(--metal); }
+
+.alert-item .btn { flex-shrink: 0; }
+
+/* ---------- ۱۰) Dropzone و وضعیت Import ---------- */
+.dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 26px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  user-select: none;
+}
+.dropzone svg { width: 30px; height: 30px; color: var(--text-faint); margin-bottom: 6px; }
+.dropzone p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+.dropzone .drop-hint { margin-top: 6px; font-size: 0.7rem; color: var(--text-faint); }
+
+.dropzone:hover, .dropzone:focus-visible, .dropzone.dragover {
+  border-color: var(--setup);
+  background: var(--setup-soft);
+  transform: scale(1.01);
+}
+.dropzone.dragover svg, .dropzone:hover svg { color: var(--setup); }
+.dropzone.loading { pointer-events: none; opacity: 0.6; }
+
+.import-status {
+  margin-top: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.import-status .status-empty { margin: 0; color: var(--text-faint); }
+.import-status.ok  { border-color: rgba(4, 120, 87, 0.35); }
+.import-status.err { border-color: rgba(220, 38, 38, 0.45); }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+  flex-wrap: wrap;
+}
+.status-row b { color: var(--text); font-weight: 600; }
+.status-row .num, .num { color: var(--setup); font-weight: 700; }
+.status-row .num-warn { color: var(--metal); font-weight: 700; }
+.status-row.muted { color: var(--text-faint); font-size: 0.72rem; }
+
+/* سطر مشکل‌دارِ قابل کلیک → Drill-down رکوردهای عامل (§9 اصلاحات) */
+button.status-row, .status-row-link {
+  width: 100%;
+  text-align: right;
+  background: transparent;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font);
+  color: var(--text-muted);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.status-row-link:hover, .status-row-link:focus-visible {
+  background: var(--metal-soft);
+  border-color: rgba(180, 83, 9, 0.4);
+  color: var(--text);
+}
+.drill-hint { font-size: 0.68rem; color: var(--metal); font-weight: 700; margin-inline-start: auto; }
+
+.status-icon { width: 15px; height: 15px; flex-shrink: 0; display: inline-grid; place-items: center; }
+.status-icon svg { width: 15px; height: 15px; }
+.status-icon.ok { color: var(--raw); }
+.status-icon.err { color: var(--metal); }
+
+/* گزارشنمای Import (§11) */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 4px 12px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.import-preview { margin-top: 12px; }
+.import-preview summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--setup);
+  font-weight: 500;
+  padding: 4px 0;
+  user-select: none;
+}
+.import-preview summary:hover { text-decoration: underline; }
+
+/* ---------- ۱۱) جدول‌ها ---------- */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.table-scroll { max-height: 480px; overflow-y: auto; }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; background: var(--surface); }
+.data-table th, .data-table td {
+  padding: 9px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  color: var(--text);
+}
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.73rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+.data-table tbody tr:hover { background: rgba(15, 118, 110, 0.05); }
+.data-table td.ltr { direction: ltr; text-align: left; font-family: 'Consolas', monospace; font-size: 0.72rem; }
+.data-table .film-r { color: var(--raw); font-weight: 700; }
+.data-table .film-bad { color: var(--danger-text); }
+.data-table .count-cell { color: var(--metal); font-weight: 700; font-size: 0.88rem; }
+.data-table .thickness-cell { color: var(--setup); font-weight: 600; }
+.data-table tr.group-boundary td { border-top: 2px solid var(--border-strong); }
+
+.data-table td.num-raw   { color: var(--raw); font-weight: 700; }
+.data-table td.num-metal { color: var(--metal); font-weight: 700; }
+.data-table td.num-uncut { color: var(--uncut); font-weight: 700; }
+
+/* ---------- ۱۲) صفحه‌بندی ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 8px 4px;
+}
+.pager-info { font-size: 0.72rem; color: var(--text-muted); }
+.btn-sm { padding: 6px 12px; font-size: 0.75rem; min-height: 34px; }
+
+/* ---------- دکمه‌های خیلی کوچک (۳٫۸): تاگل پنل‌ها + حذف همه ---------- */
+.btn-mini {
+  padding: 2px 9px;
+  font-size: 0.68rem;
+  min-height: 0;
+  gap: 4px;
+  border-radius: 6px;
+}
+.btn-mini svg { width: 11px; height: 11px; }
+
+/* حالت «روشن»: پنل مربوط باز است — دکمه رنگ عادی (ghost) → فیروزه‌ای پررنگ */
+.btn-mini.panel-on,
+.btn-mini.panel-on:hover {
+  background: var(--setup);
+  border-color: var(--setup);
+  color: #ffffff;
+}
+.btn-mini.panel-on:hover { box-shadow: 0 4px 12px rgba(15, 118, 110, 0.28); }
+
+/* ---------- آیکون راهنمای ریز کنار عناوین بخش‌ها (۳٫۸) ----------
+   ۳٫۹ — تغییر ۲: علامت «!» با فونت وزیرمتن درشت‌تر و خواناتر — ظاهر تمیزتر */
+.help-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  padding: 0 0 1px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-inline-start: 7px;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+}
+.help-dot:hover,
+.help-dot:focus-visible {
+  background: var(--setup);
+  border-color: var(--setup);
+  color: #ffffff;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.25);
+}
+.help-dot:active { transform: scale(0.9); }
+
+/* محتوای پاپ‌آپ راهنما (مودال اطلاعاتی) — همان قالب help-list */
+.help-pop-body { font-size: 0.82rem; line-height: 2.1; color: var(--text); }
+.help-pop-body ul.help-list { margin: 8px 0 0; padding: 0 18px 0 0; }
+
+/* ---------- مودال Audit جدید: دو خط کلید + دو لیست تخصیص (۳٫۸) ---------- */
+.audit-keys {
+  display: grid;
+  gap: 6px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  line-height: 1.9;
+}
+.audit-keys code {
+  font-size: 0.78rem;
+  direction: ltr;
+  unicode-bidi: embed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+.audit-list { margin-bottom: 14px; }
+.audit-list h4 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.audit-list h4 .muted { font-weight: 600; }
+.audit-list-empty { color: var(--text-muted); font-size: 0.76rem; margin: 0; }
+
+/* ---------- دریل گروه‌بندی‌شدهٔ «عرض تعریف‌نشده در ستاپ» (۳٫۸) ---------- */
+.wm-group-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.wm-group-box summary {
+  cursor: pointer;
+  padding: 9px 13px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  user-select: none;
+}
+.wm-group-box summary::-webkit-details-marker { display: none; }
+.wm-group-box summary::after {
+  content: '▾';
+  margin-inline-start: auto;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+.wm-group-box[open] summary::after { content: '▴'; }
+.wm-group-box .wm-group-body { padding: 10px 12px 12px; }
+.wm-key-chip {
+  display: inline-block;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.wm-count-chip {
+  display: inline-block;
+  background: rgba(190, 18, 60, 0.08);
+  border: 1px solid rgba(190, 18, 60, 0.35);
+  color: var(--uncut);
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ---------- ۱۳) سازندهٔ مرتب‌سازی (§36-§38) ---------- */
+.sort-builder {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.sort-builder-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.sort-pipeline { display: flex; gap: 8px; flex-wrap: wrap; min-height: 34px; align-items: center; }
+
+.sort-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  font-size: 0.75rem;
+  cursor: grab;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  color: var(--text);
+}
+.sort-chip:hover { border-color: var(--setup); }
+.sort-chip.dragging { opacity: 0.5; cursor: grabbing; transform: scale(0.97); }
+.sort-chip.drag-over { border-color: var(--setup); box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18); }
+
+.sort-chip .grip { color: var(--text-faint); display: inline-grid; place-items: center; }
+.sort-chip .grip svg { width: 13px; height: 13px; }
+
+.sort-priority {
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  background: var(--setup-soft);
+  color: var(--setup);
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.sort-label { font-weight: 500; }
+
+.sort-dir {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.sort-dir.asc { color: var(--raw); }
+.sort-dir.desc { color: var(--metal); }
+.sort-dir:hover { border-color: var(--setup); color: var(--text); }
+
+.sort-remove {
+  width: 22px; height: 22px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  display: grid; place-items: center;
+  border-radius: 6px;
+}
+.sort-remove svg { width: 12px; height: 12px; }
+.sort-remove:hover { color: var(--danger-text); background: rgba(220, 38, 38, 0.1); }
+
+.sort-add-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+.sort-add-select {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+}
+
+/* ---------- ۱۴) وضعیت تطبیق گروه‌ها ---------- */
+.status-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill-ok     { background: var(--raw-soft); color: var(--raw); border: 1px solid rgba(4, 120, 87, 0.3); }
+.pill-warn   { background: var(--metal-soft); color: var(--metal); border: 1px solid rgba(180, 83, 9, 0.3); }
+.pill-muted  { background: var(--surface-2); color: var(--text-faint); border: 1px solid var(--border); }
+.pill-bad    { background: rgba(220, 38, 38, 0.08); color: var(--danger-text); border: 1px solid rgba(220, 38, 38, 0.35); }
+
+/* ---------- ۱۵) چیپ‌ها ---------- */
+.panel-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.chip {
+  font-size: 0.7rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.chip-strong { color: var(--metal); border-color: rgba(180, 83, 9, 0.35); background: var(--metal-soft); font-weight: 700; }
+.chip-ok     { color: var(--raw); border-color: rgba(4, 120, 87, 0.35); background: var(--raw-soft); }
+.chip-warn   { color: var(--metal); border-color: rgba(180, 83, 9, 0.4); background: var(--metal-soft); font-weight: 600; }
+
+/* ---------- ۱۶) فرم‌ها ---------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field-wide { grid-column: 1 / -1; }
+.field label { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+.field .req { color: var(--uncut); }
+.field .unit { color: var(--text-faint); font-weight: 400; font-size: 0.7rem; }
+
+.field input, .field select, .field textarea {
+  font-family: var(--font);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--input-hover-border); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+.field input:disabled, .field select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-soft);
+  border-style: dashed;
+}
+.field input.invalid, .field select.invalid, .field textarea.invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.field-error { margin: 0; font-size: 0.68rem; color: var(--danger-text); }
+.field-hint {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--setup);
+  background: var(--setup-soft);
+  border: 1px dashed rgba(15, 118, 110, 0.35);
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+
+.field-actions { display: flex; gap: 10px; align-items: flex-end; padding-top: 4px; flex-wrap: wrap; }
+
+.rule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* ---------- ۱۷) بازخورد زندهٔ الگوی برش (§29) ---------- */
+.pattern-feedback {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  border-radius: 8px;
+  padding: 6px 12px;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-muted);
+  min-height: 30px;
+}
+.pattern-feedback.valid   { border-color: rgba(4, 120, 87, 0.45); color: var(--raw); background: var(--raw-soft); }
+.pattern-feedback.invalid { border-color: rgba(220, 38, 38, 0.45); color: var(--danger-text); background: rgba(220, 38, 38, 0.06); }
+.pattern-feedback b { font-weight: 700; }
+
+.pf-status { font-weight: 700; }
+
+/* ---------- ۱۸) کارت‌های الگوی برش در جدول (§30) ---------- */
+.pattern-cards { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+
+.pattern-card {
+  display: inline-grid;
+  place-items: center;
+  min-width: 46px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 118, 110, 0.35);
+  background: var(--setup-soft);
+  color: var(--setup);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'Vazirmatn', sans-serif;
+}
+
+.pattern-sum {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* ---------- ۱۹) نشان مغایرت ظرفیت (§86) ---------- */
+.conflict-badge {
+  display: inline-block;
+  margin-inline-start: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--danger-text);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 999px;
+  padding: 1px 8px;
+  animation: pulse 1.8s ease infinite;
+  white-space: nowrap;
+}
+
+/* ---------- ۲۰) دکمه‌ها ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  min-height: 42px;
+}
+.btn svg { width: 15px; height: 15px; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary { background: var(--setup); color: var(--accent-contrast); }
+.btn-primary:hover { background: #0d9488; box-shadow: 0 6px 18px rgba(15, 118, 110, 0.25); }
+
+.btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-strong); }
+.btn-ghost:hover { color: var(--text); border-color: var(--input-hover-border); background: var(--surface-2); }
+
+.btn-danger { background: rgba(220, 38, 38, 0.08); color: var(--danger-text); border-color: rgba(220, 38, 38, 0.35); }
+.btn-danger:hover { background: rgba(220, 38, 38, 0.15); color: #991b1b; }
+
+.btn-icon {
+  width: 34px; height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 9px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--danger-text);
+}
+.btn-icon:hover { background: rgba(220, 38, 38, 0.18); color: #7f1d1d; }
+
+.btn-ghost.btn-icon { background: transparent; border-color: var(--border-strong); color: var(--text-muted); }
+.btn-ghost.btn-icon:hover { color: var(--setup); border-color: var(--setup); background: var(--setup-soft); }
+
+.row-actions { display: inline-flex; gap: 6px; }
+
+/* ---------- ۲۱) مودال‌ها ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(38, 43, 48, 0.45);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+  overflow-y: auto;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.modal-card h3 { margin: 0 0 8px; font-size: 1rem; color: var(--text); }
+.modal-msg { margin: 0 0 20px; font-size: 0.84rem; color: var(--text-muted); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.modal-info-card { max-width: 640px; }
+.modal-info-body { max-height: min(60vh, 560px); overflow-y: auto; }
+
+/* ۳٫۹ — تغییر ۶: کادر مودال عریض برای جدول‌های دارای «ستون‌های جزئیات»
+   (دریل رکوردها / جزئیات گروه خام / گروه‌های عرض تعریف‌نشده) — ستون‌های
+   بیشتری بدون اسکرول افقی جا می‌شوند؛ جدول همچنان در صورت لزوم اسکرول می‌شود. */
+.modal-info-card.modal-wide {
+  max-width: min(1240px, 96vw);
+}
+.modal-info-card.modal-wide .modal-info-body {
+  max-height: min(76vh, 760px);
+}
+.modal-info-card.modal-wide .table-wrap { max-width: 100%; }
+
+.confirm-stats {
+  display: grid;
+  gap: 4px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--text);
+}
+.confirm-warn {
+  color: var(--danger-text);
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+/* آمار Audit در مودال اطلاعاتی */
+.audit-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.audit-stats b { color: var(--setup); font-weight: 700; }
+.audit-conflict {
+  grid-column: 1 / -1;
+  color: var(--danger-text);
+  border-top: 1px dashed rgba(220, 38, 38, 0.35);
+  padding-top: 8px;
+}
+.audit-section { margin-bottom: 12px; }
+.audit-section h4 { margin: 0 0 4px; font-size: 0.8rem; color: var(--text-muted); }
+.audit-section p { margin: 0; font-size: 0.78rem; color: var(--text); }
+.audit-peers { margin: 4px 0 0; padding-inline-start: 18px; font-size: 0.75rem; color: var(--text-muted); }
+.audit-formula {
+  background: var(--bg-soft);
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--setup);
+}
+
+/* ---------- ۲۲) مودال Drill-down (§8/§9 اصلاحات) ---------- */
+.drill-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.drill-subtitle b { color: var(--metal); font-weight: 700; }
+
+/* ---------- ۲۳) انتخاب‌گر ستون‌های جزئیات گروه (§7 اصلاحات) ---------- */
+.detail-cols-picker { margin-bottom: 12px; font-size: 0.75rem; }
+.detail-cols-picker summary {
+  cursor: pointer;
+  color: var(--setup);
+  font-weight: 500;
+  padding: 4px 0;
+  user-select: none;
+}
+.detail-cols-picker summary:hover { text-decoration: underline; }
+
+.detail-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* ۳٫۹ — تغییر ۶: باکس عرض (px) روی هر چیپ روشنِ «ستون‌های جزئیات» —
+   هم‌سبک باکس عرض پنل ترتیب ستون‌ها؛ خالی/۰ = خودکار. */
+.detail-chip .detail-width {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  direction: ltr;
+}
+.detail-chip .detail-width-input {
+  width: 46px;
+  min-width: 46px;
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-family: var(--font);
+  text-align: center;
+}
+.detail-chip .detail-width-input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.14);
+}
+
+.detail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  padding: 2px 4px;
+}
+.detail-chip.on {
+  border-color: rgba(15, 118, 110, 0.4);
+  background: var(--setup-soft);
+  color: var(--text);
+}
+.detail-chip.on b { font-weight: 600; color: var(--setup); }
+
+.detail-chip button {
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.detail-chip button:hover { color: var(--setup); background: rgba(15, 118, 110, 0.1); }
+.detail-chip.on button[data-col-off]:hover { color: var(--danger-text); background: rgba(220, 38, 38, 0.1); }
+
+/* ---------- ۲۴) پنل Bulk Paste (§4 اصلاحات) ---------- */
+.bulk-panel .bulk-textarea {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  min-height: 130px;
+  resize: vertical;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.bulk-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  min-height: 18px;
+}
+
+.bulk-alert {
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.bulk-common-error {
+  font-size: 0.75rem;
+  color: var(--danger-text);
+}
+
+.bulk-table td { vertical-align: top; }
+.bulk-row-error { background: rgba(220, 38, 38, 0.04); }
+
+.bulk-errors {
+  margin: 4px 0 0;
+  padding-inline-start: 16px;
+  font-size: 0.68rem;
+  color: var(--danger-text);
+  display: grid;
+  gap: 2px;
+  white-space: normal;
+  max-width: 340px;
+}
+
+.bulk-commit { font-weight: 700; }
+
+/* ---------- ۲۵) پنل Mapping (§1 اصلاحات) ---------- */
+.mapping-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.mapping-section:last-child { margin-bottom: 0; }
+
+.mapping-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.mapping-field select { font-size: 0.8rem; padding: 8px 10px; }
+.mapping-hint { font-size: 0.65rem; padding: 3px 8px; }
+
+/* ---------- ۲۶) Toast ---------- */
+.toast-stack {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 200;
+  max-width: min(400px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  animation: toastIn 0.3s cubic-bezier(0.21, 1.02, 0.73, 1);
+  cursor: pointer;
+}
+.toast.leaving { animation: toastOut 0.25s ease forwards; }
+
+.toast svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
+.toast-success { border-color: rgba(4, 120, 87, 0.4); }
+.toast-success svg { color: var(--raw); }
+.toast-error { border-color: rgba(220, 38, 38, 0.45); }
+.toast-error svg { color: var(--danger); }
+.toast-warning { border-color: rgba(180, 83, 9, 0.4); }
+.toast-warning svg { color: var(--metal); }
+.toast-info svg { color: var(--setup); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+
+/* ---------- ۲۷) پاصفحه ---------- */
+.app-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  padding: 14px 20px;
+  text-align: center;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+.app-footer p { margin: 0; font-size: 0.7rem; color: var(--text-faint); }
+
+/* ---------- ۲۸) حالت خالی ---------- */
+.empty-state {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--text-faint);
+  font-size: 0.84rem;
+}
+.empty-state svg { width: 34px; height: 34px; opacity: 0.5; margin-bottom: 8px; }
+.empty-state h4 { margin: 8px 0 4px; color: var(--text-muted); }
+.empty-state p { margin: 0; line-height: 2; }
+.empty-state code { font-size: 0.72rem; }
+
+/* ---------- ۲۹) Backup ---------- */
+.backup-warning {
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  line-height: 2;
+}
+.backup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.rules-wrap { margin-top: 16px; }
+
+/* ---------- ۳۰) خطای بارگذاری کتابخانه‌ها ---------- */
+.panel-lib-error {
+  border-color: rgba(220, 38, 38, 0.5) !important;
+}
+.panel-lib-error .section-title { color: var(--danger-text); }
+.panel-lib-error p { color: var(--text-muted); }
+
+/* ---------- ۳۱) واکنش‌گرایی ---------- */
+@media (max-width: 768px) {
+  .header-inner { padding: 12px 14px; }
+  .app-main { padding: 16px 12px 32px; }
+
+  .kpi-value { font-size: 2rem; }
+  .kpi-card { padding: 16px; gap: 12px; }
+  .kpi-icon { width: 42px; height: 42px; }
+  .kpi-icon svg { width: 21px; height: 21px; }
+
+  .tabs { padding: 0 10px; }
+  .tab-btn { padding: 9px 12px 11px; font-size: 0.8rem; gap: 6px; }
+
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .field-actions { grid-column: 1 / -1; }
+  .rule-grid { grid-template-columns: 1fr 1fr; }
+
+  .panel { padding: 16px; }
+  .settings-grid { grid-template-columns: 1fr; }
+  .toast-stack { left: 10px; right: 10px; max-width: none; }
+  .modal-card { padding: 18px; }
+  .mapping-grid { grid-template-columns: 1fr; }
+  .bulk-toolbar { grid-template-columns: 1fr; }
+  .filter-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .rule-grid { grid-template-columns: 1fr; }
+  .header-inner { flex-direction: column; align-items: stretch; }
+  .status-badges { justify-content: center; }
+  .brand { justify-content: center; }
+  .filter-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- ۳۲) کاهش حرکت ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- ۳۳) تخصیص‌های تم تاریک (روی اجزای خاص) ---------- */
+[data-theme="dark"] body {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(45, 212, 191, 0.05), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(251, 191, 36, 0.04), transparent 55%),
+    var(--bg);
+}
+[data-theme="dark"] .btn-primary:hover { background: #5eead4; }
+[data-theme="dark"] .btn-danger:hover { color: #fecaca; }
+[data-theme="dark"] .btn-icon:hover { color: #fecaca; }
+[data-theme="dark"] .modal-overlay { background: rgba(0, 0, 0, 0.62); }
+[data-theme="dark"] .data-table tbody tr:hover { background: rgba(45, 212, 191, 0.08); }
+[data-theme="dark"] .alert-error   { background: rgba(248, 113, 113, 0.07); }
+[data-theme="dark"] .alert-warning { background: rgba(251, 191, 36, 0.06); }
+[data-theme="dark"] .bulk-row-error { background: rgba(248, 113, 113, 0.08); }
+[data-theme="dark"] .bulk-alert { background: rgba(248, 113, 113, 0.07); }
+[data-theme="dark"] .badge { background: var(--surface); }
+
+/* ---------- ۳۴) نوار ابزار Bulk (فیلدهای سراسری + جدول قابل ویرایش) ---------- */
+.bulk-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.bulk-toolbar .field { gap: 4px; }
+.bulk-toolbar .field label { font-size: 0.72rem; }
+.bulk-toolbar .field input,
+.bulk-toolbar .field select { font-size: 0.8rem; padding: 8px 10px; }
+.bulk-toolbar .field-hint { font-size: 0.62rem; }
+
+.bulk-table td { vertical-align: top; }
+.bulk-table input,
+.bulk-table select {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  width: 100%;
+  min-width: 70px;
+}
+.bulk-table input:focus,
+.bulk-table select:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+.bulk-input { direction: ltr; text-align: left; font-family: 'Consolas', 'Courier New', monospace; }
+.bulk-input-pattern { min-width: 120px; }
+.bulk-input-count { max-width: 80px; }
+.bulk-status { white-space: normal; min-width: 130px; }
+
+/* ---------- ۳۵) نوار فیلتر ستون‌ها (گزارش ستاپ‌ها) ---------- */
+.filter-bar {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.filter-bar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.filter-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.filter-field label { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); }
+.filter-field input {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 7px 10px;
+  width: 100%;
+}
+.filter-field input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+/* ---------- ۳۶) متای سابقهٔ Import (تنظیمات) ---------- */
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* ---------- ۳۷) صفحهٔ راهنما ---------- */
+.help-sections { display: grid; gap: 10px; }
+
+.help-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.help-section summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.help-section summary::-webkit-details-marker { display: none; }
+.help-section summary::before { content: '◂'; color: var(--setup); font-size: 0.9rem; }
+.help-section[open] summary::before { content: '▾'; }
+.help-section summary:hover { color: var(--setup); }
+
+.help-body { padding: 2px 16px 14px; }
+.help-formula {
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--setup);
+  margin-bottom: 10px;
+}
+.help-list {
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  display: grid;
+  gap: 6px;
+  line-height: 1.9;
+}
+.help-list b { color: var(--text); }
+
+/* ---------- ۳۸) انتخاب تم (تنظیمات نمایش) ---------- */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: var(--font);
+  text-align: right;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.theme-option:hover { border-color: var(--border-strong); }
+.theme-option.active {
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+.theme-option-text { display: flex; flex-direction: column; gap: 2px; }
+.theme-option-text b { font-size: 0.85rem; color: var(--text); }
+.theme-option-text .muted { font-size: 0.7rem; }
+.theme-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.swatch-light { background: linear-gradient(135deg, #fcfcfa 55%, #f1f2ec); }
+.swatch-dark  { background: linear-gradient(135deg, #292e33 55%, #16181b); }
+
+/* =========================================================================
+   تغییرات نسخهٔ ۲٫۲ — رول‌های برش‌خورده + قوانین زمان متالایز
+   ========================================================================= */
+
+/* ---------- سلول «تعداد + وزن» روی هم (جدول برش‌خورده‌ها) ---------- */
+.cw-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.35;
+  min-width: 86px;
+}
+.cw-count {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--text);
+}
+.cw-weight {
+  direction: ltr;
+  text-align: left;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  letter-spacing: 0.3px;
+}
+.data-table td.grade-cell .cw-count { color: var(--setup); }
+
+/* ---------- جدول برش‌خورده‌ها: سرستون چسبان + ردیف فیلتر ---------- */
+.cut-table-scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overscroll-behavior: contain;
+}
+.cut-table { margin: 0; }
+.cut-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 8px 10px;
+  white-space: nowrap;
+  text-align: right;
+}
+.cut-table thead tr.cut-head-row th {
+  font-size: 0.76rem;
+  color: var(--text);
+  padding-bottom: 4px;
+  /* Wrap Text داینامیک (نسخهٔ ۲٫۵): عنوان ستون با توجه به عرض ستون
+     در یک یا چند خط نمایش می‌یابد — هرگز بریده/ناقص نمی‌شود */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+  vertical-align: middle;
+}
+.cut-table thead tr.cut-filter-row th {
+  top: var(--ft-head-h, 38px);   /* زیر ردیف سرستون — JS ارتفاع واقعی را ثبت می‌کند (نسخهٔ ۲٫۵) */
+  background: var(--surface-2);
+  padding: 4px 6px 8px;
+  border-bottom: 2px solid var(--border);
+  z-index: 2;
+}
+.cut-filter-input {
+  width: 100%;
+  min-width: 74px;
+  max-width: 130px;
+  font-family: var(--font);
+  font-size: 0.74rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cut-filter-input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+.cut-table tbody td { vertical-align: top; }
+.cut-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* ---------- نوار بالای جدول‌های فیلتردار (نسخهٔ ۳٫۰ — تغییر ۵) ----------
+   دکمهٔ جمع‌وجور «پاک‌کردن همهٔ فیلترها» بالای همهٔ جدول‌های دارای فیلتر
+   (گزارش ستاپ‌ها، لیست رول‌ها/سابقه، رول‌های خام، رول‌های برش‌خورده) —
+   شمارندهٔ فیلترهای فعال داخل دکمه؛ وقتی فعالی نیست دکمه کم‌رنگ است.
+   ۳٫۹ — تغییر ۵: دکمه‌های ابزار «ترتیب ستون‌ها»/«مرتب‌سازی» نیز کنار همین
+   دکمه (داخل گروه ft-topbar-actions) قرار می‌گیرند — هم‌قد و هم‌فونت.
+   ۳٫۹ — تغییر ۷: آمار «N از M رکورد (فیلترشده)» از نوار پایین به همین نوار
+   (سمت چپ) منتقل شد تا همیشه در دید کاربر باشد. */
+.ft-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 2px 0 8px;
+}
+.ft-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ft-clear-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+}
+.ft-clear-top svg { width: 0.95rem; height: 0.95rem; flex: none; }
+.ft-clear-top:disabled { opacity: 0.55; cursor: default; }
+/* دکمهٔ ابزار جدول (ترتیب ستون‌ها / مرتب‌سازی) — هم‌اندازهٔ دکمهٔ پاک‌کردن فیلترها */
+.ft-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.ft-tool.panel-on,
+.ft-tool.panel-on:hover {
+  background: var(--setup);
+  border-color: var(--setup);
+  color: #ffffff;
+}
+.ft-tool.panel-on:hover { box-shadow: 0 3px 10px rgba(15, 118, 110, 0.25); }
+.ft-clear-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--metal-soft);
+  color: var(--metal);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ---------- ستون‌های مانده زمان (گزارش ستاپ‌ها) ---------- */
+.data-table td .num-time {
+  color: var(--setup);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.data-table td .num-time.time-produced { color: var(--metal); }
+
+/* ---------- جعبهٔ مدت زمان خودکار (فرم قانون زمان) ---------- */
+.mt-duration {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--setup-soft);
+  color: var(--setup);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* ---------- چارت مانده زمان متالایز (داشبورد) ---------- */
+.mt-legend-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  padding: 4px 2px 12px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 12px;
+}
+.mt-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.mt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.mt-dot-setup    { background: var(--setup); }
+.mt-dot-produced { background: var(--metal); }
+
+.mt-rows { display: flex; flex-direction: column; gap: 14px; }
+.mt-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.mt-label { display: flex; flex-direction: column; gap: 2px; }
+.mt-label b { font-size: 0.85rem; color: var(--text); }
+.mt-records { font-size: 0.68rem; }
+.mt-bars { display: flex; flex-direction: column; gap: 6px; }
+.mt-bar-line {
+  display: grid;
+  grid-template-columns: 84px 1fr 150px;
+  gap: 10px;
+  align-items: center;
+}
+.mt-legend-setup, .mt-legend-produced {
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mt-legend-setup    { color: var(--setup); }
+.mt-legend-produced { color: var(--metal); }
+.mt-track {
+  height: 16px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.mt-bar {
+  height: 100%;
+  border-radius: 8px 3px 3px 8px;
+  min-width: 0;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mt-bar-setup    { background: linear-gradient(90deg, var(--setup), rgba(15, 118, 110, 0.75)); }
+.mt-bar-produced { background: linear-gradient(90deg, var(--metal), rgba(180, 83, 9, 0.75)); }
+.mt-val {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-align: left;
+  direction: rtl;
+}
+.mt-total {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.mt-total b { color: var(--text); }
+
+@media (max-width: 720px) {
+  .mt-row { grid-template-columns: 1fr; gap: 6px; }
+  .mt-bar-line { grid-template-columns: 64px 1fr 112px; gap: 6px; }
+  .mt-val { font-size: 0.68rem; }
+  .cw-cell { min-width: 70px; }
+}
+
+/* =========================================================================
+   نسخهٔ ۲٫۳ — فیلتر «شامل بودن» + دکمهٔ «≠» + جدول‌های بلند مشترک +
+   پنل ترتیب ستون‌ها + ستون‌های تأکیدی + داشبورد ECharts
+   ========================================================================= */
+
+/* ---------- ۱) باکس فیلتر + دکمهٔ کوچک «≠» (برعکس‌کردن منطق) ----------
+   نسخهٔ ۲٫۵: آیکون «≠» کوچک‌تر و ریزتر در سمت راست باکس قرار می‌گیرد؛
+   باکس فیلتر در ادامه (سمت چپ آیکون) عرضش را با عرض ستون تنظیم می‌کند
+   (min-width: 0) — هرگز ناقص/بریده دیده نمی‌شود. */
+.ft-filter-box {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  direction: rtl;
+  max-width: 100%;
+}
+.ft-filter-box .cut-filter-input {
+  flex: 1 1 auto;
+  min-width: 0;        /* با عرض ستون کوچک/بزرگ می‌شود — هرگز سرریز نمی‌کند */
+  width: auto;
+  max-width: none;
+}
+.ft-invert {
+  /* ۳٫۱۱ — بدون کادر: آیکون خالص (کادر دور آن جا می‌گرفت)؛ کوچک‌تر از قبل */
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 4px;          /* فقط برای هالهٔ focus-visible */
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.12s ease;
+}
+.ft-invert svg { width: 9px; height: 9px; }   /* ۳٫۱۱ — ریزتر (قبلاً ۱۱px) */
+.ft-invert:hover { color: var(--metal); }
+.ft-invert:active { transform: scale(0.88); }
+/* فعال (۳٫۱۱): فقط تغییر رنگ آیکون — کهربایی؛ بدون هیچ کادر/پس‌زمینه.
+   غیرفعال: بازگشت به رنگ کم‌رنگ اولیه (color پایه بالا). */
+.ft-invert.on { color: var(--metal); }
+.ft-invert:focus-visible {
+  outline: none;
+  color: var(--setup);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+}
+
+/* نوار وضعیت فیلتر در پایین جدول */
+.ft-status { display: inline-flex; align-items: center; }
+
+/* ارتفاع حداقلی ردیف سرستون (Wrap Text ممکن است چندخط کند — نسخهٔ ۲٫۵):
+   ردیف فیلتر چسبان با متغیر --ft-head-h (اندازه‌گیری JS) هم‌گام می‌شود */
+.cut-table thead tr.cut-head-row th { height: auto; min-height: 38px; }
+
+/* ---------- ۲) سلول‌های تأکیدی (عرض / ستاپ — بزرگ و بولد) ---------- */
+.em-cell {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+.data-table td.em-cell .muted { font-weight: 500; }
+
+/* ---------- ۳) پنل ترتیب ستون‌ها (گزارش ستاپ‌ها) ---------- */
+.cols-builder .order-chip {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: var(--setup-soft);
+}
+.cols-builder .order-chip .sort-dir { color: var(--setup); }
+.cols-builder .sort-add-row { gap: 8px; }
+
+/* ---------- ۴) ردیف نمودارهای داشبورد (ECharts لوکال) ---------- */
+.dash-charts-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+  align-items: stretch;
+}
+/* آیتم‌های گرید نباید با min-content خودشان مسیر را عریض کنند (رفع سرریز موبایل) */
+.dash-charts-grid > * { min-width: 0; }
+/* فاصلهٔ استاندارد فقط بین پنل‌های مستقل (خارج گرید نمودارها) —
+   نسخهٔ ۳٫۵ — تغییر ۲: قبلاً «.chart-panel { margin: 0 }» روی همهٔ پنل‌های
+   نموداری اعمال می‌شد و پنل‌های «مانده زمان موجودی همهٔ ستاپ‌ها» و
+   «عرض‌های رول» به پنل‌های بالا/پایین خود می‌چسبیدند. */
+.dash-charts-grid .chart-panel { margin: 0; }
+.chart-panel .echart-box {
+  width: 100%;
+  height: 330px;
+  direction: ltr;
+}
+#raw-status-chart.echart-box { height: 330px; }
+#machine-time-footer { margin-top: 4px; }
+#machine-time-footer:empty { display: none; }
+
+/* ---------- ۵) پالایش کارت‌های KPI (نسخهٔ ۲٫۳) ---------- */
+.kpi-card::before { height: 4px; }
+.kpi-raw::before        { background: linear-gradient(90deg, var(--raw), rgba(4, 120, 87, 0.25)); }
+.kpi-metallized::before { background: linear-gradient(90deg, var(--metal), rgba(180, 83, 9, 0.25)); }
+.kpi-setup::before      { background: linear-gradient(90deg, var(--setup), rgba(15, 118, 110, 0.25)); }
+.kpi-uncut::before      { background: linear-gradient(90deg, var(--uncut), rgba(190, 18, 60, 0.25)); }
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: -46px;
+  top: -46px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--surface-2) 0%, transparent 68%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+.kpi-card {
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--surface-2) 0%, transparent 46%),
+    linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
+}
+.kpi-value {
+  font-size: 2.6rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+.kpi-card:hover { transform: translateY(-5px); }
+
+/* ---------- ۶) واکنش‌گرایی نسخهٔ ۲٫۳ ---------- */
+@media (max-width: 1080px) {
+  .dash-charts-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .chart-panel .echart-box,
+  #raw-status-chart.echart-box { height: 270px; }
+  .kpi-value { font-size: 2.1rem; }
+  .em-cell { font-size: 0.95rem; }
+}
+
+/* =========================================================================
+   نسخهٔ ۲٫۴ — باکس تعداد ردیف + باکس عرض ستون + فرمت [H]:mm +
+   آمار دوخطی داشبورد + دو دونات زمان + نمودار ستونی ستاپ‌ها
+   ========================================================================= */
+
+/* ---------- ۱) باکس «ردیف‌های قابل نمایش» در نوار فیلتر ---------- */
+.ft-rows {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.ft-rows-input {
+  width: 64px;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  direction: ltr;
+  text-align: center;
+}
+.ft-rows-input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+/* عددی‌ها در ورودی عددی همیشه لاتین (سازگاری مرورگرها) */
+.ft-rows-input::-webkit-outer-spin-button,
+.ft-rows-input::-webkit-inner-spin-button { margin: 0; }
+
+/* ---------- ۲) باکس عرض ستون در چیپ‌های «پنل ترتیب ستون‌ها» ---------- */
+.order-width {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: 4px;
+  direction: ltr;
+  cursor: default;
+}
+.order-width-unit {
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+.order-width-input {
+  width: 62px;
+  padding: 2px 5px;
+  font-size: 0.74rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+.order-width-input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+.order-width-input:disabled { opacity: 0.5; }
+
+/* جدول با عرض ستون‌های صریح — عرض‌ها حاکم‌اند (پنل ترتیب ستون‌ها) */
+.data-table.fixed-cols { table-layout: fixed; }
+.data-table.fixed-cols td {
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.data-table.fixed-cols td .pattern-cards { flex-wrap: wrap; }
+.data-table.fixed-cols .row-actions { flex-wrap: wrap; }
+
+/* ---------- ۳) سلول‌های زمان [H]:mm ---------- */
+.data-table td.time-cell .num-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- ۴) جدول ماتریسی مانده زمان زیر نمودار (نسخهٔ ۳٫۴ — تغییر ۲) ----------
+   چیدمان خواسته‌شدهٔ کاربر — دو ستون × دو ردیف:
+     ستون‌ها: «رول‌های موجود» (کهربایی — هماهنگ با میله‌های موجودی چارت)
+              «رول‌های ستاپ» (فیروزه‌ای — هماهنگ با میله‌های ستاپ چارت)
+     ردیف‌ها: «کمترین مانده زمان» (دستگاه کمینه به‌عنوان زیرنویس)
+              «میانگین دستگاه‌ها» (تعداد دستگاه‌ها به‌عنوان زیرنویس)
+   هر سلول: مقدار [H]:mm درشت تبولار + «معادل روزانه» — خوانا در یک نگاه. */
+.mt-matrix {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+.mtx-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+.mtx-row + .mtx-row { border-top: 1px solid var(--border); }
+.mtx-row:not(.mtx-head):hover { background: var(--surface-2); }
+
+.mtx-head { background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%); }
+.mtx-corner { border-left: 1px solid transparent; }
+
+.mtx-colhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.mtx-col-inv   { color: var(--metal); border-right: 1px solid var(--border); }
+.mtx-col-setup { color: var(--setup); }
+
+.mtx-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mtx-dot-inv   { background: var(--metal); }
+.mtx-dot-setup { background: var(--setup); }
+
+.mtx-rowhead {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-2);
+  border-left: 1px solid var(--border);
+}
+.mtx-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.mtx-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 10px;
+  text-align: center;
+  min-width: 0;
+}
+.mtx-row .mtx-cell:nth-child(3) { border-left: 1px solid var(--border); }
+.mtx-value {
+  font-size: 1.18rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mtx-inv .mtx-value   { color: var(--metal); }
+.mtx-setup .mtx-value { color: var(--setup); }
+.mtx-days {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .mtx-row { grid-template-columns: minmax(110px, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .mtx-rowhead { padding: 10px 10px; font-size: 0.74rem; }
+  .mtx-value { font-size: 1rem; }
+  .mtx-days { font-size: 0.62rem; }
+  .mtx-colhead { font-size: 0.72rem; padding: 8px 6px; }
+}
+
+/* ---------- ۵) چیدمان ردیف نمودارهای داشبورد (نسخهٔ ۲٫۴) ----------
+   میله‌ای دستگاه‌ها تمام عرض؛ دو دونات هم‌عرض کنار هم؛
+   نمودار ستونی ستاپ‌ها زیر همه (خارج از گرید). */
+.dash-charts-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.dash-charts-grid .panel-wide { grid-column: 1 / -1; }
+.chart-panel .echart-box.donut-box { height: 320px; }
+.chart-panel .echart-box.col-box { height: 400px; }
+
+/* ---------- ۶) واکنش‌گرایی نسخهٔ ۲٫۴ ---------- */
+@media (max-width: 1080px) {
+  .dash-charts-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .chart-panel .echart-box.donut-box { height: 280px; }
+  .chart-panel .echart-box.col-box { height: 320px; }
+  .ft-rows-input { width: 54px; }
+  .order-width-input { width: 56px; }
+  .cut-filter-bar { flex-wrap: wrap; }
+}
+
+/* =========================================================================
+   نسخهٔ ۲٫۵ — Wrap Text هدر ستون‌ها + چیدمان باکس فیلتر (آیکون «≠» کوچک
+   در سمت راست + باکس هم‌عرض ستون) + راست‌به‌چپ‌شدن نمودار میله‌ای دستگاه‌ها
+   + مرکز دقیق متن دونات‌ها + یک میله برای هر ستاپ در نمودار ستونی.
+   ========================================================================= */
+
+/* =========================================================================
+   نسخهٔ ۲٫۶ — حذف ردیف پیش‌نمایش Bulk + فونت/رنگ دونات‌ها + کارت‌های آمار
+   میله‌ای + tooltip سادهٔ نمودار ستونی + وسط‌چین ستون‌های سه جدول +
+   پنل ترتیب ستون‌ها برای خام/برش‌خورده + باکس‌های جمع (tfoot) + جدول قوانین
+   تمام‌عرض. تغییرات این نسخه در بخش‌های بالایی با برچسب «نسخهٔ ۲٫۶»
+   علامت خورده‌اند؛ بخش‌های اختصاصی این نسخه در ادامه می‌آیند.
+   ========================================================================= */
+
+/* ---------- ۱) آیکون حذف هر ردیف پیش‌نمایش ثبت گروهی (Bulk) ---------- */
+.bulk-table td.bulk-del-cell {
+  vertical-align: middle;
+  text-align: center;
+}
+.bulk-del-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+}
+.bulk-del-btn svg { width: 14px; height: 14px; }
+.bulk-del-btn:hover {
+  color: var(--danger-text);
+  border-color: var(--danger-text);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* ---------- ۱-ب) آیکون ادغام ردیف تکراری با همتای معتبر (تغییر ۲) ----------
+   کنار آیکون حذف — فقط برای ردیف‌های دارای خطای تکراری نمایش داده می‌شود؛
+   با کلیک، تعداد رول این ردیف به همتای معتبرش اضافه و خودش حذف می‌شود. */
+.bulk-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.bulk-merge-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+}
+.bulk-merge-btn svg { width: 14px; height: 14px; }
+.bulk-merge-btn:hover {
+  color: var(--setup);
+  border-color: var(--setup);
+  background: var(--setup-soft);
+}
+
+/* ---------- ۱-ج) پرت عرض الگو در کارت‌های الگوی برش (تغییر ۲) ----------
+   نشان «×تعداد» حذف شد؛ به‌جای آن وقتی الگو نسبت به رول مادر پرت دارد،
+   فقط مقدار پرت زیر کارت‌ها نمایش داده می‌شود (کهربایی/هشدار). */
+.pattern-trim {
+  font-weight: 700;
+  font-size: 0.68rem;
+  color: var(--metal);
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  border-radius: 999px;
+  padding: 0 8px;
+  display: inline-block;
+}
+
+/* تعداد ست در گزارش ستاپ‌ها (تغییر ۱) — برجسته و خوانا */
+.num-set {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---------- ۲) وسط‌چین تمام ستون‌های سه جدول مشترک (نسخهٔ ۲٫۶) ----------
+   هدر، دیتا، کارت‌های الگو، وضعیت‌ها، باکس فیلتر و دکمه‌های عملیات —
+   همه وسط‌چین (خواستهٔ کاربر)؛ جبران‌کنندهٔ text-align:right پیش‌فرض. */
+.cut-table thead th,
+.cut-table thead tr.cut-head-row th,
+.cut-table thead tr.cut-filter-row th,
+.cut-table tbody td {
+  text-align: center;
+}
+.cut-table .cw-cell {
+  align-items: center;
+}
+.cut-table .cw-weight {
+  text-align: center;
+}
+.cut-table .pattern-cards {
+  justify-content: center;
+}
+.cut-table .pattern-sum {
+  text-align: center;
+}
+.cut-table .row-actions {
+  justify-content: center;
+}
+.cut-table .bulk-errors {
+  text-align: right;        /* لیست خطاها چندخطی — راست‌چین بماند */
+}
+
+/* ---------- ۳) ردیف جمع چسبان زیر جدول‌ها (نسخهٔ ۲٫۶) ----------
+   tfoot همیشه پایین ناحیهٔ اسکرول چسبان است؛ باکس جمع هر ستون با دیتای
+   فیلترشده به‌روز می‌شود (رایگان از ui.js).
+   نسخهٔ ۳٫۱ — تغییر ۴: علامت Σ از باکس‌های جمع حذف شد (جاگیر بود). */
+.cut-table tfoot.ft-sum-row td {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: var(--bg-soft);
+  border-top: 2px solid var(--border-strong);
+  border-bottom: none;
+  padding: 5px 8px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.ft-sum-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  direction: rtl;
+  max-width: 100%;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.ft-sum-val {
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ft-sum-val.ft-sum-time { color: var(--setup); }
+.ft-sum-pair {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 1.3;
+}
+.ft-sum-pair .ft-sum-val {
+  font-size: 0.8rem;
+}
+.ft-sum-wgt {
+  direction: ltr;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  letter-spacing: 0.3px;
+}
+.ft-sum-skip {
+  font-size: 0.55rem;
+  color: var(--metal);
+  margin-inline-start: 1px;
+}
+
+/* ---------- ۴) واکنش‌گرایی نسخهٔ ۲٫۶ ---------- */
+@media (max-width: 720px) {
+  .ft-sum-box { padding: 1px 4px; }
+  .ft-sum-val { font-size: 0.74rem; }
+}
+
+/* =========================================================================
+   تغییرهای جدید (پس از ۲٫۶) — استایل‌های افزودنی
+   ========================================================================= */
+
+/* ---------- پنل «کنترل تعداد مجاز» عرض‌های مادر در Bulk (تغییر ۱) ---------- */
+.bulk-allowed {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 10px 12px;
+}
+
+.bulk-allowed-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+}
+
+.bulk-allowed-head b { color: var(--text); }
+
+.bulk-allowed-table { width: 100%; }
+
+.bulk-allowed-table td,
+.bulk-allowed-table th {
+  padding: 5px 8px;
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.bulk-allowed-bad td {
+  background: rgba(220, 38, 38, 0.05);
+}
+
+[data-theme="dark"] .bulk-allowed-bad td {
+  background: rgba(248, 113, 113, 0.08);
+}
+
+/* ---------- زبانه‌های لیست رول‌ها در صفحهٔ «ورود داده‌ها» (تغییر ۳) ----------
+   همان طراحی زبانه‌های صفحهٔ «رول‌ها» (کلاس‌های subtabs/subtab-btn/subview). */
+#view-import .subtabs { margin-top: 22px; }
+
+#view-import .subview { margin-top: 12px; }
+
+/* نشان «ویرایش‌شده» سلول‌های رکورد (تغییر ۳) */
+.edited-val {
+  position: relative;
+  display: inline-block;
+  padding-inline-start: 10px;
+}
+
+.edited-val::before {
+  content: '✎';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.6rem;
+  color: var(--metal);
+  font-weight: 700;
+}
+
+.edited-val { color: var(--text); font-weight: 600; }
+
+/* فرم مودال ویرایش رکورد (تغییر ۳) */
+.modal-edit-card { max-width: 760px; width: min(760px, calc(100vw - 40px)); }
+
+.modal-edit-body { max-height: min(62vh, 620px); overflow-y: auto; }
+
+.modal-edit-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px 14px;
+}
+
+.modal-edit-fields .field { margin: 0; gap: 3px; }
+
+.modal-edit-fields .field label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.modal-edit-fields .field input {
+  font-size: 0.8rem;
+  padding: 7px 9px;
+  width: 100%;
+}
+
+.field-edit-flag {
+  color: var(--metal);
+  font-size: 0.6rem;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  background: var(--metal-soft);
+  border-radius: 999px;
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.modal-edit-note {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  margin-top: 10px;
+  line-height: 1.9;
+}
+
+/* جدول رول‌های ویرایش‌شده (تغییر ۳) */
+.edited-fields-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  justify-content: center;
+}
+
+.edited-field-chip {
+  font-size: 0.66rem;
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  background: var(--metal-soft);
+  color: var(--metal);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-weight: 600;
+  direction: rtl;
+}
+
+.edited-field-chip b { font-weight: 800; }
+
+/* دکمهٔ چشم نمایش/مخفی ستون در پنل ترتیب ستون‌ها (تغییر ۳) */
+.order-vis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.order-vis svg { width: 13px; height: 13px; }
+
+.order-vis:hover { border-color: var(--setup); color: var(--setup); }
+
+.order-vis.on { color: var(--setup); border-color: rgba(15, 118, 110, 0.4); background: var(--setup-soft); }
+
+.order-chip.col-hidden { opacity: 0.55; }
+
+.order-chip.col-hidden .sort-label { text-decoration: line-through; text-decoration-color: var(--text-faint); }
+
+/* ---------- کنترل سگمنتی «مبنای نمودار عرض‌های رول» (نسخهٔ ۳٫۱ — تغییر ۵) ----------
+   دو دکمهٔ چسبیدهٔ خام موجود / تعداد در سربرگ پنل نمودار داشبورد. */
+.seg-control {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+  direction: rtl;
+}
+
+.seg-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  min-height: 34px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.seg-btn + .seg-btn { border-inline-start: 1px solid var(--border); }
+
+.seg-btn:hover { color: var(--text); background: var(--bg-soft); }
+
+.seg-btn:focus-visible {
+  outline: 2px solid var(--setup);
+  outline-offset: -2px;
+}
+
+.seg-btn.active {
+  background: var(--setup);
+  color: var(--accent-contrast);
+}
+
+.seg-btn.active:hover { background: var(--setup); color: var(--accent-contrast); }
+
+@media (max-width: 720px) {
+  .seg-btn { padding: 6px 10px; font-size: 0.72rem; }
+}
+
+/* =========================================================================
+   برنامه‌ریزی و گانت چارت (نسخهٔ ۳٫۳)
+   پنل حرفه‌ای برنامه‌ریزی هر دستگاه + گانت چارت ریسپانسیو LTR
+   نوین در ۳٫۳: فونت وزیرمتن برای همهٔ کنترل‌ها · کنترل‌های هم‌ارتفاع ·
+   کلید خط «اکنون» · فیلترهای پویای رول · جدول خلاصهٔ ردیف‌کارت با تاریخ شمسی
+   ========================================================================= */
+
+/* ---------- ۱) چیدمان کلی پنل ---------- */
+
+#plan-body { display: flex; flex-direction: column; gap: 14px; }
+
+.plan-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.plan-subtitle svg { width: 17px; height: 17px; color: var(--setup); flex-shrink: 0; }
+
+.plan-seg-count {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  margin-inline-start: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.68rem;
+  line-height: 17px;
+}
+
+/* فونت وزیرمتن برای همهٔ کنترل‌های صفحهٔ برنامه‌ریزی (نسخهٔ ۳٫۳ — کنترل‌های
+   فرم فونت را به ارث نمی‌برند و از فونت سیستم رندر می‌شدند) */
+#view-planning select,
+#view-planning input,
+#view-planning textarea,
+#view-planning button {
+  font-family: var(--font);
+}
+
+/* ---------- ۲) تنظیمات زمان‌بندی (تاریخ + ساعت شروع + کلید خط اکنون) ----------
+   نسخهٔ ۳٫۵ — تغییر ۵: عنوان کادر حذف شد؛ باکس فقط سه فیلد تمیز است و
+   دکمهٔ ریز «امروز» داخل خانهٔ فیلد تاریخ نشسته (استایل پایین‌تر). */
+
+.plan-timing-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.plan-timing-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.plan-field { flex: 0 1 240px; margin: 0; }
+.plan-field input { max-width: 240px; }
+
+/* — کلید نمایش خط «اکنون» (نسخهٔ ۳٫۳) — */
+
+.plan-now-field { flex: 0 1 auto; }
+
+.plan-now-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 0;
+}
+
+.plan-switch-input {
+  position: absolute;
+  inset: 0;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.plan-switch-track {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 0.18s ease;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.plan-switch-knob {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s ease;
+}
+
+.plan-switch-input:checked + .plan-switch-track { background: var(--setup); }
+.plan-switch-input:checked + .plan-switch-track .plan-switch-knob { transform: translateX(-18px); }
+.plan-switch-input:focus-visible + .plan-switch-track { outline: 2px solid var(--setup); outline-offset: 2px; }
+
+.plan-now-state {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.plan-switch-input:checked ~ .plan-now-state { color: var(--setup); }
+
+@media (max-width: 640px) {
+  .plan-timing-fields { gap: 10px; }
+  .plan-field { flex: 1 1 100%; }
+  .plan-field input { max-width: none; }
+}
+
+/* ---------- ۳) پنل افزودن اقلام ---------- */
+
+.plan-add-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .plan-add-grid { grid-template-columns: 1fr; }
+}
+
+.plan-add-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  min-width: 0;   /* آیتم گرید — اجازهٔ کوچک‌تر شدن از عرض محتوای select */
+}
+
+.plan-add-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.plan-add-title svg { width: 16px; height: 16px; color: var(--setup); flex-shrink: 0; }
+.plan-add-title .muted { font-weight: 500; font-size: 0.72rem; }
+
+.plan-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.plan-add-row select { flex: 1 1 260px; min-width: 0; }
+.plan-add-row input[type="text"] { min-width: 0; }
+.plan-add-row-lag input[type="text"]:first-child { flex: 1 1 180px; }
+
+/* — کنترل‌های افزودن: ظاهر یکپارچه + هم‌ارتفاع با دکمه‌ها + فونت وزیرمتن (نسخهٔ ۳٫۳) — */
+
+.plan-add-row > select,
+.plan-add-row > input[type="text"] {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  height: 42px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plan-add-row > select:hover,
+.plan-add-row > input[type="text"]:hover { border-color: var(--input-hover-border); }
+
+.plan-add-row > select:focus,
+.plan-add-row > input[type="text"]:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.plan-add-row > input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--bg-soft);
+  border-style: dashed;
+}
+
+.plan-add-row > .btn { height: 42px; min-height: 42px; padding-top: 0; padding-bottom: 0; }
+
+/* فیلد «تعداد» کنار انتخاب رول (نسخهٔ ۳٫۳) */
+
+.plan-qty-add-input {
+  width: 92px;
+  flex: 0 0 92px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.86rem !important;
+}
+
+/* — فیلترهای پویای رول: شماره ستاپ + عرض (نسخهٔ ۳٫۳) — */
+
+.plan-roll-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.prf-item { display: flex; flex-direction: column; gap: 4px; }
+
+.prf-item label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.prf-item input {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 118px;
+  min-height: 36px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.prf-item input:hover { border-color: var(--input-hover-border); }
+
+.prf-item input:focus {
+  outline: none;
+  border-color: var(--setup);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.prf-item input::placeholder { color: var(--text-faint); font-size: 0.72rem; }
+
+.prf-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--setup);
+  background: var(--setup-soft);
+  border: 1px solid rgba(15, 118, 110, 0.25);
+  border-radius: 999px;
+  padding: 3px 11px;
+  white-space: nowrap;
+  margin-bottom: 1px;
+}
+
+.plan-add-card .field-hint { margin: 8px 0 0; font-size: 0.68rem; }
+
+/* ---------- ۴) جدول اولویت‌بندی ---------- */
+
+.plan-items-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.plan-items-wrap { margin-top: 8px; overflow-x: auto; }
+.plan-items-table { min-width: 680px; }
+
+.plan-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.plan-items-table th {
+  background: var(--surface);
+  border-bottom: 2px solid var(--border-strong);
+  padding: 8px 8px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.plan-items-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.plan-items-table td.pi-desc { text-align: right; }
+
+.plan-item.dragging { opacity: 0.45; }
+.plan-item.drag-over td { border-top: 2px solid var(--setup); }
+
+.pi-grip {
+  width: 34px;
+  cursor: grab;
+  color: var(--text-faint);
+}
+
+.pi-grip:active { cursor: grabbing; }
+.pi-grip svg { width: 15px; height: 15px; pointer-events: none; }
+
+.pi-order {
+  width: 44px;
+  font-weight: 700;
+  color: var(--setup);
+  font-size: 0.85rem;
+}
+
+.kind-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.kb-roll { background: var(--raw-soft); color: var(--raw); border: 1px solid rgba(4, 120, 87, 0.3); }
+.kb-lag  { background: var(--metal-soft); color: var(--metal); border: 1px solid rgba(180, 83, 9, 0.3); }
+
+.pi-desc { white-space: nowrap; }
+.pi-desc b { color: var(--raw); font-size: 0.84rem; }
+
+.pi-status { margin-inline-start: 6px; }
+.pi-status .status-pill { font-size: 0.62rem; padding: 1px 8px; }
+
+.pi-deleted { color: var(--uncut); font-weight: 700; font-size: 0.72rem; }
+.pi-deleted svg { width: 13px; height: 13px; vertical-align: -2px; }
+
+.plan-qty-input,
+.plan-lag-min-input {
+  width: 74px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.plan-lag-title-input {
+  width: 100%;
+  min-width: 140px;
+  font-size: 0.78rem;
+}
+
+/* ورودی‌های داخل جدول اولویت‌بندی — ظاهر یکپارچه + فونت وزیرمتن (نسخهٔ ۳٫۳) */
+.plan-qty-input,
+.plan-lag-min-input,
+.plan-lag-title-input {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plan-qty-input:hover,
+.plan-lag-min-input:hover,
+.plan-lag-title-input:hover { border-color: var(--input-hover-border); }
+
+.plan-qty-input:focus,
+.plan-lag-min-input:focus,
+.plan-lag-title-input:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+/* نشان دستگاه دیگر (نسخهٔ ۳٫۳ — در ۳٫۴ از ستون «مشخصات قلم» حذف شد؛ قانون باقی است) */
+
+.pi-qty-hint {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+
+/* — دکمهٔ لینک تعداد با «خام موجود» (نسخهٔ ۳٫۴ — تغییر ۱) — */
+
+.pi-qty-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  direction: rtl;
+}
+
+.pi-qty-box .plan-qty-input { flex: 0 0 74px; }
+
+.pi-qty-box .plan-qty-input:disabled {
+  background: var(--setup-soft);
+  border-color: var(--setup);
+  color: var(--setup);
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.pi-link-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.16s ease, border-color 0.16s ease, background 0.16s ease, transform 0.14s ease;
+}
+.pi-link-btn svg { width: 13px; height: 13px; }
+.pi-link-btn:hover {
+  color: var(--setup);
+  border-color: var(--setup);
+  background: var(--setup-soft);
+  transform: translateY(-1px);
+}
+.pi-link-btn:focus-visible {
+  outline: 2px solid var(--setup);
+  outline-offset: 2px;
+}
+
+/* حالت فعال لینک — فیروزه‌ای پررنگ */
+.pi-link-btn.on {
+  background: var(--setup);
+  border-color: var(--setup);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(15, 118, 110, 0.35);
+}
+.pi-link-btn.on:hover { background: #0c655e; }
+
+.pi-link-hint {
+  color: var(--setup);
+  font-weight: 700;
+}
+
+.pi-unit { font-size: 0.64rem; color: var(--text-muted); margin-inline-start: 4px; }
+
+.pi-time .num-time { font-weight: 700; color: var(--setup); }
+
+.pi-span { white-space: nowrap; }
+.pi-clock { font-weight: 700; color: var(--text); }
+
+.plan-item.invalid td { background: var(--uncut-soft); }
+.plan-item.invalid .plan-qty-input,
+.plan-item.invalid .plan-lag-title-input,
+.plan-item.invalid .plan-lag-min-input { border-color: var(--uncut); }
+
+.pi-invalid-reason {
+  color: var(--uncut);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.pi-actions { white-space: nowrap; }
+.btn-move { font-size: 0.9rem; font-weight: 700; width: 28px; height: 28px; padding: 0; }
+
+/* ---------- ۵) گانت چارت ---------- */
+
+.plan-gantt-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.plan-gantt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.plan-zoom { display: flex; gap: 4px; }
+.plan-zoom .btn { min-width: 34px; padding: 4px 9px; }
+
+.gantt-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.gantt-canvas { position: relative; width: max-content; min-width: 100%; padding: 0; }
+
+.gantt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 34px 16px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.gantt-empty svg { width: 30px; height: 30px; color: var(--text-faint); }
+
+/* — ردیف محور ساعت (بالای چارت) — */
+
+.gantt-ruler-row { display: flex; direction: ltr; }
+
+.gantt-corner {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-strong);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.gantt-ruler { position: relative; flex-shrink: 0; border-bottom: 2px solid var(--border-strong); }
+
+.gtick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--gantt-grid, var(--border));
+  pointer-events: none;
+}
+
+.gtick span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.gtick-zero span, .gtick-end span { color: var(--setup); font-weight: 700; }
+.gtick-end { background: var(--setup); width: 2px; }
+
+/* — ردیف‌های اقلام — */
+
+.gantt-rows { display: flex; flex-direction: column; }
+
+.grow { display: flex; direction: ltr; }
+.grow + .grow .gtrack { border-top: 1px solid var(--border); }
+
+.glabel {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 5px 9px;
+  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.glabel-order {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.56rem;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.glabel-main {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+}
+
+.grow.kind-lag-row .glabel-main { color: var(--metal); }
+
+.glabel-sub {
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+}
+
+.gtrack { position: relative; height: 46px; flex-shrink: 0; }
+
+/* — میله‌ها — */
+
+.gantt-bar {
+  position: absolute;
+  top: 8px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(35, 42, 36, 0.25);
+}
+
+.bar-roll {
+  background: linear-gradient(180deg, #0b8a63 0%, var(--raw) 100%);
+  color: #fff;
+}
+
+.bar-lag {
+  background: repeating-linear-gradient(45deg,
+    #c9720c 0 9px,
+    #b45309 9px 18px);
+  color: #fff;
+}
+
+.gbar-main {
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 7px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.gbar-edge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.58rem;
+  font-weight: 700;
+  opacity: 0.92;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+}
+
+.gbar-start { left: 4px; }
+.gbar-end { right: 4px; }
+
+.ginvalid {
+  position: absolute;
+  inset: 8px 6px auto 6px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1.5px dashed var(--uncut);
+  border-radius: 7px;
+  color: var(--uncut);
+  font-size: 0.66rem;
+  font-weight: 700;
+  background: var(--uncut-soft);
+}
+
+/* — نشانگر اکنون — */
+
+.gantt-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--uncut);
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(190, 18, 60, 0.15);
+}
+
+.gnow-label {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  background: var(--uncut);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+/* — راهنمای رنگ‌ها — */
+
+.plan-gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 10px 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.lg-item { display: inline-flex; align-items: center; gap: 6px; }
+
+.lg-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.lg-roll { background: linear-gradient(180deg, #0b8a63, var(--raw)); }
+.lg-lag  { background: repeating-linear-gradient(45deg, #c9720c 0 5px, #b45309 5px 10px); }
+.lg-now  { background: var(--uncut); width: 3px; height: 14px; border-radius: 2px; }
+
+/* ---------- ۶) خلاصهٔ زمان‌بندی ---------- */
+
+.plan-summary-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.plan-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+/* — جدول خلاصهٔ زمان‌بندی (نسخهٔ ۳٫۳ — بازطراحی: ردیف‌کارت‌های هوادار،
+   فاصلهٔ خالی اطراف اطلاعات، گوشه‌های گرد و ردیف جمع تأکیدی) — */
+
+#plan-sched-wrap { overflow-x: auto; padding: 0 2px 4px; }
+
+.plan-sched-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.plan-sched-table thead th {
+  position: static;
+  background: transparent;
+  border-bottom: none;
+  padding: 2px 14px 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.plan-sched-table tbody td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 11px 16px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.plan-sched-table tbody td:first-child {
+  border-inline-start: 1px solid var(--border);
+  border-start-start-radius: 10px;
+  border-end-start-radius: 10px;
+}
+
+.plan-sched-table tbody td:last-child {
+  border-inline-end: 1px solid var(--border);
+  border-start-end-radius: 10px;
+  border-end-end-radius: 10px;
+}
+
+.plan-sched-table tbody tr:hover td { background: var(--surface); }
+
+.plan-sched-table td.sched-ord { font-weight: 700; color: var(--setup); }
+
+.plan-sched-table td.sched-title { text-align: right; font-weight: 600; color: var(--text); }
+
+.plan-sched-table tbody tr.invalid td {
+  background: var(--uncut-soft);
+  border-color: rgba(190, 18, 60, 0.35);
+}
+
+.plan-sched-table tfoot td {
+  font-weight: 700;
+  background: var(--setup-soft);
+  border-top: 1px solid rgba(15, 118, 110, 0.3);
+  border-bottom: 1px solid rgba(15, 118, 110, 0.3);
+  white-space: nowrap;
+  padding: 11px 16px;
+}
+
+.plan-sched-table tfoot td:first-child {
+  text-align: right;
+  border-inline-start: 1px solid rgba(15, 118, 110, 0.3);
+  border-start-start-radius: 10px;
+  border-end-start-radius: 10px;
+}
+
+.plan-sched-table tfoot td:last-child {
+  border-inline-end: 1px solid rgba(15, 118, 110, 0.3);
+  border-start-end-radius: 10px;
+  border-end-end-radius: 10px;
+}
+
+/* مُهر تاریخ شمسی دقیق برای زمان‌های روزهای بعد (نسخهٔ ۳٫۳ — مثل ۱۴۰۵/۰۶/۲۹ ۱۷:۳۵) */
+.sched-dt {
+  font-weight: 700;
+  color: var(--setup);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pi-clock.sched-dt, .chip .sched-dt { color: inherit; }
+
+.plan-summary-panel .field-hint { margin: 10px 0 0; }
+
+/* ---------- ۷) موبایل ---------- */
+
+@media (max-width: 640px) {
+  .plan-items-table { font-size: 0.72rem; }
+  .plan-items-table th, .plan-items-table td { padding: 6px 5px; }
+  .pi-desc { white-space: normal; min-width: 150px; }
+  .gtrack { height: 40px; }
+  .gantt-bar { top: 6px; height: 28px; }
+  .ginvalid { inset: 6px 4px auto 4px; height: 28px; }
+  .plan-gantt-head { align-items: flex-start; flex-direction: column; }
+  .plan-sched-table { min-width: 560px; font-size: 0.72rem; }
+  .plan-sched-table tbody td { padding: 8px 10px; }
+  .plan-sched-table tfoot td { padding: 9px 10px; }
+  .plan-roll-filters { gap: 8px; }
+  .plan-qty-add-input { width: 76px; flex: 0 0 76px; }
+}
+
+/* ---------- ۸) تم تاریک ---------- */
+
+[data-theme="dark"] .bar-roll { background: linear-gradient(180deg, #10a274 0%, #0c8f65 100%); }
+[data-theme="dark"] .bar-lag {
+  background: repeating-linear-gradient(45deg, #d98324 0 9px, #b45309 9px 18px);
+}
+[data-theme="dark"] .glabel,
+[data-theme="dark"] .gantt-corner { background: #1d2023; }
+[data-theme="dark"] .gantt-scroll { background: #191c1f; }
+
+/* =========================================================================
+   نسخهٔ ۳٫۴ — خروجی PDF گانت چارت (تغییر ۸)
+   استیج مخفی ساخت صفحهٔ PDF: تم روشن ثابت (مستقل از تم برنامه)، عرض ثابت
+   A4-مانند (نسبت ۲۹۷:۲۱۰ نزدیک)، هدر برندینگ + گانت فیت‌شده + خلاصه + فوتر.
+   پس از هر خروجی، محتوای استیج خالی می‌شود.
+
+   نسخهٔ ۳٫۵ — تغییر ۷/۸: صفحات A4 افقی استاندارد با ارتفاع ثابت و فوتر
+   چسبان به پایین؛ رفع به‌هم‌ریختگی فونت فارسی (حذف letter-spacing)؛
+   استریپ لگ با SVG data-URI (پشتیبانی html2canvas)؛ نوار «ادامه» برای
+   صفحات میانی/پایانی چندصفحه‌ای.
+   ========================================================================= */
+
+/* استیج خارج از دید — نه display:none (باید برای html2canvas چیدمان داشته باشد) */
+.plan-pdf-stage {
+  position: fixed;
+  top: 0;
+  left: -40000px;
+  width: 1580px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* صفحهٔ PDF — بازتعریف متغیرهای تم به مقدارهای روشن ثابت (حتی در تم تاریک) */
+.pp-page {
+  --surface: #ffffff;
+  --surface-2: #f4f7f4;
+  --text: #1a211d;
+  --text-muted: #57615b;
+  --text-faint: #8d968f;
+  --border: #dde3dd;
+  --border-strong: #c2ccc4;
+  --setup: #0f766e;
+  --setup-soft: rgba(15, 118, 110, 0.1);
+  --metal: #b45309;
+  --metal-soft: rgba(180, 83, 9, 0.1);
+  --raw: #047857;
+  --raw-soft: rgba(4, 120, 87, 0.1);
+  --uncut: #be123c;
+  --uncut-soft: rgba(190, 18, 60, 0.08);
+  --gantt-grid: rgba(120, 128, 118, 0.25);
+
+  width: 1580px;
+  height: 1117px;            /* نسخهٔ ۳٫۵ — تغییر ۷: ارتفاع ثابت A4 افقی */
+  box-sizing: border-box;
+  background: #ffffff;
+  color: var(--text);
+  font-family: var(--font);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 0 0 1px #e3e7e2;
+  display: flex;             /* فوتر همیشه در پایین صفحه */
+  flex-direction: column;
+  margin-bottom: 24px;       /* فاصلهٔ صفحات داخل استیج */
+}
+
+/* نسخهٔ ۳٫۵ — تغییر ۸: letter-spacing روی متن فارسی در html2canvas باعث
+   شکستن اتصال حروف و جابه‌جایی واژه‌ها می‌شود (سروته‌نویسی) — در PDF حذف می‌شود */
+.pp-page, .pp-page * { letter-spacing: normal !important; }
+
+/* نسخهٔ ۳٫۵ — تغییر ۸: استریپ لگ در PDF با SVG data-URI — چون
+   repeating-linear-gradient در html2canvas رندر نمی‌شود (لگ‌ها خالی می‌شدند) */
+.pp-page .bar-lag {
+  background-color: #b45309;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Crect width='18' height='18' fill='%23c9720c'/%3E%3Cpath d='M0 18 L18 0 M-4.5 4.5 L4.5 -4.5 M13.5 22.5 L22.5 13.5' stroke='%23b45309' stroke-width='9'/%3E%3C/svg%3E");
+}
+
+/* میله‌های گانت در PDF نباید از مسیر پنجرهٔ صفحه بیرون بزنند */
+.pp-page .gtrack { overflow: hidden; }
+
+/* لِجند «لگ / توقف» در PDF هم مانند خود میله‌ها با استریپ SVG رندر می‌شود —
+   repeating-linear-gradient در html2canvas رندر نمی‌شد و خانهٔ لجند خالی می‌ماند */
+.pp-page .lg-lag {
+  background-color: #b45309;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Crect width='18' height='18' fill='%23c9720c'/%3E%3Cpath d='M0 18 L18 0 M-4.5 4.5 L4.5 -4.5 M13.5 22.5 L22.5 13.5' stroke='%23b45309' stroke-width='9'/%3E%3C/svg%3E");
+}
+
+/* — هدر برندینگ — */
+
+.pp-head {
+  background:
+    linear-gradient(135deg, #0c4f43 0%, #0f766e 55%, #12857c 100%);
+  color: #ffffff;
+  padding: 26px 36px 20px;
+  position: relative;
+}
+.pp-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 5px;
+  background: linear-gradient(90deg, #047857, #b45309 55%, #be123c);
+}
+
+.pp-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
+}
+.pp-logo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+.pp-logo svg { width: 21px; height: 21px; color: #ffffff; }
+/* لوگوی پروژه (نسخهٔ ۳٫۵ — تغییر ۶/۸) */
+.pp-logo img { width: 34px; height: 34px; border-radius: 9px; object-fit: contain; display: block; }
+.pp-brand-sub { font-weight: 500; opacity: 0.85; font-size: 0.8rem; }
+
+.pp-gen {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.85;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.pp-title {
+  margin: 12px 0 10px;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.pp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 0;
+}
+.pp-meta-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 500;
+  opacity: 0.94;
+  white-space: nowrap;
+}
+.pp-meta-item + .pp-meta-item::before {
+  content: '·';
+  margin: 0 9px;
+  opacity: 0.5;
+}
+.pp-meta-item b { font-weight: 800; }
+
+/* — بدنه: گانت — */
+
+.pp-gantt { padding: 20px 36px 6px; }
+
+.pp-gantt-scroll {
+  overflow: hidden;
+  border: 1px solid #cdd5cf;
+  background: #f7faf7;
+}
+
+.pp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  color: #57615b;
+}
+
+/* — بدنه: خلاصه — */
+
+.pp-summary { padding: 14px 36px 8px; }
+
+.pp-sec-title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0c4f43;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-sec-title::before {
+  content: '';
+  width: 4px;
+  height: 17px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #0f766e, #047857);
+}
+
+.pp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/* جدول خلاصه در PDF — فشرده‌تر و چاپ‌پسند */
+.pp-summary .plan-sched-table { border-spacing: 0 5px; }
+.pp-summary .plan-sched-table td,
+.pp-summary .plan-sched-table th { padding: 5px 10px; font-size: 0.72rem; }
+
+/* — فوتر — */
+
+.pp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;          /* نسخهٔ ۳٫۵ — تغییر ۷: چسبان به پایین صفحهٔ A4 */
+  padding: 12px 36px 16px;
+  border-top: 1px solid #e0e5e0;
+  background: #f4f7f4;
+  color: #57615b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* — نوار «ادامه» صفحات میانی/پایانی (نسخهٔ ۳٫۵ — تغییر ۷) — */
+
+.pp-cont {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 36px;
+  background: linear-gradient(135deg, #0c4f43 0%, #0f766e 60%, #12857c 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+.pp-cont-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: contain; flex-shrink: 0; }
+.pp-cont-title { font-size: 0.92rem; font-weight: 800; white-space: nowrap; }
+.pp-cont-range {
+  margin-inline-start: auto;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  padding: 4px 13px;
+  white-space: nowrap;
+}
+
+/* — صفحهٔ خلاصهٔ مستقل (نسخهٔ ۳٫۵ — تغییر ۷) — */
+
+.pp-summary-page { flex: 1; padding-top: 20px; }
+.pp-tbl-more {
+  margin: 10px 0 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+/* نشان «مرز صفحه» در لِجند (نسخهٔ ۳٫۵ — تغییر ۷) */
+.lg-swatch.lg-boundary {
+  background: transparent;
+  border-right: 3px dashed #b45309;
+  border-radius: 1px;
+}
+
+/* دکمهٔ خروجی PDF در هدر گانت */
+.plan-pdf-btn { display: inline-flex; align-items: center; gap: 6px; }
+.plan-pdf-btn svg { width: 14px; height: 14px; }
+.plan-pdf-btn:disabled { opacity: 0.6; cursor: wait; }
+
+/* =========================================================================
+   نسخهٔ ۳٫۵ — تغییر ۵: دکمهٔ ریز «امروز» داخل خانهٔ فیلد «تاریخ چارت»
+   (عنوان کادر زمان‌بندی حذف شد — باکس فقط سه فیلد تمیز است)
+   ========================================================================= */
+.plan-date-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.plan-date-wrap input { flex: 1 1 auto; min-width: 0; padding-inline-end: 62px; }
+.plan-date-today-mini {
+  position: absolute;
+  inset-inline-end: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+.plan-date-today-mini:hover {
+  border-color: var(--setup);
+  color: var(--setup);
+  background: var(--setup-soft);
+}
+.plan-date-today-mini:focus-visible {
+  outline: 2px solid var(--setup);
+  outline-offset: 1px;
+}
+/* نسخهٔ ۳٫۶ — تغییر ۳: کادر سبز توضیح حالت تاریخ (خودکار/ثابت) حذف شد */
+
+/* =========================================================================
+   نسخهٔ ۳٫۵ — تغییر ۲: انتخابگر دستگاه نمودار عرض‌های رول (داشبورد)
+   ========================================================================= */
+.width-machine-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  padding: 0 4px 0 6px;
+  height: 30px;
+}
+.width-machine-pick svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.width-machine-pick select {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 28px;
+  padding: 0 2px;
+  cursor: pointer;
+  outline: none;
+}
+.width-machine-pick:focus-within { border-color: var(--setup); }
+
+/* =========================================================================
+   نسخهٔ ۳٫۵ — تغییر ۴: آیکون‌های ریز دستگاه‌ها در ردیف «میانگین دستگاه‌ها»
+   ماتریس مانده زمان (روشن = جزء میانگین · خاموش = حذف از میانگین)
+   ========================================================================= */
+.mtx-mach-btns {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 5px;
+}
+.mtx-mach {
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mtx-mach.on {
+  background: var(--setup);
+  border-color: var(--setup);
+  color: #ffffff;
+}
+.mtx-mach:hover { border-color: var(--setup); }
+.mtx-mach:focus-visible { outline: 2px solid var(--setup); outline-offset: 1px; }
+.mtx-mach .mtx-mach-num { font-variant-numeric: tabular-nums; }
+
+/* =========================================================================
+   صفحهٔ «بسته‌بندی» (نسخهٔ ۳٫۱۲ → ۳٫۱۳)
+   کارت‌های آماری وسط‌چین + چیپ‌های بسته/رزرو + ستون‌های لیستی
+   (پالت‌های هر بسته / رول‌های هر بسته) + مودال‌ها + نمایش گرافیکی
+   ========================================================================= */
+
+/* --- شبکهٔ کارت‌های آماری خلاصه (۳٫۱۳ — بند ۹: وسط‌چین) --- */
+.pack-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+.pack-stats .status-empty { margin: 0; color: var(--text-faint); font-size: 0.8rem; }
+.pack-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.pack-stat-label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+.pack-stat-value { font-size: 1.15rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pack-stat-sub { font-size: 0.63rem; color: var(--text-faint); font-weight: 600; }
+.pack-stat.ok { border-color: rgba(4, 120, 87, 0.4); }
+.pack-stat.ok .pack-stat-value { color: var(--raw); }
+.pack-stat.warn { border-color: rgba(180, 83, 9, 0.45); }
+.pack-stat.warn .pack-stat-value { color: var(--metal); }
+
+/* --- ۳٫۱۳ بند ۹: وسط‌چین همهٔ جدول‌های صفحهٔ بسته‌بندی و جدول‌های مودال جزئیات --- */
+#view-packaging .data-table th,
+#view-packaging .data-table td { text-align: center; }
+.data-table.center-table th,
+.data-table.center-table td { text-align: center; }
+.pack-info-item { text-align: center; }   /* مودال خارج از #view-packaging است — قانون سراسری */
+
+/* --- ۳٫۱۳ بندهای ۳/۴ + ۳٫۱۴ بند ۱۳: ستون‌های لیستی «پالت‌های هر بسته» و
+     «رول‌های هر بسته» — چپ‌نویس/LTR (شمارنده چپ، شمارهٔ پالت/رول راستِ آن) --- */
+.pk-list-cell { vertical-align: top; }
+/* چپ‌نویس/LTR فقط همین دو ستون (۳٫۱۴ بند ۱۳) — انتخابگر با ID تا بر
+   قانونِ وسط‌چینِ سلول‌های صفحهٔ بسته‌بندی غلبه کند */
+#view-packaging .data-table td.pk-ltr,
+.pk-ltr { direction: ltr; text-align: left; }
+.pk-pal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  padding: 2px 0;
+}
+.pk-pal-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  direction: ltr;
+}
+.pk-pal-item .pk-pal-no { font-weight: 700; }
+.pk-pal-idx { color: var(--text-faint); font-weight: 700; font-size: 0.66rem; font-variant-numeric: tabular-nums; }
+
+/* ۳٫۱۴ بند ۱۳: پالت «پای کار» — فقط تغییر رنگ + کادر ظریف (بدون آیکون ⚡) */
+.pk-pal-item.at-base .pk-pal-no {
+  color: var(--metal);
+  border: 1px solid rgba(180, 83, 9, 0.45);
+  border-radius: 5px;
+  background: var(--metal-soft);
+  padding: 0 4px;
+}
+
+/* رول‌های هر پالت — گروه زیر شمارهٔ پالت (بند ۴ + ۳٫۱۴ بند ۱۳: LTR) */
+.pk-rolls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+  align-items: flex-start;
+}
+.pk-rolls-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  direction: ltr;
+  text-align: left;
+}
+.pk-rolls-group .pk-pal-idx { min-width: 1.3em; }
+.pk-rolls-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  direction: ltr;
+  align-items: flex-start;
+}
+.pk-roll {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ۳٫۱۴ بند ۱۳: رول‌های پالت «پای کار» — رنگ کهربایی + کادر ظریف (بدون آیکون) */
+.pk-roll.at-base {
+  color: var(--metal);
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.4);
+  border-radius: 5px;
+  padding: 0 4px;
+}
+
+/* ۳٫۱۴ بند ۱۳: دکمهٔ «+ نمایش / ✓ نمایش» ریز و جمع‌وجور */
+.pk-actions { justify-content: center; flex-wrap: wrap; gap: 4px; }
+.pk-graph-toggle {
+  padding: 1px 8px !important;
+  font-size: 0.62rem !important;
+  line-height: 1.55;
+  gap: 2px;
+  white-space: nowrap;
+}
+.pk-graph-toggle.panel-on {
+  color: var(--setup);
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.35);
+  font-weight: 800;
+}
+
+.pack-pal-no { font-size: 0.74rem; }
+.pack-warn-star { color: var(--metal); font-weight: 800; }
+
+/* چیپ شماره رول (رزرو/مرجوعی) */
+.pack-recall-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  direction: ltr;
+  font-family: 'Consolas', monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--uncut);
+  background: var(--uncut-soft);
+  border: 1px solid rgba(190, 18, 60, 0.3);
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin: 1px 2px 1px 0;
+  white-space: nowrap;
+}
+.pack-recall-chip b { font-variant-numeric: tabular-nums; }
+.pack-reserve-chip { color: var(--setup); background: var(--setup-soft); border-color: rgba(15, 118, 110, 0.3); }
+
+/* --- ۳٫۱۳ بند ۱۲: گروه رول‌های رزرو بر اساس پالت (مودال جزئیات بسته) --- */
+.pack-reserve-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 6px 8px;
+  margin: 4px 0;
+}
+.pack-reserve-pal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 0.74rem;
+}
+.pack-reserve-rolls { display: flex; flex-wrap: wrap; gap: 3px; }
+
+/* شمارهٔ رنگی رزرو */
+.pack-reserve { color: var(--setup); font-weight: 800; }
+
+/* چیپ نوع بسته */
+.chip.chip-pack-assembled { background: var(--raw-soft); color: var(--raw); border-color: rgba(4, 120, 87, 0.35); }
+.chip.chip-pack-as-is { background: var(--setup-soft); color: var(--setup); border-color: rgba(15, 118, 110, 0.35); }
+.chip.chip-pack-downgraded { background: var(--metal-soft); color: var(--metal); border-color: rgba(180, 83, 9, 0.35); }
+
+/* --- گرید اطلاعات مودال (بسته/پالت) --- */
+.pack-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.pack-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  min-width: 0;
+}
+.pack-info-item span { font-size: 0.66rem; color: var(--text-faint); font-weight: 600; }
+.pack-info-item b { font-size: 0.78rem; color: var(--text); overflow-wrap: anywhere; }
+
+.pack-modal-title {
+  margin: 14px 0 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  border-inline-start: 3px solid var(--setup);
+  padding-inline-start: 8px;
+}
+.pack-reserve-list { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0; }
+
+/* =========================================================================
+   نمایش گرافیکی بسته‌بندی (۳٫۱۴ — بندهای ۷ تا ۱۱)
+   صفحهٔ استاندارد A4 (794×1123px در 96dpi) با کارت‌های استاندارد دو-رنگِ
+   ردیفی + جدول واسط قابل ویرایش + استیج خروجی PNG/PDF
+   ========================================================================= */
+
+/* ۳٫۱۴ بند ۱۲: هل‌دادن دکمه‌های خروجی به انتهای چپ نوار ابزار (RTL) */
+.panel-tools .tool-push-end { margin-inline-start: auto; }
+
+/* انتخابگر «تعداد ستون» برگهٔ خروجی (۳٫۱۸ بند ۳ — جایگزین «بسته در صفحه») */
+.pg-perpage {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* ورودی عددی «تعداد ستون» (۱ تا ۸) */
+.pg-perpage input[type="number"] {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px 6px;
+  width: 52px;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.pg-perpage input::-webkit-outer-spin-button,
+.pg-perpage input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pg-perpage input:focus-visible { outline: 2px solid var(--setup); }
+
+/* --- جدول «لیست بسته های قابل نمایش» (۳٫۱۵ بند ۳) — الگوی سایر جدول‌ها --- */
+.pge-ord { display: inline-flex; align-items: center; gap: 3px; }
+.pge-idx {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.4em;
+  text-align: center;
+}
+.pge-drag {
+  cursor: grab;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 5px;
+  user-select: none;
+}
+.pge-drag:hover { color: var(--setup); background: var(--setup-soft); }
+.pge-drag-off { cursor: not-allowed; opacity: 0.4; }
+.pge-move {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.pge-move:hover:not(:disabled) { color: var(--setup); border-color: rgba(15, 118, 110, 0.4); }
+.pge-move:disabled { opacity: 0.35; cursor: default; }
+.pge-move:focus-visible { outline: 2px solid var(--setup); }
+tr.pge-row-draggable { cursor: grab; }
+tr.pge-row-draggable:active { cursor: grabbing; }
+tr.pge-dragging { opacity: 0.45; }
+tr.pge-drag-over { outline: 2px dashed var(--setup); outline-offset: -2px; }
+tr.pge-drag-over > td { background: var(--setup-soft) !important; }
+
+/* پالت‌های نمایش — ستونی زیر هم (۳٫۱۵ بند ۴) */
+.pge-pal-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.pge-pal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  direction: ltr;
+}
+.pge-pal.at-base {
+  color: var(--metal);
+  background: var(--metal-soft);
+  border-color: rgba(180, 83, 9, 0.4);
+}
+.pge-pal.is-manual {
+  color: var(--setup);
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.4);
+}
+.pge-pal-col { text-align: left; }
+
+/* عملیات — دکمه‌های ریز و جمع‌وجور (۳٫۱۵ بند ۳) */
+.pge-actions { display: inline-flex; align-items: center; gap: 4px; }
+.pge-btn {
+  padding: 2px 8px !important;
+  font-size: 0.66rem !important;
+  gap: 3px;
+}
+.pge-btn-del:hover { color: var(--uncut) !important; border-color: rgba(190, 18, 60, 0.4) !important; }
+
+/* رول دستی در جدول لیست */
+#view-packaging .pk-roll.is-manual {
+  color: var(--setup);
+  background: var(--setup-soft);
+  border-radius: 4px;
+  padding: 0 3px;
+}
+.pk-rolls-group.is-manual .pk-pal-idx { color: var(--setup); }
+
+/* نشان ریز «دستی» کنار پارامتر ویرایش‌شدهٔ دستی در جدول «لیست بسته های قابل نمایش» (۳٫۲۲ بند ۲) —
+   خیلی کوچک؛ هم‌زبانِ بصری آیتم‌های دستی (فیروزه‌ای)؛ در تم تاریک با متغیرها خودکار روشن می‌شود */
+.pge-manual-flag {
+  display: inline-block;
+  margin-inline-start: 5px;
+  padding: 0 5px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  line-height: 1.55;
+  color: var(--setup);
+  background: var(--setup-soft);
+  border: 1px solid rgba(15, 118, 110, 0.4);
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: help;
+}
+.pge-pal-list .pge-manual-flag,
+.pk-rolls-list .pge-manual-flag { margin-inline-start: 0; margin-top: 3px; }
+
+/* --- مودال ویرایش بسته (۳٫۱۵ بند ۳) --- */
+.pge-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pge-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--text);
+  margin: 12px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.pge-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.pge-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
+.pge-input {
+  font-family: 'Consolas', monospace;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  padding: 4px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pge-input:focus-visible { outline: 2px solid var(--setup); }
+/* ۳٫۲۱ بند ۲-الف — متن راهنمای داخل فیلدهای مودال ویرایش بسته (placeholder)
+   با فونت اصلی پروژه (وزیر) نوشته می‌شود — مقدار تایپ‌شده همچنان مونواسپیس
+   (Consolas) می‌ماند چون کدهای لاتین است؛ فقط متن راهنمای فارسی وزیر می‌شود */
+.pge-input::placeholder {
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  opacity: 1;
+}
+/* ۳٫۲۱ بند ۲-ب/ج/د — دو فیلد پایانی «افزودن پالت دستی»: عنوان بالای هر فیلد
+   + توضیح زیر فیلد (به‌جای داخل فیلد) */
+.pge-manual-add { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.pge-manual-add .pge-input { flex: 1; min-width: 160px; }
+.pge-mf { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 170px; }
+.pge-mf-title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.35;   /* ارتفاع قطعی عنوان — مبنای هم‌ترازی دکمهٔ افزودن */
+  cursor: pointer;
+}
+.pge-mf-hint {
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+/* ستون دکمهٔ افزودن — هم‌تراز با ردیف ورودی‌ها: ارتفاع = خودِ عنوان (فاصلهٔ flex gap خودش +3px می‌دهد) */
+.pge-mf-btn { flex: 0 0 auto; min-width: 0; }
+.pge-mf-btn::before { content: ''; display: block; height: 16px; }
+.pge-pallets-wrap { display: flex; flex-direction: column; gap: 8px; }
+.pge-pallet-sec {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 7px 9px;
+}
+.pge-pallet-sec.at-base { background: var(--metal-soft); border-color: rgba(180, 83, 9, 0.4); }
+.pge-pallet-sec.is-manual { background: var(--setup-soft); border-color: rgba(15, 118, 110, 0.4); }
+.pge-ps-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pge-ps-head b { font-size: 0.78rem; letter-spacing: 0.2px; }
+.pge-ps-count { font-size: 0.64rem; color: var(--text-faint); font-weight: 700; }
+.pge-tag {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.pge-tag.tag-base { color: var(--metal); background: var(--metal-soft); border-color: rgba(180, 83, 9, 0.4); }
+.pge-ps-rolls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.pge-roll {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 3px 1px 7px;
+  white-space: nowrap;
+}
+.pge-roll.is-manual { color: var(--setup); border-color: rgba(15, 118, 110, 0.45); }
+.pge-rm-roll {
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  padding: 0;
+}
+.pge-rm-roll:hover { color: var(--uncut); background: var(--uncut-soft); }
+.pge-rm-roll:focus-visible { outline: 2px solid var(--uncut); }
+.pge-ps-add { display: flex; gap: 6px; align-items: center; }
+.pge-ps-add .pge-input { flex: 1; }
+.pge-removed-box {
+  margin-top: 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 6px 9px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pge-removed-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.pge-restore {
+  border: 1px solid rgba(15, 118, 110, 0.4);
+  background: transparent;
+  color: var(--setup);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 1px 7px;
+  text-decoration: none;
+}
+.pge-restore:hover { background: rgba(15, 118, 110, 0.16); }
+.pge-restore:focus-visible { outline: 2px solid var(--setup); }
+/* (.pge-manual-add در بلوک ۳٫۲۱ بالاتر تعریف شد — عنوان بالای فیلد + توضیح زیر فیلد) */
+.pge-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- صفحهٔ استیج خروجی PNG/PDF (۳٫۱۶ — در نمایش، کارت‌ها مستقیم در
+   پنل می‌نشینند و عرض کامل آن را پر می‌کنند؛ این بلوک فقط استیج است) --- */
+.pg-page {
+  /* متغیرهای تم روشن چاپی — در استیج خروجی ثابت است (حتی در تم تاریک) */
+  --surface: #ffffff;
+  --surface-2: #f4f7f4;
+  --text: #1a211d;
+  --text-muted: #57615b;
+  --text-faint: #8d968f;
+  --border: #dde3dd;
+  --border-strong: #c2ccc4;
+  --setup: #0f766e;
+  --setup-soft: rgba(15, 118, 110, 0.1);
+  --metal: #b45309;
+  --metal-soft: rgba(180, 83, 9, 0.1);
+  --uncut: #be123c;
+  --uncut-soft: rgba(190, 18, 60, 0.08);
+  --shadow-soft: none;
+
+  background: #ffffff;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  direction: rtl;
+}
+.pg-page, .pg-page * { letter-spacing: normal !important; }
+.pg-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #1a211d;
+  padding-bottom: 6px;
+}
+.pg-stage-head b { font-size: 1rem; }
+.pg-stage-head span { font-size: 0.74rem; color: #57615b; font-weight: 700; }
+
+/* گرید کارت‌ها — چیدمان آزاد ۳٫۱۳ (۳٫۱۶ بند ۱): auto-fill با حداقل
+   عرض ۳۴۰px؛ هر کارت هم‌اندازهٔ محتوای خودش (align-items:start) و
+   گرید عرض کامل پنل/صفحهٔ استیج را پر می‌کند — بدون سلول ثابت/جای خالی */
+.pg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* --- کارت بسته — ظاهر ۳٫۱۳ (۳٫۱۵ بند ۱) + اندازهٔ آزاد (۳٫۱۶ بند ۱):
+   هم‌اندازهٔ محتوای خودش — نه ارتفاع/سلول ثابت و نه جای خالی؛ پالت‌ها
+   و رول‌های زیاد فقط کارت را بلندتر می‌کنند (پس‌زمینه از تم برنامه) --- */
+.pg-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--pg-accent, var(--setup));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+/* سربرگ کارت (۳٫۱۶ بند ۲): روشن با حاشیهٔ رنگِ بسته + عنوان رنگی +
+   «ظرفیت n از m» (جای بج نوع بسته) + «N پالت · M رول» + عدد «عرض» بزرگ
+   و بولد در سمت چپ (۳٫۱۹ بند ۵) + دکمهٔ مداد ویرایش و × (۳٫۱۹ بند ۴) */
+.pg-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.pg-title { font-weight: 800; font-size: 0.86rem; }
+/* «ظرفیت n از m» — متن پررنگ به رنگ بسته، جای بج نوع (۳٫۱۶ بند ۲) */
+.pg-cap { font-weight: 800; font-size: 0.74rem; letter-spacing: 0.2px; }
+.pg-meta { font-size: 0.66rem; color: var(--text-faint); font-weight: 700; }
+/* ۳٫۱۹ بند ۵ — «عرض» در سمت چپ نوار بالایی کارت: عدد بزرگ و بولد به رنگ
+   تم همان کارت (در applyGraphAccents ست می‌شود) + برچسب ریز «عرض».
+   margin-inline-start:auto این عنصر (و دکمه‌های بعد از آن) را به سمت چپ
+   نوار هل می‌دهد (در RTL سمت چپ = انتهای ردیف) */
+.pg-width {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: none;
+  direction: rtl;
+}
+.pg-width i {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.pg-width b {
+  font-weight: 800;
+  font-size: 1.08rem;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  color: var(--pg-accent, var(--text));
+}
+/* ۳٫۱۹ بند ۴ — دکمهٔ مداد بولد و نمایان کنار ضربدر: همان مودال ویرایش
+   جدول «لیست بسته های قابل نمایش» را باز می‌کند */
+.pg-edit {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 0;
+}
+.pg-edit:hover { background: var(--setup-soft); color: var(--setup); }
+.pg-edit:focus-visible { outline: 2px solid var(--setup); }
+.pg-remove {
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  flex: none;
+}
+.pg-remove:hover { background: var(--uncut-soft); color: var(--uncut); }
+.pg-remove:focus-visible { outline: 2px solid var(--uncut); }
+
+/* نوار مشخصات ثابت هر کارت (۳٫۱۳) — ۴ چیپ:
+   فیلم/ضخامت/گرید/نوع بسته (ظرفیت به سربرگ — ۳٫۱۶ بند ۲؛ عرض هم به
+   سربرگ منتقل شد — ۳٫۱۹ بند ۵). ۳٫۱۹ بند ۵: کادرها کاملاً مستطیلی با
+   انحنای خیلی کم (نه گرد) و فونت درشت‌تر شدند */
+.pg-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  flex: none;
+}
+.pg-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+}
+.pg-spec i { font-style: normal; color: var(--text-faint); font-weight: 600; }
+.pg-spec b { font-weight: 800; color: var(--text); }
+
+/* پالت‌های هر کارت — ۳٫۱۸ بند ۲: کادر و پس‌زمینهٔ هر پالت از «تم همان
+   کارت» رنگ می‌گیرد (rgba مستقیم در applyGraphAccents ست می‌شود؛ از
+   color-mix استفاده نشد چون html2canvas آن را پشتیبانی نمی‌کند) — کارت
+   تک‌رنگ است و رنگ دوم ندارد. ارتفاع کاملاً طبیعی — بدون اسکرول داخلی
+   (۳٫۱۶ بند ۱: هیچ محتوایی فشرده یا ناقص نمی‌ماند). */
+.pg-pallets {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pg-pallet {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 6px 8px;
+}
+/* «at-base» فقط نشانهٔ معنایی «پای کار» است؛ تمایز پای‌کار با بج کهربایی
+   «⚡ پای کار» حفظ می‌شود (رنگ کادر پالت‌ها از تم کارت است — ۳٫۱۸ بند ۲) */
+.pg-pal-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pg-pal-idx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+/* ۳٫۱۸ بند ۲ — شمارهٔ رول کارت‌های گرافیکی: دو درجه بزرگ‌تر شد
+   (۰٫۷۸ → ۰٫۹۸rem) و رنگ آن مشکی (هم‌رنگ شمارهٔ پالت — var(--text))
+   است؛ بولد ماند (۳٫۱۷ بند ۴) */
+/* ۳٫۱۹ بند ۵ — شمارهٔ پالت یک سایز بزرگ‌تر شد (۰٫۸۵ → ۰٫۹۵rem) */
+.pg-pal-no { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.2px; }
+.pg-wh-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.pg-pal-count { margin-inline-start: auto; font-size: 0.64rem; color: var(--text-faint); font-weight: 700; }
+.pg-rolls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  direction: ltr;
+  align-items: flex-start;
+  margin-top: 5px;
+}
+.pg-roll {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text);
+  font-family: 'Consolas', monospace;
+  white-space: nowrap;
+}
+
+/* بج «⚡ پای کار» کارت‌های گرافیکی (۳٫۱۳ — بازگشت در ۳٫۱۵ بند ۱) */
+.pk-base-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--metal);
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.4);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+
+/* (نوار «رزرو: n رول» پای کارت در ۳٫۱۶ بند ۵ حذف شد — رزرو در جدول
+   «لیست بسته های قابل نمایش» و مودال جزئیات بسته موجود است) */
+
+/* استیج خروجی PNG/PDF — خارج از دید، تم روشن ثابت (حتی در تم تاریک).
+   ۳٫۱۸ بند ۳: برگه‌های استیج (pg-page) عرض صریح خودشان را دارند و برای
+   ستون‌های بیشتر از ۲ می‌توانند از ۷۹۴px هم عریض‌تر شوند (و در رندر
+   نهایی یکجا روی A4 کوچک می‌شوند) — سرریزِ بصری نداریم چون استیج
+   در -۴۰۰۰۰px و بدون رویداد است */
+.pack-graph-stage {
+  position: fixed;
+  top: 0;
+  left: -40000px;
+  width: max-content;   /* برگه‌ها عرض صریح خودشان را دارند */
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* موبایل — کارت‌های گرافیکی تمام‌عرض (چیدمان آزاد) */
+@media (max-width: 640px) {
+  .pack-stats { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
+  .panel-head-row { flex-wrap: wrap; gap: 8px; }
+  .panel-tools { flex-wrap: wrap; }
+  .pg-grid { grid-template-columns: 1fr; }
+  .pk-actions { flex-direction: row; }
+}
+
+/* =========================================================================
+   ۳٫۱۷ — بندهای ۱/۲/۳/۶ صفحهٔ بسته‌بندی + بند ۷ داشبورد
+   ========================================================================= */
+
+/* ---------- بند ۱: کلید برقی «تفکیک صادراتی‌ها» (روشن/خاموش) ---------- */
+.pk-export-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+/* سوییچ کوچک: ریل + دات — خاموش = خاکستری و دات سمت چپ؛ روشن = سبز و دات سمت راست */
+.pk-export-switch .exp-sw {
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  border: 1px solid var(--border-strong);
+  flex: 0 0 auto;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.pk-export-switch .exp-sw i {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fcfcfa;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s ease;
+}
+.pk-export-switch .exp-state {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--text-faint);
+  min-width: 3.2em;
+  text-align: center;
+}
+/* روشن — دات به سمت راست می‌خزد و کل دکمه حالت فعال می‌گیرد */
+.pk-export-switch.panel-on {
+  background: var(--raw-soft);
+  border-color: rgba(4, 120, 87, 0.45);
+  color: var(--raw);
+}
+.pk-export-switch.panel-on .exp-sw {
+  background: var(--raw);
+  border-color: var(--raw);
+}
+.pk-export-switch.panel-on .exp-sw i { transform: translateX(12px); }
+.pk-export-switch.panel-on .exp-state { color: var(--raw); }
+[data-theme="dark"] .pk-export-switch.panel-on {
+  background: rgba(52, 211, 153, 0.14);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+/* ---------- بند ۲: فریز نوار زیرتب‌های بسته‌بندی زیر نوار اصلی ----------
+   نوار با اسکرول پایین، دقیقاً زیر سربرگ چسبان فریز می‌شود (top = ارتفاع
+   سربرگ، از متغیر --pk-subnav-top که JS اندازه می‌گیرد) و با بازگشت به
+   موقعیت اصلی خود، به‌طور طبیعی رها و همراه صفحه اسکرول می‌کند. */
+#view-packaging .subtabs {
+  position: sticky;
+  top: var(--pk-subnav-top, 0px);
+  z-index: 45;
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-top: 4px;
+  padding: 2px 4px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  box-shadow: 0 7px 12px -10px rgba(20, 24, 20, 0.4);
+}
+#view-packaging .subtab-btn { flex: 0 0 auto; }
+
+/* ---------- بند ۳: رنگ‌های پیش‌فرض تم اول کارت‌ها تا اعمال تم ردیفی ----------
+   (applyGraphAccents پس از چیدمان، رنگ‌های واقعی ردیف را inline ست می‌کند) */
+.pg-head {
+  border-bottom-color: rgba(4, 120, 87, 0.35);
+  background: rgba(4, 120, 87, 0.06);
+}
+.pg-title, .pg-cap { color: #047857; }
+/* ۳٫۱۹ بند ۵ — عدد «عرض» سربرگ هم پیش از اعمال تم ردیفی، رنگ تم پیش‌فرض */
+.pg-width b { color: #047857; }
+
+/* ---------- بند ۶: بسته‌های ترکیبی U+X — هایلایت + چیپ‌های گرید ---------- */
+/* ردیف جدول‌های «برنامهٔ بسته‌بندی» و «لیست بسته های قابل نمایش» */
+tr.pk-mixed-row td {
+  background: #FDE9D9 !important;
+}
+[data-theme="dark"] tr.pk-mixed-row td {
+  background: rgba(251, 146, 60, 0.14) !important;
+}
+/* چیپ گرید ترکیبی کنار «نوع بسته» */
+.pk-chip-mixed {
+  background: rgba(251, 146, 60, 0.16);
+  color: #c2410c;
+  border: 1px solid rgba(234, 88, 12, 0.45);
+  font-size: 0.62rem;
+}
+[data-theme="dark"] .pk-chip-mixed {
+  background: rgba(251, 146, 60, 0.16);
+  color: #fdba74;
+}
+/* بنر مودال جزئیات بستهٔ ترکیبی */
+.pk-mixed-banner {
+  background: #FDE9D9;
+  border: 1px solid rgba(234, 88, 12, 0.5);
+  border-radius: var(--radius-sm);
+  color: #9a3412;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  line-height: 1.9;
+  margin-bottom: 12px;
+}
+[data-theme="dark"] .pk-mixed-banner {
+  background: rgba(251, 146, 60, 0.12);
+  border-color: rgba(251, 146, 60, 0.4);
+  color: #fdba74;
+}
+/* بج «ترکیبی · تأیید QC» در سربرگ کارت گرافیکی */
+.pg-mixed-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #c2410c;
+  background: rgba(251, 146, 60, 0.16);
+  border: 1px solid rgba(234, 88, 12, 0.45);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+[data-theme="dark"] .pg-mixed-badge { color: #fdba74; }
+/* ۳٫۲۰ بند ۳ — قانون pg-mixed-note (نشان ریز «تأیید QC» کنار چیپ گرید نوار
+   مشخصات کارت) حذف شد؛ نشان تأیید QC فقط در نوار بالایی کارت باقی است */
+
+/* ۳٫۱۸ بند ۱ — گریدها در جدول‌ها فقط بولد و بدون کادر رنگی‌اند؛ کدهای
+   رنگی گرید (X سبز #00B050 · U سبز روشن #AFDC7E · Q کهربایی #FFC000)
+   فقط در خروجی اکسل (۳٫۱۷ بند ۵) حفظ می‌شوند، نه در نمایش جدول‌ها */
+.pk-grade-single { font-weight: 800; }
+
+/* ستون گرید ترکیبی: هم‌ساختار ستون «رول‌های هر بسته» — یک ستون دیتا
+   (فقط گرید رول‌ها) که دقیقاً هم‌تراز ردیف‌های همان رول‌ها است؛
+   pk-grade-txt روی همان .pk-roll نشسته تا متریک خط یکسان بماند */
+.pk-grade-txt { font-weight: 800; color: var(--text); }
+
+/* ---------- بند ۷ (داشبورد): منوی تفکیک‌های نمودار عرض‌ها ---------- */
+.width-bd-pop {
+  position: relative;
+  flex: 0 0 auto;
+}
+.width-bd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  min-width: 172px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.width-bd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.width-bd-item:hover { background: var(--surface-2); }
+.width-bd-item input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--setup);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.width-bd-item span { flex: 1 1 auto; }
+
+/* ---------- ۳٫۱۷ بند ۹: دریل هشدارهای Import — رول‌های ویرایش‌شدهٔ اصلاح‌شده ---------- */
+.edited-fixed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-inline-end: 4px;
+}
+.edited-fixed-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--raw);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.edited-fixed-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.edited-fixed-head .ltr { font-size: 0.78rem; }
+.edited-fixed-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.edited-before {
+  text-decoration: line-through;
+  opacity: 0.62;
+  font-weight: 500;
+}
+.edited-after { color: var(--raw); }
+[data-theme="dark"] .edited-after { color: var(--raw); }

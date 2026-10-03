@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سامانه مانیتورینگ متالایز</title>
+  <link rel="icon" type="image/png" href="lib/logo.png">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    /* اعمال تم ذخیره‌شده پیش از رندر (جلوگیری از فلش تم اشتباه) */
+    (function () {
+      try {
+        if (localStorage.getItem('rm-theme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) { /* file:// قدیمی — پیش‌فرض روشن */ }
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- ================= سربرگ ================= -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">
+            <img src="lib/logo.png" alt="" width="46" height="46">
+          </span>
+          <div class="brand-text">
+            <h1>سامانه مانیتورینگ متالایز</h1>
+            <p>پایش هوشمند رول‌ها، ستاپ‌ها و فرآیند تولید</p>
+          </div>
+        </div>
+
+        <div class="status-badges">
+          <span class="badge badge-offline" id="badge-offline" title="این برنامه هیچ درخواستی به اینترنت ارسال نمی‌کند">
+            کاملاً آفلاین
+          </span>
+          <span class="badge badge-db" id="badge-db" title="وضعیت پایگاه‌داده محلی مرورگر">
+            <span id="badge-db-text">در حال اتصال…</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- نوار تب‌های اصلی -->
+      <nav class="tabs" role="tablist" aria-label="بخش‌های برنامه">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="view-dashboard" data-view="dashboard" id="tab-dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          داشبورد
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-import" data-view="import" id="tab-import">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          ورود داده‌ها
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-rolls" data-view="rolls" id="tab-rolls">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          رول‌ها
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-setup" data-view="setup" id="tab-setup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></svg>
+          ستاپ‌ها
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-planning" data-view="planning" id="tab-planning">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16V9"/><path d="M11 16v-3"/><path d="M15 16V6"/><path d="M19 16v-8"/></svg>
+          برنامه‌ریزی
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-packaging" data-view="packaging" id="tab-packaging">
+          <!-- ۳٫۱۳ — بند ۱۰: آیکون «چند جعبه/پالت» متمایز از تب رول‌ها (جعبهٔ تکی) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.86"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.86"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg>
+          بسته‌بندی
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-settings" data-view="settings" id="tab-settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          تنظیمات
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="view-help" data-view="help" id="tab-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          راهنما
+        </button>
+      </nav>
+    </header>
+
+    <!-- ================= محتوای اصلی ================= -->
+    <main class="app-main">
+
+      <!-- ---------- ۱) داشبورد ---------- -->
+      <section class="view active" id="view-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+
+        <div class="kpi-grid">
+
+          <article class="kpi-card kpi-raw" aria-label="تعداد رول‌های خام">
+            <div class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div class="kpi-body">
+              <h3 class="kpi-title">رول‌های خام</h3>
+              <div class="kpi-value" id="kpi-raw">۰</div>
+            </div>
+            <!-- ردیف‌های کلیک‌پذیر تمام‌عرض کارت (نسخهٔ ۳٫۶ — تغییر ۱):
+                 برای پهنای بیشتر، از ستون باریک kpi-body (کنار آیکون) بیرون
+                 آمدند و کل عرض کارت را با فاصلهٔ استاندارد از لبه‌ها می‌گیرند -->
+            <div class="kpi-actions" id="kpi-raw-actions">
+              <span class="muted" style="font-size:.68rem">دیتایی برای بررسی نیست</span>
+            </div>
+          </article>
+
+          <article class="kpi-card kpi-metallized" aria-label="مانده زمان متالایز ستاپ‌ها">
+            <div class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="kpi-body">
+              <h3 class="kpi-title">مانده زمان متالایز — ستاپ</h3>
+              <div class="kpi-value" id="kpi-remaining-setup">—</div>
+              <p class="kpi-desc">Σ [(تعداد − متالایز) × مدت زمان] — زمان ماندهٔ متالایز کل رول‌های ستاپ‌ها بر اساس قوانین زمان هر دستگاه</p>
+              <p class="kpi-meta" id="kpi-remaining-setup-meta">قانون زمان تعریف نشده</p>
+              <p class="kpi-file" id="kpi-file-archived"><span class="muted">فایلی بارگذاری نشده</span></p>
+            </div>
+          </article>
+
+          <article class="kpi-card kpi-setup" aria-label="مانده زمان متالایز موجودی">
+            <div class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="kpi-body">
+              <h3 class="kpi-title">مانده زمان متالایز — موجودی</h3>
+              <div class="kpi-value" id="kpi-remaining-produced">—</div>
+              <p class="kpi-desc">Σ [مدت زمان × (تعداد − متالایز)] — زمان ماندهٔ متالایز رول‌های متالایزنشدهٔ ستاپ‌ها</p>
+              <p class="kpi-meta" id="kpi-remaining-produced-meta">قانون زمان تعریف نشده</p>
+            </div>
+          </article>
+
+          <article class="kpi-card kpi-uncut" aria-label="تعداد رول‌های برش نشده">
+            <div class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+            </div>
+            <div class="kpi-body">
+              <h3 class="kpi-title">رول‌های برش‌نشده</h3>
+              <div class="kpi-value" id="kpi-uncut">۰</div>
+              <p class="kpi-desc">Σ [تعداد ستاپ − (خام موجود + متالایز)] — مغایرت ظرفیت جداگانه گزارش می‌شود</p>
+              <!-- ردیف کلیک‌پذیر (نسخهٔ ۳٫۵ — تغییر ۳ + تمام‌عرض در ۳٫۶ — تغییر ۱) -->
+              <p class="kpi-meta" id="kpi-uncut-meta">—</p>
+            </div>
+            <div class="kpi-actions" id="kpi-uncut-actions">
+              <span class="muted" style="font-size:.68rem">دیتایی برای بررسی نیست</span>
+            </div>
+          </article>
+        </div>
+
+        <!-- مرکز هشدار کیفیت داده (§52) — نسخهٔ ۳٫۵ — تغییر ۹:
+             بین کارت‌ها و «مانده زمان متالایز به تفکیک دستگاه» جابه‌جا شد تا
+             کاربر موارد خطا را در بالاترین نقطهٔ داشبورد راحت‌تر ببیند. -->
+        <article class="panel alerts-panel" id="alerts-panel" hidden>
+          <h3 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            مرکز هشدار کیفیت داده
+            <span class="chip chip-warn" id="alerts-count">۰</span>
+          </h3>
+          <div id="alerts-list" class="alerts-list"></div>
+        </article>
+
+        <!-- ردیف نمودارهای داشبورد (نسخهٔ ۲٫۳ — Apache ECharts لوکال) -->
+        <div class="dash-charts-grid">
+
+          <!-- گزارش مانده زمان متالایز (کل + به تفکیک دستگاه) — نمودار ECharts -->
+          <article class="panel time-chart-panel chart-panel panel-wide" id="machine-time-panel">
+            <header class="panel-head panel-head-row">
+              <h3>
+                <span class="panel-icon icon-setup" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                </span>
+                مانده زمان متالایز به تفکیک دستگاه
+                <button type="button" class="help-dot" data-help="dash-machine-time" data-help-title="راهنمای نمودار مانده زمان متالایز به تفکیک دستگاه"
+                  aria-label="راهنمای نمودار مانده زمان متالایز به تفکیک دستگاه">!</button>
+              </h3>
+              <div class="panel-tools" id="machine-time-chips"></div>
+            </header>
+            <!-- ۳٫۹ — تغییر ۳: توضیحات چارت به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+            <template id="help-dash-machine-time">
+              <p>جمع مانده زمان هر دستگاه از رکوردهای «گزارش تولید ستاپ‌ها» — به تفکیک «مانده زمان ستاپ» ((تعداد − متالایز) × مدت زمان) و «مانده زمان موجودی» (خام موجود × مدت زمان). مدت زمان هر رول از قوانین زمان متالایز (دستگاه + متراژ استاندارد) استخراج می‌شود.</p>
+              <p>زیر نمودار، جدول ماتریسی کمترین/میانگین مانده زمان با ستون‌های «رول‌های موجود» و «رول‌های ستاپ» دیده می‌شود؛ در ردیف میانگین، آیکون‌های ریز شمارهٔ دستگاه‌ها با کلیک روشن/خاموش می‌شوند و میانگین فقط از دستگاه‌های روشن محاسبه می‌شود (انتخاب ماندگار).</p>
+            </template>
+            <div id="machine-time-chart" class="echart-box"></div>
+            <div id="machine-time-footer"></div>
+          </article>
+
+          <!-- دونات مانده زمان موجودی (نسخهٔ ۲٫۴ — جایگزین دونات وضعیت خام) -->
+          <article class="panel chart-panel" id="inventory-time-panel">
+            <header class="panel-head">
+              <h3>
+                <span class="panel-icon icon-metal" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>
+                دونات مانده زمان موجودی
+                <button type="button" class="help-dot" data-help="dash-inventory-donut" data-help-title="راهنمای دونات مانده زمان موجودی"
+                  aria-label="راهنمای دونات مانده زمان موجودی">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات چارت به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-dash-inventory-donut">
+                <p>مانده زمان موجودی هر سه دستگاه — داخل نمودار: کمترین و میانگین با فرمت [H]:mm</p>
+              </template>
+            </header>
+            <div id="inventory-time-chart" class="echart-box donut-box"></div>
+          </article>
+
+          <!-- دونات مانده زمان ستاپ (نسخهٔ ۲٫۴) -->
+          <article class="panel chart-panel" id="setup-time-panel">
+            <header class="panel-head">
+              <h3>
+                <span class="panel-icon icon-setup" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                </span>
+                دونات مانده زمان ستاپ
+                <button type="button" class="help-dot" data-help="dash-setup-donut" data-help-title="راهنمای دونات مانده زمان ستاپ"
+                  aria-label="راهنمای دونات مانده زمان ستاپ">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات چارت به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-dash-setup-donut">
+                <p>مانده زمان ستاپ هر سه دستگاه — داخل نمودار: کمترین و میانگین با فرمت [H]:mm</p>
+              </template>
+            </header>
+            <div id="setup-time-chart" class="echart-box donut-box"></div>
+          </article>
+        </div>
+
+        <!-- نمودار ستونی مانده زمان موجودی همهٔ ستاپ‌ها (نسخهٔ ۲٫۴) -->
+        <article class="panel chart-panel" id="setup-inventory-panel">
+          <header class="panel-head">
+            <h3>
+              <span class="panel-icon icon-setup" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              </span>
+              مانده زمان موجودی و ستاپ — همهٔ ستاپ‌ها
+              <button type="button" class="help-dot" data-help="dash-setup-inventory" data-help-title="راهنمای نمودار مانده زمان موجودی و ستاپ همهٔ ستاپ‌ها"
+                aria-label="راهنمای نمودار مانده زمان موجودی و ستاپ همهٔ ستاپ‌ها">!</button>
+            </h3>
+            <!-- ۳٫۹ — تغییر ۳: توضیحات چارت به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+            <template id="help-dash-setup-inventory">
+              <p>به‌ازای هر ستاپ (شماره ستاپ) دو ستون نمایش داده می‌شود (۳٫۱۷): ستون کهربایی = مجموع مانده زمان <b>موجودی</b> همهٔ رکوردهای همان ستاپ (Σ [خام موجود × مدت]) و ستون فیروزه‌ای = مجموع مانده زمان <b>ستاپ</b> (Σ [تعداد − متالایز] × مدت) — هر دو بر اساس شماره دستگاه و متراژ استاندارد هر رکورد. رکوردهای بدون قانون زمان در مجموع لحاظ نمی‌شوند و در تولتیپ اعلام می‌شوند. ۳٫۱۸: بین دو ستونِ هر ستاپ فاصلهٔ کمی وجود دارد تا دیتالیبل‌های هر ستون داخل ستون مجاور سرریز نکنند و خوانا بمانند.</p>
+            </template>
+          </header>
+          <div id="setup-inventory-chart" class="echart-box col-box"></div>
+        </article>
+
+        <!-- نمودار افقی عرض‌های رول — بر مبنای خام موجود / تعداد (نسخهٔ ۳٫۱ — تغییر ۵) -->
+        <article class="panel chart-panel" id="width-inventory-panel">
+          <header class="panel-head panel-head-row">
+            <h3>
+              <span class="panel-icon icon-raw" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 8v8"/><path d="M12 8v8"/><path d="M17 8v8"/></svg>
+              </span>
+              عرض‌های رول — بر مبنای <span id="width-basis-label">خام موجود</span>
+              <button type="button" class="help-dot" data-help="dash-width-chart" data-help-title="راهنمای نمودار عرض‌های رول"
+                aria-label="راهنمای نمودار عرض‌های رول">!</button>
+            </h3>
+            <div class="panel-tools" role="group" aria-label="مبنای نمودار عرض‌های رول">
+              <div class="seg-control" id="width-basis-seg">
+                <button type="button" class="seg-btn active" data-basis="rawExisting" aria-pressed="true" title="نمودار بر اساس ستون «خام موجود» — فقط عرض‌هایی که رول خام موجود (مقدار مثبت) دارند">خام موجود</button>
+                <button type="button" class="seg-btn" data-basis="rollCount" aria-pressed="false" title="نمودار بر اساس مجموع ستون‌های «برش‌نشده» + «خام موجود» (فقط مقادیر بزرگ‌تر از صفر) — عرض‌های دارای مقدار مثبت">تعداد</button>
+              </div>
+              <!-- انتخابگر دستگاه (نسخهٔ ۳٫۵ — تغییر ۲): فقط رول‌های ستاپ‌های همان دستگاه -->
+              <label class="width-machine-pick" for="width-machine-select">
+                <span class="sr-only">انتخاب دستگاه</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2"/><path d="M15 2v2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M20 9h2"/><path d="M20 14h2"/><path d="M2 9h2"/><path d="M2 14h2"/></svg>
+                <select id="width-machine-select" title="فیلتر دستگاه — فقط رکوردهای «گزارش تولید ستاپ‌ها»ی همان دستگاه در نمودار می‌آیند">
+                  <option value="all">همهٔ دستگاه‌ها</option>
+                  <option value="1">دستگاه ۱</option>
+                  <option value="2">دستگاه ۲</option>
+                  <option value="3">دستگاه ۳</option>
+                </select>
+              </label>
+              <!-- ۳٫۱۷ بند ۷: منوی تفکیک‌های نمودار عرض‌ها — متراژ استاندارد / خط تولید / ضخامت
+                   (جمع‌وجور، کنار سگمنت مبنا و انتخابگر دستگاه؛ هر تفکیک جدا روشن/خاموش می‌شود) -->
+              <div class="width-bd-pop" id="width-breakdown-wrap">
+                <button type="button" class="seg-btn" id="width-breakdown-toggle" aria-expanded="false" aria-haspopup="true"
+                        aria-controls="width-breakdown-menu"
+                        title="تفکیک‌های نمودار — روشن/خاموش کردن هرکدام: متراژ استاندارد، خط تولید، ضخامت (به‌ازای هر گروه تفکیک یک میلهٔ مستقل رسم می‌شود؛ تفکیک تیک‌نخورده در دیتالیبل هم نمی‌آید)">
+                  تفکیک‌ها ▾
+                </button>
+                <div class="width-bd-menu" id="width-breakdown-menu" hidden role="menu" aria-label="تفکیک‌های نمودار عرض‌های رول">
+                  <label class="width-bd-item" title="تفکیک میله‌ها بر اساس متراژ استاندارد رکوردهای ستاپ">
+                    <input type="checkbox" id="width-bd-stdlength"><span>متراژ استاندارد</span>
+                  </label>
+                  <label class="width-bd-item" title="تفکیک میله‌ها بر اساس خط تولید (BOPP / CPP)">
+                    <input type="checkbox" id="width-bd-line"><span>خط تولید</span>
+                  </label>
+                  <label class="width-bd-item" title="تفکیک میله‌ها بر اساس ضخامت رکوردهای ستاپ">
+                    <input type="checkbox" id="width-bd-thickness"><span>ضخامت</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </header>
+          <!-- ۳٫۹ — تغییر ۳: توضیحات چارت (هر دو مبنا + فیلتر دستگاه) به پاپ‌آپ راهنما منتقل شد -->
+          <template id="help-dash-width-chart">
+            <p>هر میله یک عرض از رکوردهای جدول «گزارش تولید ستاپ‌ها» است — مرتب‌شده از عرض بزرگ به کوچک؛ دیتالیبل هر میله «<b>N رول</b>» = مقدار همان عرض/گروه در مبنای انتخابی شما (۳٫۲۲).</p>
+            <p>مبنای نمودار با دکمه‌های کنار عنوان تعیین می‌شود: <b>«خام موجود»</b> (مجموع ستون خام موجود — فقط عرض‌هایی که رول خام موجود مقدار مثبت دارند) یا <b>«تعداد»</b> (مجموع ستون‌های «برش‌نشده» + «خام موجود» — فقط مقادیر بزرگ‌تر از صفر لحاظ می‌شوند)؛ طول میله‌ها و عدد «N رول» دیتالیبل هر دو از همین مبنای انتخابی حساب می‌شوند (۳٫۲۲) و انتخاب مبنای ماندگار است.</p>
+            <p>با انتخابگر دستگاه کنار آن، فقط رکوردهای ستاپ‌های همان دستگاه در نمودار می‌آیند.</p>
+            <p>منوی <b>«تفکیک‌ها»</b> (۳٫۲۰): با روشن‌کردن هر تفکیک — <b>متراژ استاندارد</b>، <b>خط تولید</b> (BOPP / CPP) و <b>ضخامت</b> — رکوردهای هر عرض بر اساس «ترکیب مقادیر همان تفکیک‌ها» گروه می‌شوند و <b>به‌ازای هر گروه یک میلهٔ مستقل تمام‌قد</b> رسم می‌شود؛ میله‌های هر عرض در نزدیک هم و عرض‌های مختلف با فاصلهٔ زیاد از هم قرار می‌گیرند تا تفکیک بصری و نظم کافی ایجاد شود. همهٔ میله‌های یک عرض هم‌رنگ‌اند (چون متعلق به همان عرض‌اند) و رنگ عرض‌ها یکی‌درمیان بین <b>فیروزه‌ای و کهربایی</b> (همان دو رنگ نمودار «مانده زمان متالایز به تفکیک دستگاه») عوض می‌شود؛ طراحی میله‌ها (انحنا، بدون بردر و جزئیات) و فاصلهٔ میله‌های هر عرض هم دقیقاً الگوی همان نمودار است (۳٫۲۱). دیتالیبل هر میله «<b>N رول</b> | مقدار تفکیک‌های روشن» است — N = مقدار همان گروه در مبنای انتخابی شما (۳٫۲۲)؛ فقط تفکیک‌هایی که تیکشان خورده در لیبل می‌آیند (متراژ با رقم لاتین) — مثلاً «۸ رول | 20000 | BOPP»؛ اگر هیچ تفکیکی روشن نباشد هر عرض یک میلهٔ واحد با دیتالیبل «N رول» دارد. <b>عدد عرض</b> در سمت راست چارت با فونت درشت و بولد دقیقاً <b>وسط میله‌های همان عرض</b> درج می‌شود (۳٫۲۱). طول میله‌ها همیشه از مبنای انتخابی شما (خام موجود / تعداد) حساب می‌شود، انتخاب‌ها ماندگارند و اگر دیتالیبل‌ها در کادر جا نشوند میله‌ها یکجا کوچک‌تر می‌شوند. تولتیپ هر میله «عرض — لیبل گروه» را همراه تعداد رول‌های هر دستگاه و برش‌نشده‌های همان دستگاه نشان می‌دهد؛ دستگاه‌هایی که نه رولی در مبنای فعال دارند و نه برش‌نشده، در تولتیپ نمایش داده نمی‌شوند (۳٫۲۲).</p>
+          </template>
+          <div id="width-inventory-chart" class="echart-box col-box"></div>
+        </article>
+      </section>
+
+      <!-- ---------- ۲) ورود داده‌ها ---------- -->
+      <section class="view" id="view-import" role="tabpanel" aria-labelledby="tab-import" hidden>
+
+        <div class="import-grid">
+
+          <article class="panel import-card" id="card-rolls">
+            <header class="panel-head">
+              <h3>
+                <span class="panel-icon icon-raw" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                </span>
+                رول‌های موجود
+                <button type="button" class="help-dot" data-help="import-rolls" data-help-title="راهنمای بخش رول‌های موجود"
+                  aria-label="راهنمای بخش رول‌های موجود">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-import-rolls">
+                <p>وضعیت فعلی رول‌ها — مبنای شناسایی «رول‌های خام». نام واقعی فایل پس از Import برای Audit نمایش داده می‌شود.</p>
+                <p>Import جدید Dataset قبلی همین بخش را کامل جایگزین می‌کند (نه افزودن پیوسته) — پیش از جایگزینی، آمار قدیم/جدید نمایش داده می‌شود. فایل فقط <code>.xlsx</code> / <code>.xls</code> پذیرفته می‌شود و کاملاً محلی خوانده می‌شود.</p>
+              </template>
+            </header>
+
+            <div class="dropzone" id="drop-rolls" role="button" tabindex="0" aria-label="انتخاب یا رهاکردن فایل «رول‌های موجود»">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              <p><b>فایل را اینجا رها کنید</b> یا برای انتخاب کلیک کنید</p>
+              <p class="drop-hint">فقط <code>.xlsx</code> / <code>.xls</code> — با جایگزینی تراکنشی Dataset قبلی</p>
+              <input type="file" id="file-rolls" accept=".xlsx,.xls" hidden aria-hidden="true">
+            </div>
+
+            <div class="import-status" id="status-rolls" aria-live="polite">
+              <p class="status-empty">هنوز فایلی بارگذاری نشده است.</p>
+            </div>
+
+            <details class="import-preview" id="preview-wrap-rolls" hidden>
+              <summary>پیش‌نمایش ۲۰ رکورد اول (مدل نرمال‌شده)</summary>
+              <div id="preview-inner-rolls"></div>
+            </details>
+          </article>
+
+          <article class="panel import-card" id="card-archived">
+            <header class="panel-head">
+              <h3>
+                <span class="panel-icon icon-metal" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>
+                سابقه رول‌ها (آرشیو)
+                <button type="button" class="help-dot" data-help="import-archived" data-help-title="راهنمای بخش سابقه رول‌ها (آرشیو)"
+                  aria-label="راهنمای بخش سابقه رول‌ها (آرشیو)">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-import-archived">
+                <p>تاریخچهٔ وضعیت‌های قبلی رول‌ها — مبنای شمارش «متالایز یونیک». نام واقعی فایل پس از Import برای Audit نمایش داده می‌شود.</p>
+                <p>Import جدید Dataset قبلی همین بخش را کامل جایگزین می‌کند (نه افزودن پیوسته) — پیش از جایگزینی، آمار قدیم/جدید نمایش داده می‌شود. فایل فقط <code>.xlsx</code> / <code>.xls</code> پذیرفته می‌شود و کاملاً محلی خوانده می‌شود.</p>
+              </template>
+            </header>
+
+            <div class="dropzone" id="drop-archived" role="button" tabindex="0" aria-label="انتخاب یا رهاکردن فایل «سابقه رول‌ها (آرشیو)»">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              <p><b>فایل را اینجا رها کنید</b> یا برای انتخاب کلیک کنید</p>
+              <p class="drop-hint">فقط <code>.xlsx</code> / <code>.xls</code> — با جایگزینی تراکنشی Dataset قبلی</p>
+              <input type="file" id="file-archived" accept=".xlsx,.xls" hidden aria-hidden="true">
+            </div>
+
+            <div class="import-status" id="status-archived" aria-live="polite">
+              <p class="status-empty">هنوز فایلی بارگذاری نشده است.</p>
+            </div>
+
+            <details class="import-preview" id="preview-wrap-archived" hidden>
+              <summary>پیش‌نمایش ۲۰ رکورد اول (مدل نرمال‌شده)</summary>
+              <div id="preview-inner-archived"></div>
+            </details>
+          </article>
+        </div>
+
+        <!-- زبانه‌های لیست رول‌ها (تغییر ۳) — مانند زبانه‌های صفحهٔ «رول‌ها» -->
+        <div class="subtabs" role="tablist" aria-label="لیست رول‌ها">
+          <button class="subtab-btn active" role="tab" aria-selected="true" data-ilsubview="rolls" id="ilsubtab-rolls">لیست رول های موجود</button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-ilsubview="archived" id="ilsubtab-archived">لیست سابقه رول ها</button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-ilsubview="edited" id="ilsubtab-edited">رول‌های ویرایش‌شده <span class="chip" id="edited-count-badge">۰</span></button>
+        </div>
+
+        <!-- زبانهٔ لیست رول‌های موجود (تغییر ۳) -->
+        <div class="subview il-subview active" id="ilsubview-rolls" role="tabpanel" aria-labelledby="ilsubtab-rolls">
+          <!-- کادر جداگانهٔ کنترل‌های کیفیت (نسخهٔ ۲٫۹ — تغییر ۲ کاربر) — مستقل از لیست، با قابلیت نمایش/مخفی -->
+          <article class="panel quality-panel">
+            <header class="panel-head panel-head-row">
+              <h3>کنترل‌های کیفیت داده — رول‌های موجود</h3>
+              <div class="panel-tools">
+                <div id="quality-chips-rolls"></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="quality-toggle-rolls" aria-expanded="true"
+                  title="کادر کنترل‌های کیفیت را مخفی/ظاهر کن">مخفی‌کردن کنترل‌های کیفیت</button>
+              </div>
+            </header>
+            <!-- سه کنترل با کلید هویت ۴فاکتوری (ستاپ + خط تولید + سالن + سال — نسخهٔ ۲٫۹) -->
+            <div class="quality-area" id="quality-rolls" hidden></div>
+          </article>
+
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>لیست رول های موجود
+                <button type="button" class="help-dot" data-help="list-rolls" data-help-title="راهنمای لیست رول های موجود"
+                  aria-label="راهنمای لیست رول های موجود">!</button>
+              </h3>
+              <div class="panel-tools">
+                <div id="list-stats-rolls"></div>
+              </div>
+            </header>
+
+            <template id="help-list-rolls">
+              <p>همهٔ اطلاعات فایل «رول‌های موجود» — فیلتر هر ستون زیر سرستون همان ستون · منطق: شامل بودن (اعداد و متن‌ها) · دکمهٔ «≠» = شامل نشود.</p>
+              <p>با دکمهٔ ✎ هر رکورد قابل ویرایش است — ویرایش ماندگار است، پس از Import جدید هم دوباره اعمال می‌شود، در محاسبات لحاظ می‌گردد و در فایل پشتیبان ذخیره می‌شود.</p>
+            </template>
+
+            <!-- پنل مرتب‌سازی (تغییر ۳) -->
+            <div class="sort-builder" id="list-sort-builder-rolls">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="list-sort-pipeline-rolls" aria-label="مراحل مرتب‌سازی لیست رول‌های موجود"></div>
+              <div class="sort-add-row">
+                <select id="list-sort-add-select-rolls" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی"></select>
+                <button type="button" class="btn btn-ghost btn-sm" id="list-sort-add-btn-rolls">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="list-sort-reset-btn-rolls">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- پنل ترتیب ستون‌ها + نمایش/مخفی هر ستون (تغییر ۳) -->
+            <div class="sort-builder cols-builder" id="list-cols-builder-rolls">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید (صفر/خالی = خودکار) · با دکمهٔ چشم هر ستون را در جدول مخفی یا دوباره نمایش دهید · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="list-cols-pipeline-rolls" aria-label="ترتیب، عرض و نمایش ستون‌های لیست رول‌های موجود"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="list-cols-reset-btn-rolls">بازنشانی ترتیب، عرض و نمایش ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="list-table-rolls"></div>
+          </article>
+        </div>
+
+        <!-- زبانهٔ لیست سابقه رول‌ها (تغییر ۳) -->
+        <div class="subview il-subview" id="ilsubview-archived" role="tabpanel" aria-labelledby="ilsubtab-archived" hidden>
+          <!-- کادر جداگانهٔ کنترل‌های کیفیت (نسخهٔ ۲٫۹ — تغییر ۲ کاربر) — مستقل از لیست، با قابلیت نمایش/مخفی -->
+          <article class="panel quality-panel">
+            <header class="panel-head panel-head-row">
+              <h3>کنترل‌های کیفیت داده — سابقه رول‌ها</h3>
+              <div class="panel-tools">
+                <div id="quality-chips-archived"></div>
+                <button type="button" class="btn btn-ghost btn-sm" id="quality-toggle-archived" aria-expanded="true"
+                  title="کادر کنترل‌های کیفیت را مخفی/ظاهر کن">مخفی‌کردن کنترل‌های کیفیت</button>
+              </div>
+            </header>
+            <!-- سه کنترل با کلید هویت ۴فاکتوری (ستاپ + خط تولید + سالن + سال — نسخهٔ ۲٫۹) -->
+            <div class="quality-area" id="quality-archived" hidden></div>
+          </article>
+
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>لیست سابقه رول ها
+                <button type="button" class="help-dot" data-help="list-archived" data-help-title="راهنمای لیست سابقه رول ها"
+                  aria-label="راهنمای لیست سابقه رول ها">!</button>
+              </h3>
+              <div class="panel-tools">
+                <div id="list-stats-archived"></div>
+              </div>
+            </header>
+
+            <template id="help-list-archived">
+              <p>همهٔ اطلاعات فایل «سابقه رول‌ها (آرشیو)» — فیلتر هر ستون زیر سرستون همان ستون · منطق: شامل بودن (اعداد و متن‌ها) · دکمهٔ «≠» = شامل نشود.</p>
+              <p>با دکمهٔ ✎ هر رکورد قابل ویرایش است — ویرایش ماندگار است، پس از Import جدید هم دوباره اعمال می‌شود، در محاسبات لحاظ می‌گردد و در فایل پشتیبان ذخیره می‌شود.</p>
+            </template>
+
+            <!-- پنل مرتب‌سازی (تغییر ۳) -->
+            <div class="sort-builder" id="list-sort-builder-archived">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="list-sort-pipeline-archived" aria-label="مراحل مرتب‌سازی لیست سابقه رول‌ها"></div>
+              <div class="sort-add-row">
+                <select id="list-sort-add-select-archived" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی"></select>
+                <button type="button" class="btn btn-ghost btn-sm" id="list-sort-add-btn-archived">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="list-sort-reset-btn-archived">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- پنل ترتیب ستون‌ها + نمایش/مخفی هر ستون (تغییر ۳) -->
+            <div class="sort-builder cols-builder" id="list-cols-builder-archived">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید (صفر/خالی = خودکار) · با دکمهٔ چشم هر ستون را در جدول مخفی یا دوباره نمایش دهید · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="list-cols-pipeline-archived" aria-label="ترتیب، عرض و نمایش ستون‌های لیست سابقه رول‌ها"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="list-cols-reset-btn-archived">بازنشانی ترتیب، عرض و نمایش ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="list-table-archived"></div>
+          </article>
+        </div>
+
+        <!-- زبانهٔ رول‌های ویرایش‌شده (تغییر ۳) -->
+        <div class="subview il-subview" id="ilsubview-edited" role="tabpanel" aria-labelledby="ilsubtab-edited" hidden>
+          <article class="panel">
+            <header class="panel-head">
+              <h3>رول‌های ویرایش‌شده
+                <button type="button" class="help-dot" data-help="edited-rolls" data-help-title="راهنمای رول‌های ویرایش‌شده"
+                  aria-label="راهنمای رول‌های ویرایش‌شده">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-edited-rolls">
+                <p>لیست رول‌هایی که اطلاعات‌شان ویرایش شده — برای هر شماره رول یک رکورد ذخیره می‌شود و هر ویرایش جدید روی ویرایش قبلی ذخیره می‌شود. ویرایش‌ها پس از هر Import جایگزین اطلاعات فایل می‌شوند و در فایل پشتیبان ذخیره می‌گردند.</p>
+                <p>از این زبانه امکان ویرایش مجدد و حذف ویرایش (بازگشت کامل به اطلاعات فایل) وجود دارد.</p>
+              </template>
+            </header>
+            <div id="edited-rolls-table"></div>
+          </article>
+        </div>
+
+        <article class="panel notice-panel">
+          <h3 class="section-title">نکات مهم ورود داده‌ها</h3>
+          <ul class="tips-list">
+            <li>فایل‌ها <b>کاملاً محلی</b> خوانده و در IndexedDB مرورگر ذخیره می‌شوند — هیچ داده‌ای به هیچ سروری ارسال نمی‌شود.</li>
+            <li>Import جدید Dataset قبلی همان جدول را <b>جایگزین</b> می‌کند (نه افزودن پیوسته) — پیش از جایگزینی آمار قدیم/جدید نمایش داده می‌شود.</li>
+            <li>ستون‌های الزامی: شمارهٔ رول، عرض اولیه (رول اولیه)، عرض، متراژ (اولیه)، ضخامت، نوع فیلم، شمارهٔ پالت، شمارهٔ ستاپ.</li>
+            <li>اگر فایل تکراری (هش یکسان) باشد، سیستم هشدار می‌دهد که محتوای آن تغییری نکرده است.</li>
+            <li>در زبانه‌های <b>«لیست رول های موجود» / «لیست سابقه رول ها»</b> همهٔ اطلاعات فایل‌ها با فیلتر/مرتب‌سازی/ترتیب ستون‌ها (و نمایش/مخفی‌کردن ستون) دیده می‌شود؛ با ✎ هر رکورد قابل ویرایش است — ویرایش ماندگار است، پس از Import جدید هم دوباره اعمال می‌شود و در Backup ذخیره می‌گردد.</li>
+          </ul>
+        </article>
+      </section>
+
+      <!-- ---------- ۳) رول‌ها ---------- -->
+      <section class="view" id="view-rolls" role="tabpanel" aria-labelledby="tab-rolls" hidden>
+
+        <!-- تب‌های داخلی -->
+        <div class="subtabs" role="tablist" aria-label="انواع رول">
+          <button class="subtab-btn active" role="tab" aria-selected="true" data-subview="raw" id="subtab-raw">رول‌های خام</button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-subview="cut" id="subtab-cut">رول‌های برش‌خورده</button>
+        </div>
+
+        <!-- تب رول‌های خام -->
+        <div class="subview active" id="subview-raw" role="tabpanel" aria-labelledby="subtab-raw">
+
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>گروه‌بندی رول‌های خام
+                <button type="button" class="help-dot" data-help="raw-rolls" data-help-title="راهنمای گروه‌بندی رول‌های خام"
+                  aria-label="راهنمای گروه‌بندی رول‌های خام">!</button>
+              </h3>
+              <div class="panel-tools">
+                <div id="rolls-stats"></div>
+              </div>
+            </header>
+            <template id="help-raw-rolls">
+              <p>گروه‌بندی رول‌های خام با کلید: <b>عرض + متراژ استاندارد + شمارهٔ ستاپ + خط تولید + شماره سالن + عدد سال</b>.</p>
+              <p>رول خام = ردیف‌های فایل «رول‌های موجود» با نوع فیلم شامل R/r و شمارهٔ پالت خالی. هویت (خط تولید/سالن/سال) از شمارهٔ رول خوانده می‌شود: F = BOPP و K = CPP، رقم اول بعد از آن = شماره سالن و رقم دوم = رقم آخر سال تولید — ستاپ‌هایی با شمارهٔ مشابه اما خط/سالن/سال متفاوت، هویت‌های جداگانه‌اند.</p>
+              <p>وضعیت هر گروه: <b>✓ دارای ستاپ</b> / <b>⚠ بدون ستاپ</b> / <b>غیرقابل تطبیق</b> (بدون قانون متراژ).</p>
+              <p>دکمهٔ «جزئیات» هر گروه، رول‌های همان گروه را با ستون‌های Mapping‌شده نمایش می‌دهد — انتخاب و ترتیب ستون‌ها قابل تغییر و ذخیره است.</p>
+            </template>
+
+            <!-- پنل مرتب‌سازی چندمرحله‌ای کشیدنی (§36-§38) — قابل مخفی/ظاهر (نسخهٔ ۲٫۳) -->
+            <div class="sort-builder" id="roll-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="sort-pipeline" aria-label="مراحل مرتب‌سازی"></div>
+              <div class="sort-add-row">
+                <select id="sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی">
+                  <option value="">افزودن فیلد…</option>
+                  <option value="status">وضعیت</option>
+                  <option value="width">عرض</option>
+                  <option value="thickness">ضخامت</option>
+                  <option value="standardLength">متراژ استاندارد</option>
+                  <option value="setupNumber">شمارهٔ ستاپ</option>
+                  <option value="count">تعداد</option>
+                </select>
+                <button type="button" class="btn btn-ghost btn-sm" id="sort-add-btn">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="sort-reset-btn">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- پنل ترتیب ستون‌ها (نسخهٔ ۲٫۶ — مانند گزارش ستاپ‌ها) — ماندگار + قابل مخفی/ظاهر -->
+            <div class="sort-builder cols-builder" id="raw-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="raw-cols-pipeline" aria-label="ترتیب و عرض ستون‌های گروه‌بندی رول‌های خام"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="raw-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="raw-rolls-table"></div>
+          </article>
+        </div>
+
+        <!-- تب رول‌های برش‌خورده (فرزند) — کلید: عرض برش + شماره ستاپ -->
+        <div class="subview" id="subview-cut" role="tabpanel" aria-labelledby="subtab-cut" hidden>
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>رول‌های برش‌خورده
+                <button type="button" class="help-dot" data-help="cut-rolls" data-help-title="راهنمای رول‌های برش‌خورده"
+                  aria-label="راهنمای رول‌های برش‌خورده">!</button>
+              </h3>
+              <div class="panel-tools">
+                <div id="cutrolls-stats"></div>
+              </div>
+            </header>
+            <template id="help-cut-rolls">
+              <p>کلید هر رکورد: <b>عرض برش‌خورده + شماره ستاپ + خط تولید + شماره سالن + عدد سال</b>.</p>
+              <p>رکوردها از تنوع عرض‌های «الگوی برش» ستاپ‌ها ساخته می‌شوند؛ «موجود/گرید/پای کار/پالت» از رول‌های برش‌خوردهٔ فایل «رول‌های موجود» (شناسهٔ رول دارای بازوی L/R بعد از M) با همان کلید خوانده می‌شود.</p>
+              <p>وزن = عرض × ۰٫۳۶۲ × تعداد (kg) — نمایش سه‌رقمی با نقطه.</p>
+              <p>با دکمهٔ «جزئیات» هر رکورد، رول‌های واقعیِ برش‌خوردهٔ هم‌کلید در مودال (به‌همراه پنل شخصی‌سازی ستون‌ها) نمایش داده می‌شود.</p>
+            </template>
+
+            <!-- پنل مرتب‌سازی مشابه رول‌های خام (کشیدنی + ماندگار + قابل مخفی) -->
+            <div class="sort-builder" id="cut-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · مرتب‌سازی بر مبنای «تعداد» · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="cut-sort-pipeline" aria-label="مراحل مرتب‌سازی رول‌های برش‌خورده"></div>
+              <div class="sort-add-row">
+                <select id="cut-sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی برش‌خورده‌ها">
+                  <option value="">افزودن فیلد…</option>
+                </select>
+                <button type="button" class="btn btn-ghost btn-sm" id="cut-sort-add-btn">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="cut-sort-reset-btn">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- پنل ترتیب ستون‌ها (نسخهٔ ۲٫۶ — مانند گزارش ستاپ‌ها) — ماندگار + قابل مخفی/ظاهر -->
+            <div class="sort-builder cols-builder" id="cut-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="cut-cols-pipeline" aria-label="ترتیب و عرض ستون‌های رول‌های برش‌خورده"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="cut-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="cutrolls-table"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ---------- ۴) ستاپ‌ها ---------- -->
+      <section class="view" id="view-setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
+
+        <!-- جدول گزارش ستاپ‌ها — ابتدای صفحه -->
+        <article class="panel">
+          <header class="panel-head">
+            <h3>گزارش تولید ستاپ‌ها</h3>
+            <!-- ۳٫۱۰ — تغییر ۱: دکمهٔ «حذف همه» حذف شد (لازم نبود)؛ دکمه‌های
+                 «ترتیب ستون‌ها»/«مرتب‌سازی» از ۳٫۹ در نوار بالای جدول
+                 (کنار «پاک‌کردن همهٔ فیلترها») قرار دارند -->
+          </header>
+
+          <!-- پنل مرتب‌سازی گزارش ستاپ‌ها — ماندگار + قابل مخفی/ظاهر -->
+          <div class="sort-builder" id="setup-sort-builder">
+            <div class="sort-builder-head">
+              <b>پنل مرتب‌سازی:</b>
+              <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+            </div>
+            <div class="sort-pipeline" id="setup-sort-pipeline" aria-label="مراحل مرتب‌سازی گزارش ستاپ‌ها"></div>
+            <div class="sort-add-row">
+              <select id="setup-sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی گزارش ستاپ‌ها">
+                <option value="">افزودن فیلد…</option>
+              </select>
+              <button type="button" class="btn btn-ghost btn-sm" id="setup-sort-add-btn">افزودن</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="setup-sort-reset-btn">بازنشانی</button>
+            </div>
+          </div>
+
+          <!-- پنل ترتیب ستون‌ها (نسخهٔ ۲٫۳) — ماندگار + قابل مخفی/ظاهر -->
+          <div class="sort-builder cols-builder" id="setup-cols-builder">
+            <div class="sort-builder-head">
+              <b>پنل ترتیب ستون‌ها:</b>
+              <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · دکمهٔ «چشم» هر چیپ همان ستون را در جدول مخفی/نمایان می‌کند · همه‌چیز ذخیره می‌شود</span>
+            </div>
+            <div class="sort-pipeline" id="setup-cols-pipeline" aria-label="ترتیب و عرض ستون‌های گزارش ستاپ‌ها"></div>
+            <div class="sort-add-row">
+              <button type="button" class="btn btn-ghost btn-sm" id="setup-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+            </div>
+          </div>
+
+          <div id="setup-table-wrap"></div>
+        </article>
+
+        <!-- فرم ثبت/ویرایش — زیر گزارش -->
+        <article class="panel">
+          <header class="panel-head">
+            <h3 id="setup-form-title">
+              <span class="panel-icon icon-setup" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </span>
+              <!-- ۳٫۹ — تغییر ۲: متن عنوان داخل span جدا است تا به‌روزرسانی textContent
+                   (حالت ویرایش/ثبت جدید) دکمهٔ راهنما و آیکون را پاک نکند -->
+              <span id="setup-form-title-text">ثبت رول جدید برای ستاپ</span>
+              <button type="button" class="help-dot" data-help="setup-form" data-help-title="راهنمای ثبت رول جدید برای ستاپ"
+                aria-label="راهنمای ثبت رول جدید برای ستاپ">!</button>
+            </h3>
+            <template id="help-setup-form">
+              <p>فیلدهای ستاپ: شماره ستاپ، خط تولید (BOPP/CPP — پیش‌فرض از آخرین رکورد همان ستاپ و قابل تغییر)، شماره سالن (۱ تا ۴ — پس از انتخاب شماره ستاپ و خط تولید؛ اگر کلید «ستاپ + خط» سالن ثبت‌شده داشته باشد همان سالن «پیشنهاد» می‌شود و قابل ویرایش است)، دستگاه متالایز (۱/۲/۳)، عرض مادر، ضخامت (تعیین خودکار با کلید هویت «ستاپ + خط + سالن + سال» — در صورت تعیین خودکار قفل؛ بدون رکورد هم‌هویت، ورود دستی)، متراژ استاندارد (از قوانین)، تعداد، تاریخ ستاپ شمسی (ارث‌بری خودکار با کلید هویت — در صورت ارث‌بری قفل؛ بدون رکورد، ورود دستی؛ عدد سال از رقم آخر سال استخراج می‌شود) و الگوی برش.</p>
+              <p>کلید هویت هر ستاپ = شماره ستاپ + خط تولید + شماره سالن + عدد سال.</p>
+            </template>
+          </header>
+
+          <form id="setup-form" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="f-setup">شماره ستاپ <b class="req">*</b></label>
+                <input type="text" id="f-setup" inputmode="numeric" placeholder="مثلاً ۱۴۰" autocomplete="off" required>
+                <p class="field-error" id="err-setup" hidden></p>
+                <p class="field-hint" id="hint-setup" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-line">خط تولید <b class="req">*</b></label>
+                <select id="f-line" required>
+                  <option value="">— انتخاب کنید —</option>
+                  <option value="BOPP">BOPP</option>
+                  <option value="CPP">CPP</option>
+                </select>
+                <p class="field-error" id="err-line" hidden></p>
+                <p class="field-hint" id="hint-line" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-hall">شماره سالن <b class="req">*</b></label>
+                <select id="f-hall" required disabled>
+                  <option value="">— ابتدا ستاپ و خط تولید —</option>
+                  <option value="1">سالن ۱</option>
+                  <option value="2">سالن ۲</option>
+                  <option value="3">سالن ۳</option>
+                  <option value="4">سالن ۴</option>
+                </select>
+                <p class="field-error" id="err-hall" hidden></p>
+                <p class="field-hint" id="hint-hall">ابتدا «شماره ستاپ» و «خط تولید» را انتخاب کنید، سپس شماره سالن.</p>
+              </div>
+
+              <div class="field">
+                <label for="f-machine">شماره دستگاه (متالایز) <b class="req">*</b></label>
+                <select id="f-machine" required>
+                  <option value="">— انتخاب کنید —</option>
+                  <option value="1">دستگاه ۱</option>
+                  <option value="2">دستگاه ۲</option>
+                  <option value="3">دستگاه ۳</option>
+                </select>
+                <p class="field-error" id="err-machine" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-width">عرض رول مادر <span class="unit">(mm)</span> <b class="req">*</b></label>
+                <input type="text" id="f-width" inputmode="numeric" placeholder="مثلاً ۲۱۲۰" autocomplete="off" required>
+                <p class="field-error" id="err-width" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-thickness">ضخامت <span class="unit">(میکرون)</span> <b class="req">*</b></label>
+                <input type="text" id="f-thickness" inputmode="numeric" placeholder="مثلاً ۲۰" autocomplete="off" required>
+                <p class="field-error" id="err-thickness" hidden></p>
+                <p class="field-hint" id="hint-thickness" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-standard">متراژ استاندارد <b class="req">*</b></label>
+                <select id="f-standard" required>
+                  <option value="">— انتخاب کنید —</option>
+                </select>
+                <p class="field-error" id="err-standard" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-count">تعداد رول <b class="req">*</b></label>
+                <input type="text" id="f-count" inputmode="numeric" placeholder="مثلاً ۵" autocomplete="off" required>
+                <p class="field-error" id="err-count" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-date">تاریخ ستاپ <span class="unit">(شمسی)</span> <b class="req">*</b></label>
+                <input type="text" id="f-date" inputmode="numeric" placeholder="مثلاً 1405/06/18" autocomplete="off" dir="ltr" required>
+                <p class="field-ok" id="date-feedback" hidden></p>
+                <p class="field-error" id="err-date" hidden></p>
+                <p class="field-hint" id="hint-date" hidden></p>
+              </div>
+
+              <div class="field field-wide">
+                <label for="f-pattern">الگوی برش <span class="unit">(اختیاری — اعداد با خط تیره)</span></label>
+                <input type="text" id="f-pattern" placeholder="مثلاً 1100-1170 یا 600-600-600-600" autocomplete="off" dir="ltr">
+                <div class="pattern-feedback" id="pattern-feedback"><span class="muted">اختیاری — مثال: 1100-1170</span></div>
+                <p class="field-error" id="err-pattern" hidden></p>
+              </div>
+
+              <div class="field field-actions">
+                <button type="submit" class="btn btn-primary" id="btn-save-roll">ذخیره رکورد</button>
+                <button type="reset" class="btn btn-ghost" id="btn-reset-form">پاک‌کردن فرم</button>
+                <button type="button" class="btn btn-ghost" id="btn-cancel-edit" hidden>انصراف از ویرایش</button>
+              </div>
+            </div>
+          </form>
+        </article>
+
+        <!-- ثبت گروهی از Clipboard (Bulk Paste) — زیر گزارش -->
+        <article class="panel bulk-panel">
+          <header class="panel-head">
+            <h3 id="bulk-title">
+              <span class="panel-icon icon-setup" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h-2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+              </span>
+              ثبت گروهی ستاپ‌ها (Paste از Clipboard)
+              <button type="button" class="help-dot" data-help="bulk-paste" data-help-title="راهنمای ثبت گروهی ستاپ‌ها (Paste از Clipboard)"
+                aria-label="راهنمای ثبت گروهی ستاپ‌ها">!</button>
+            </h3>
+            <template id="help-bulk-paste">
+              <p>هر جفت خط: <b>خط فرد</b> = عرض‌های الگو + تعداد رول در انتها · <b>خط زوج</b> = عرض رول‌های مادر متناظر
+              (سلول خالی = ادامهٔ مادر قبلی؛ الگو می‌تواند یک‌تکه/دو‌تکه/چندتکه باشد).</p>
+              <p>پس از «تحلیل و پیش‌نمایش»: <b>شماره ستاپ، خط تولید، شماره سالن، ضخامت و تاریخ ستاپ</b> برای کل رکوردها تعیین می‌شود
+              (خط تولید BOPP/CPP و شماره سالن ۱ تا ۴ سراسری هستند؛ عدد سال از تاریخ استخراج می‌شود)،
+              <b>دستگاه و متراژ استاندارد</b> به‌صورت پیش‌فرض/رکوردبه‌رکورد قابل تعیین است و
+              <b>همهٔ فیلدهای هر رکورد</b> (عرض مادر، الگوی برش، تعداد) قابل ویرایش است.</p>
+              <p><b>کلید هویت «شماره ستاپ + عدد سال + خط تولید + شماره سالن» نباید با رکوردهای ثبت‌شده تکراری باشد</b> —
+              در صورت تکراری‌بودن، فیلدهای شماره ستاپ/تاریخ/خط تولید/سالن خطا می‌گیرند و خطای جداگانهٔ «شماره ستاپ تکراری است»
+              در ستون وضعیت همهٔ ردیف‌ها نمایش داده می‌شود.</p>
+              <p>هر ردیف با آیکون سطل زباله در ستون «عملیات» قابل حذف است.</p>
+              <p>دکمهٔ <b>«ادغام ردیف‌های تکراری»</b> همهٔ ردیف‌های هم‌کلید را یک‌جا ادغام می‌کند —
+              کلید ادغام: عرض مادر + شماره ستاپ + متراژ استاندارد + دستگاه + الگوی برش + خط تولید + سالن + سال؛
+              تعداد رول ردیف‌های ادغامی جمع می‌شود و هر گروه در ردیف اولش جمع می‌شود.</p>
+              <p>آیکون ادغام تک‌ردیفی <b>در هر شرایطی</b> (حتی با خطای ستاپ تکراری) نمایان است.</p>
+              <p>آمار «جمع عرض الگوی برش» تعداد ست هر رکورد (متراژ استاندارد ÷ کوچکترین استاندارد ضخامت) را در محاسبه لحاظ می‌کند.</p>
+              <p>ثبت فقط در صورت معتبر بودن <b>همهٔ</b> رکوردها و به‌صورت یک تراکنش واحد انجام می‌شود.</p>
+            </template>
+          </header>
+
+          <div class="field">
+            <label for="bulk-text">داده‌های Paste شده (TSV — از اکسل کپی کنید)</label>
+            <textarea id="bulk-text" rows="6" dir="ltr" class="bulk-textarea" placeholder="950&#9;930&#9;960&#9;960&#9;710&#9;710&#9;1040&#9;&#9;&#9;&#9;&#9;&#9;2&#10;1880&#9;&#9;1920&#9;&#9;1420&#9;&#9;1040" spellcheck="false"></textarea>
+          </div>
+
+          <div class="field-actions" style="margin-bottom:12px">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-bulk-analyze">تحلیل و پیش‌نمایش</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-bulk-clear">پاک‌کردن</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-bulk-merge-all" disabled
+              title="همهٔ ردیف‌های هم‌کلید (عرض مادر + شماره ستاپ + متراژ استاندارد + دستگاه + الگوی برش) در یک ردیف ادغام می‌شوند — تعداد رول جمع می‌شود">ادغام ردیف‌های تکراری</button>
+            <button type="button" class="btn btn-ghost btn-sm bulk-commit" id="btn-bulk-commit" disabled
+              title="فقط وقتی همهٔ رکوردها معتبر باشند فعال می‌شود">ثبت همه (یک تراکنش)</button>
+          </div>
+
+          <div id="bulk-summary" class="bulk-summary" aria-live="polite"></div>
+          <div id="bulk-preview"></div>
+        </article>
+      </section>
+
+      <!-- ---------- ۵) برنامه‌ریزی (نسخهٔ ۳٫۲ تا ۳٫۶) ---------- -->
+      <section class="view" id="view-planning" role="tabpanel" aria-labelledby="tab-planning" hidden>
+        <article class="panel">
+          <header class="panel-head panel-head-row">
+            <h3>برنامه‌ریزی خط متالایز (گانت چارت)</h3>
+            <div class="panel-tools">
+              <div class="seg-control" id="plan-machine-seg" role="tablist" aria-label="انتخاب دستگاه برای برنامه‌ریزی"></div>
+            </div>
+          </header>
+          <div id="plan-body"></div>
+        </article>
+
+        <!-- استیج مخیف ساخت PDF گانت (نسخهٔ ۳٫۴ — تغییر ۸): خارج از دید، پس از هر خروجی خالی می‌شود -->
+        <div id="plan-pdf-stage" class="plan-pdf-stage" hidden aria-hidden="true"></div>
+      </section>
+
+      <!-- ---------- ۶) بسته‌بندی (نسخهٔ ۳٫۱۳ → ۳٫۱۴) ---------- -->
+      <section class="view" id="view-packaging" role="tabpanel" aria-labelledby="tab-packaging" hidden>
+
+        <!-- ورود فایل مدیریت پالت‌ها -->
+        <article class="panel import-card" id="card-pallets">
+          <header class="panel-head">
+            <h3>
+              <span class="panel-icon icon-metal" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              </span>
+              فایل مدیریت پالت‌ها
+              <button type="button" class="help-dot" data-help="pack-import" data-help-title="راهنمای فایل مدیریت پالت‌ها"
+                aria-label="راهنمای فایل مدیریت پالت‌ها">!</button>
+            </h3>
+            <template id="help-pack-import">
+              <p>خروجی اکسل «مدیریت پالت‌ها» از نرم‌افزار مدیریت رول را وارد کنید — مبنای برنامهٔ بسته‌بندی همین صفحه. فقط ردیف‌هایی که «نوع فیلم» آنها شامل حرف <code>M</code> است وارد برنامه می‌شوند (بقیه فقط شمرده می‌شوند).</p>
+              <p>ستون‌های فایل از مسیر «تنظیمات ← نگاشت ستون‌های اکسل (Mapping) ← پالت‌ها» قابل تغییرند؛ نام ستون «لیست شماره رول‌ها» هر پالت به رول‌های مستقل تجزیه می‌شود. Import جدید Dataset قبلی را کامل جایگزین می‌کند و نگاشت ستون‌های فایل پالت‌ها مانند دو فایل رول از تنظیمات تعریف می‌شود.</p>
+            </template>
+          </header>
+
+          <div class="dropzone" id="drop-pallets" role="button" tabindex="0" aria-label="انتخاب یا رهاکردن فایل مدیریت پالت‌ها">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            <p><b>فایل را اینجا رها کنید</b> یا برای انتخاب کلیک کنید</p>
+            <p class="drop-hint">فقط <code>.xlsx</code> / <code>.xls</code> — با جایگزینی تراکنشی Dataset قبلی</p>
+            <input type="file" id="file-pallets" accept=".xlsx,.xls" hidden aria-hidden="true">
+          </div>
+
+          <div class="import-status" id="status-pallets" aria-live="polite">
+            <p class="status-empty">هنوز فایلی بارگذاری نشده است.</p>
+          </div>
+        </article>
+
+        <!-- خلاصه برنامه (۳٫۱۳ — بند ۵: پالت‌های «فروش» همیشه کنار؛ بدون دکمهٔ دامنه) -->
+        <article class="panel">
+          <header class="panel-head">
+            <h3>خلاصهٔ برنامهٔ بسته‌بندی
+              <button type="button" class="help-dot" data-help="pack-summary" data-help-title="راهنمای خلاصهٔ برنامهٔ بسته‌بندی"
+                aria-label="راهنمای خلاصهٔ برنامهٔ بسته‌بندی">!</button>
+            </h3>
+          </header>
+          <template id="help-pack-summary">
+            <p>پالت‌هایی که مقدار «انبار» آنها شامل کلمهٔ «فروش» است (فروخته‌شده) همیشه از برنامهٔ بسته‌بندی کنار گذاشته می‌شوند؛ همهٔ پالت‌های دیگر — چه «انبار …» و چه «پای کار …» — در برنامه مشارکت می‌کنند. پالت «پای کار» در سالن تولید و پای دستگاه است و نیازی به آوردن از انبار ندارد (در جدول‌ها با نشان «⚡ پای کار» مشخص است).</p>
+            <p>برنامهٔ بسته‌بندی به‌صورت خودکار و تعیین‌ناپذیر (نتیجهٔ تکراری در محاسبه‌های مجدد) از موتور مرکزی ساخته می‌شود: پالت‌های ناقص بر اساس اولویت ظرفیت‌های هدف تکمیل می‌شوند، کمترین پالت در هر بسته مشارکت می‌کند و رول‌های باقی‌ماندهٔ هم‌ویژگی به‌عنوان رزرو معرفی می‌شوند.</p>
+          </template>
+          <div id="pack-stats" class="pack-stats"></div>
+        </article>
+
+        <!-- هشدارهای داده‌ای بسته‌بندی (§24 — مخصوص همین صفحه) -->
+        <article class="panel" id="pack-warnings-panel" hidden>
+          <header class="panel-head">
+            <h3>هشدارهای داده‌ای بسته‌بندی
+              <button type="button" class="help-dot" data-help="pack-warnings" data-help-title="راهنمای هشدارهای داده‌ای بسته‌بندی"
+                aria-label="راهنمای هشدارهای داده‌ای بسته‌بندی">!</button>
+            </h3>
+            <template id="help-pack-warnings">
+              <p>هشدارهای کیفیت دادهٔ فایل پالت‌ها (مخصوص همین صفحه — جزو هشدارهای داشبورد اصلی نیستند): «مغایرت نوع بسته‌بندی» یعنی نوع بسته‌بندی محاسبه‌شدهٔ سامانه (بر اساس قوانین خط تولید/عرض/قطر) با مقدار اکسل یکی نیست؛ «نوع بسته‌بندی نامعتبر» یعنی قطر بوبین از مقدار اکسل قابل استخراج نیست و آن پالت وارد برنامه نمی‌شود. با کلیک روی هر هشدار، پالت‌ها و رول‌های درگیر نمایش داده می‌شوند.</p>
+            </template>
+          </header>
+          <div id="pack-warnings" aria-live="polite"></div>
+        </article>
+
+        <!-- زیرتب‌ها (۳٫۱۳ — بند ۱۴: زیرتب چهارم «نمایش گرافیکی») -->
+        <div class="subtabs" role="tablist" aria-label="بخش‌های بسته‌بندی">
+          <button class="subtab-btn active" role="tab" aria-selected="true" data-pksubview="plan" id="pksubtab-plan">برنامهٔ بسته‌بندی <span class="chip" id="pack-plan-count">۰</span></button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-pksubview="pallets" id="pksubtab-pallets">پالت‌ها</button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-pksubview="rolls" id="pksubtab-rolls">رول‌ها و ردیابی</button>
+          <button class="subtab-btn" role="tab" aria-selected="false" data-pksubview="graph" id="pksubtab-graph">نمایش گرافیکی</button>
+        </div>
+
+        <!-- زیرتب ۱: برنامهٔ بسته‌بندی -->
+        <div class="subview active" id="pksubview-plan" role="tabpanel" aria-labelledby="pksubtab-plan">
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>برنامهٔ بهینهٔ بسته‌بندی
+                <button type="button" class="help-dot" data-help="pack-plan" data-help-title="راهنمای برنامهٔ بسته‌بندی"
+                  aria-label="راهنمای برنامهٔ بسته‌بندی">!</button>
+              </h3>
+              <div class="panel-tools">
+                <!-- آمار برنامه — سمت راست (۳٫۱۴ بند ۱۲) -->
+                <div id="pack-plan-stats" class="muted" style="font-size:.72rem"></div>
+                <!-- ۳٫۱۴ بند ۵: آپشن تفکیک پالت‌های صادراتی (پایان شماره با E)
+                     ۳٫۱۷ بند ۱: ظاهر کلید برقی — سوییچ کوچک + برچسب وضعیت روشن/خاموش -->
+                <button type="button" class="btn btn-ghost btn-sm tool-push-end pk-export-switch" id="pack-export-toggle"
+                        aria-pressed="true"
+                        title="فعال (روشن): پالت‌های صادراتی (شمارهٔ پالت منتهی به E مانند FFG07013059E) فقط با پالت‌های صادراتی دیگر بسته‌بندی می‌شوند — برای ترکیب با معمولی‌ها کلیک کنید">
+                  <span class="exp-label">تفکیک صادراتی‌ها</span>
+                  <span class="exp-sw" aria-hidden="true"><i></i></span>
+                  <span class="exp-state" aria-hidden="true">روشن</span>
+                </button>
+                <!-- ۳٫۱۴ بند ۱۲: خروجی اکسل کامل سمت چپ -->
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-excel-btn"
+                        title="خروجی اکسل استایل‌دار برنامهٔ بسته‌بندی — ستون «لیست پالت و رول ها» (شمارهٔ هر پالت و زیر آن رول‌هایش) + رول‌های رزرو + فیلم/عرض/ضخامت/گرید/قطر/ظرفیت — Thick Outside Border دور هر بسته، رنگ یک‌درمیان آبی/سبز کم‌رنگ، وسط‌چین RTL و هدر فریزشده — فقط ردیف‌های قابل نمایش (پس از فیلتر)">
+                  خروجی اکسل
+                </button>
+              </div>
+            </header>
+            <template id="help-pack-plan">
+              <p>هر ردیف یک بسته‌بندی «قابل اقدام» است — شماره‌گذاری بسته‌ها پیوسته است (بسته‌های «در ظرفیت هدف» بدون امکان بهبود، اقدامی ندارند و شماره نمی‌گیرند). ستون «پالت‌های هر بسته» همهٔ پالت‌های شرکت‌کننده (اصلی + مکمل) را فهرست می‌کند؛ پالت «پای کار» (در سالن تولید) با رنگ کهربایی و کادر ظریف مشخص است و بقیه در انبارند و باید به ایستگاه بسته‌بندی برگردند. ستون «رول‌های هر بسته» رول‌های هر پالت را زیر شمارهٔ همان پالت نشان می‌دهد. این دو ستون چون مقدارشان همیشه لاتین است چپ‌نویس (LTR) نمایش داده می‌شوند. «ظرفیت نهایی» یعنی تعداد رول فعلی از ظرفیت استاندارد.</p>
+              <p>با دکمهٔ «+ نمایش» هر ردیف، همان بسته به جدول «نمایش گرافیکی» اضافه می‌شود (قابل ویرایش قبل از خروجی + کارت‌های استاندارد A4 برای اپراتور). دکمهٔ «تفکیک صادراتی‌ها» مانند یک کلید برقی عمل می‌کند (۳٫۱۷): روشن = پالت‌های صادراتی (شمارهٔ پالت منتهی به E مانند FFG07013059E) فقط با پالت‌های صادراتی دیگر بسته می‌شوند؛ خاموش = با معمولی‌ها هم بسته می‌شوند. ستون «رزرو» تعداد رول‌های باقی‌ماندهٔ هم‌ویژگی است که در صورت رد QC جایگزین می‌شوند.</p>
+              <p><b>بسته‌های ترکیبی U+X (۳٫۱۷):</b> پس از بهینه‌سازی عادی، رول‌های باقی‌ماندهٔ گرید U و X که همهٔ مشخصه‌های دیگرشان یکی است در یک «بستهٔ ترکیبی» بسته می‌شوند و پس از بسته‌های عادی شماره می‌گیرند؛ ردیف این بسته‌ها با رنگ نارنجی هایلایت می‌شود، ستون «گرید» گرید هر رول را هم‌تراز شمارهٔ همان رول (با رنگ کد گرید) نشان می‌دهد و پیش از ارسال باید توسط واحد کنترل کیفیت تأیید شوند (بج «ترکیبی · تأیید QC»).</p>
+              <p>دکمهٔ «خروجی اکسل» برنامهٔ قابل نمایش (پس از فیلترهای فعال) را با Thick Outside Border دور هر بسته، رنگ یک‌درمیان آبی/سبز کم‌رنگ (بسته‌های ترکیبی نارنجی #FDE9D9)، شمارهٔ پالت‌ها و مقادیر ستون‌های فیلم/عرض/ضخامت/گرید/قطر/ظرفیت بولد و درشت، رنگ‌بندی سلول گرید (X سبز #00B050 · U سبز روشن #AFDC7E · Q کهربایی #FFC000 — در بسته‌های ترکیبی گرید خط‌به‌خط هم‌تراز رول‌ها)، وسط‌چین RTL و هدر فریزشده صادر می‌کند.</p>
+            </template>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل مرتب‌سازی (مثل گزارش ستاپ‌ها — ماندگار) -->
+            <div class="sort-builder" id="pack-plan-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-plan-sort-pipeline" aria-label="مراحل مرتب‌سازی برنامهٔ بسته‌بندی"></div>
+              <div class="sort-add-row">
+                <select id="pack-plan-sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی برنامهٔ بسته‌بندی">
+                  <option value="">افزودن فیلد…</option>
+                </select>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-plan-sort-add-btn">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-plan-sort-reset-btn">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل ترتیب ستون‌ها (مثل گزارش ستاپ‌ها — ماندگار) -->
+            <div class="sort-builder cols-builder" id="pack-plan-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · دکمهٔ «چشم» هر چیپ همان ستون را در جدول مخفی/نمایان می‌کند · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-plan-cols-pipeline" aria-label="ترتیب و عرض ستون‌های برنامهٔ بسته‌بندی"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-plan-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="pack-plan-table"></div>
+          </article>
+        </div>
+
+        <!-- زیرتب ۲: پالت‌ها -->
+        <div class="subview" id="pksubview-pallets" role="tabpanel" aria-labelledby="pksubtab-pallets" hidden>
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>پالت‌ها
+                <button type="button" class="help-dot" data-help="pack-pallets" data-help-title="راهنمای جدول پالت‌ها"
+                  aria-label="راهنمای جدول پالت‌ها">!</button>
+              </h3>
+              <div class="panel-tools"><div id="pack-pallets-stats" class="muted" style="font-size:.72rem"></div></div>
+            </header>
+            <template id="help-pack-pallets">
+              <p>همهٔ پالت‌های درون برنامه (غیر از فروخته‌شده‌های «فروش») با ویژگی‌های پنج‌گانه، نوع بسته‌بندی اکسل در برابر محاسبه‌شدهٔ سامانه، ظرفیت استاندارد (طبقه × رول در طبقه) و وضعیت هر پالت در برنامهٔ بسته‌بندی. «نوع بسته‌بندی» اکسل فقط برای استخراج قطر بوبین استفاده می‌شود و جهت/نوع واقعی مستقلاً محاسبه می‌شود. پنل‌های «ترتیب ستون‌ها» و «مرتب‌سازی» بالای جدول در دسترس‌اند و تنظیمات ماندگارند.</p>
+            </template>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل مرتب‌سازی جدول پالت‌ها -->
+            <div class="sort-builder" id="pack-pallets-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-pallets-sort-pipeline" aria-label="مراحل مرتب‌سازی پالت‌ها"></div>
+              <div class="sort-add-row">
+                <select id="pack-pallets-sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی پالت‌ها">
+                  <option value="">افزودن فیلد…</option>
+                </select>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-pallets-sort-add-btn">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-pallets-sort-reset-btn">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل ترتیب ستون‌های جدول پالت‌ها -->
+            <div class="sort-builder cols-builder" id="pack-pallets-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · دکمهٔ «چشم» هر چیپ همان ستون را در جدول مخفی/نمایان می‌کند · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-pallets-cols-pipeline" aria-label="ترتیب و عرض ستون‌های جدول پالت‌ها"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-pallets-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="pack-pallets-table"></div>
+          </article>
+        </div>
+
+        <!-- زیرتب ۳: رول‌ها و ردیابی -->
+        <div class="subview" id="pksubview-rolls" role="tabpanel" aria-labelledby="pksubtab-rolls" hidden>
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>رول‌ها و ردیابی
+                <button type="button" class="help-dot" data-help="pack-rolls" data-help-title="راهنمای جدول رول‌ها و ردیابی"
+                  aria-label="راهنمای جدول رول‌ها و ردیابی">!</button>
+              </h3>
+              <div class="panel-tools"><div id="pack-rolls-stats" class="muted" style="font-size:.72rem"></div></div>
+            </header>
+            <template id="help-pack-rolls">
+              <p>ردیابی کامل هر رول: پالت مبدأ ← بسته‌بندی ← نقش (اصلی/مکمل) ← پالت مقصد در صورت جابه‌جایی ← وضعیت نهایی (بسته‌بندی‌شده / رزرو / باقی‌مانده / مستثنا). رول‌های «رزرو» هم‌ویژگیٔ بسته‌بندی خودشان‌اند و در صورت رد شدن یکی از رول‌ها توسط کنترل کیفیت، جایگزین آن می‌شوند. پنل‌های «ترتیب ستون‌ها» و «مرتب‌سازی» بالای جدول در دسترس‌اند و تنظیمات ماندگارند.</p>
+            </template>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل مرتب‌سازی جدول رول‌ها -->
+            <div class="sort-builder" id="pack-rolls-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت تغییر کند · ترتیب ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-rolls-sort-pipeline" aria-label="مراحل مرتب‌سازی رول‌ها و ردیابی"></div>
+              <div class="sort-add-row">
+                <select id="pack-rolls-sort-add-select" class="sort-add-select" aria-label="افزودن فیلد مرتب‌سازی رول‌ها و ردیابی">
+                  <option value="">افزودن فیلد…</option>
+                </select>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-rolls-sort-add-btn">افزودن</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-rolls-sort-reset-btn">بازنشانی</button>
+              </div>
+            </div>
+
+            <!-- ۳٫۱۳ — بند ۶: پنل ترتیب ستون‌های جدول رول‌ها -->
+            <div class="sort-builder cols-builder" id="pack-rolls-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · دکمهٔ «چشم» هر چیپ همان ستون را در جدول مخفی/نمایان می‌کند · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-rolls-cols-pipeline" aria-label="ترتیب و عرض ستون‌های جدول رول‌ها و ردیابی"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-rolls-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="pack-rolls-table"></div>
+          </article>
+        </div>
+
+        <!-- زیرتب ۴: نمایش گرافیکی (۳٫۱۵ دو پنل · ۳٫۱۶ چیدمان آزاد کارت‌ها) -->
+        <div class="subview" id="pksubview-graph" role="tabpanel" aria-labelledby="pksubtab-graph" hidden>
+
+          <!-- ۳٫۱۵ بند ۳ و ۴: پنل «لیست بسته های قابل نمایش» — جدول کامل قابل ویرایش -->
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>لیست بسته های قابل نمایش
+                <button type="button" class="help-dot" data-help="pack-graph-list" data-help-title="راهنمای لیست بسته های قابل نمایش"
+                  aria-label="راهنمای لیست بسته های قابل نمایش">!</button>
+              </h3>
+              <div class="panel-tools">
+                <!-- آمار لیست — سمت راست دکمه‌ها (۳٫۱۵ بند ۴) -->
+                <div id="pack-graph-list-stats" class="muted" style="font-size:.72rem"></div>
+              </div>
+            </header>
+            <template id="help-pack-graph-list">
+              <p>این جدول، فهرست همهٔ بسته‌هایی است که با دکمهٔ «+ نمایش» از جدول «برنامهٔ بسته‌بندی» برای نمایش گرافیکی انتخاب کرده‌اید — همهٔ ردیف‌ها یکجا نمایش داده می‌شوند و تعداد «ردیف‌های قابل نمایش» را خودتان تعیین می‌کنید (مانند سایر جدول‌ها؛ بدون دکمه‌های تغییر صفحه). کارت‌های «نمایش گرافیکی بسته‌بندی» از همین جدول تغذیه می‌شوند و ستون «پالت‌های نمایش» پالت‌ها را ستونی زیر هم و ستون «رول های نمایش» رول‌های هر بسته را زیر شمارهٔ پالت خودش نشان می‌دهد.</p>
+              <p><b>ترتیب نمایش کارت‌ها</b> = ترتیب ردیف‌های همین جدول: ردیف‌ها را با دستگیرهٔ ⠿ بکشید (یا با ▲▼ جابه‌جا کنید). <b>ویرایش هر بسته</b> با دکمهٔ «ویرایش» در پنجرهٔ باز می‌شود: تغییر مشخصات، حذف/بازگردانی پالت، حذف رول تکی و افزودن رول دستی به پالت موجود یا افزودن پالت دستی جدید — حتی رول/پالتی که در دیتای اصلی نیست (همه فقط «نمایشی» است و برنامهٔ واقعی بسته‌بندی و داده‌ها را تغییر نمی‌دهد). ستون «مشخصات» به ستون‌های فیلم/عرض/ضخامت/گرید/بسته بندی تفکیک شده و پنل‌های «ترتیب ستون‌ها» و «مرتب‌سازی» مثل سایر جدول‌ها با تمام قابلیت‌ها در دسترس‌اند. درگ و ▲▼ فقط در مرتب‌سازی پیش‌فرض فعال است.</p>
+            </template>
+
+            <!-- ۳٫۱۵ بند ۳: پنل مرتب‌سازی جدول لیست -->
+            <div class="sort-builder" id="pack-graph-sort-builder">
+              <div class="sort-builder-head">
+                <b>پنل مرتب‌سازی:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا اولویت عوض شود · هر چیپ جهت صعودی/نزولی دارد · «+ افزودن» فیلد جدید می‌آورد · همه‌چیز ذخیره می‌شود — در مرتب‌سازی سفارشی، درگ ردیف‌ها غیرفعال است</span>
+              </div>
+              <div class="sort-pipeline" id="pack-graph-sort-pipeline" aria-label="خط لولهٔ مرتب‌سازی لیست بسته‌های قابل نمایش"></div>
+              <div class="sort-add-row">
+                <select id="pack-graph-sort-add-select" aria-label="افزودن فیلد مرتب‌سازی"></select>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-sort-add-btn">+ افزودن مرحله</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-sort-reset-btn">بازنشانی مرتب‌سازی</button>
+              </div>
+            </div>
+
+            <!-- ۳٫۱۵ بند ۳: پنل ترتیب ستون‌های جدول لیست -->
+            <div class="sort-builder cols-builder" id="pack-graph-cols-builder">
+              <div class="sort-builder-head">
+                <b>پنل ترتیب ستون‌ها:</b>
+                <span class="muted" style="font-size:.72rem">چیپ‌ها را بکشید تا ترتیب عوض شود · عرض هر ستون (px) را در باکس همان ستون وارد کنید — صفر یا خالی = خودکار · دکمهٔ «چشم» هر چیپ همان ستون را در جدول مخفی/نمایان می‌کند · همه‌چیز ذخیره می‌شود</span>
+              </div>
+              <div class="sort-pipeline" id="pack-graph-cols-pipeline" aria-label="ترتیب و عرض ستون‌های لیست بسته‌های قابل نمایش"></div>
+              <div class="sort-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-cols-reset-btn">بازنشانی ترتیب و عرض ستون‌ها</button>
+              </div>
+            </div>
+
+            <div id="pack-graph-list"></div>
+          </article>
+
+          <!-- ۳٫۱۵ بند ۴: پنل «نمایش گرافیکی بسته‌بندی» — کارت‌ها (۳٫۱۶: چیدمان آزاد ۳٫۱۳) -->
+          <article class="panel">
+            <header class="panel-head panel-head-row">
+              <h3>نمایش گرافیکی بسته‌بندی
+                <button type="button" class="help-dot" data-help="pack-graph" data-help-title="راهنمای نمایش گرافیکی بسته‌بندی"
+                  aria-label="راهنمای نمایش گرافیکی بسته‌بندی">!</button>
+              </h3>
+              <div class="panel-tools">
+                <!-- آمار انتخاب‌ها — سمت راست دکمه‌ها (۳٫۱۴ بند ۱۲) -->
+                <div id="pack-graph-stats" class="muted" style="font-size:.72rem"></div>
+                <!-- ۳٫۱۸ بند ۳: تنظیمات برگهٔ خروجی — «جهت صفحه» (عمودی/افقی)
+                     + «تعداد ستون» (جایگزین آپشن حذف‌شدهٔ «بسته در صفحه») -->
+                <div class="seg-control" id="pack-graph-orient" role="group" aria-label="جهت برگهٔ خروجی نمایش گرافیکی">
+                  <button type="button" class="seg-btn active" data-orient="portrait" aria-pressed="true"
+                          title="برگهٔ A4 عمودی (۲۱۰×۲۹۷ میلی‌متر) — جهت برگهٔ خروجی PDF و تصویر">عمودی</button>
+                  <button type="button" class="seg-btn" data-orient="landscape" aria-pressed="false"
+                          title="برگهٔ A4 افقی (۲۹۷×۲۱۰ میلی‌متر) — جهت برگهٔ خروجی PDF و تصویر">افقی</button>
+                </div>
+                <label class="pg-perpage" title="تعداد ستون کارت‌ها در هر برگهٔ خروجی — عددی بین ۱ تا ۸؛ اگر ستون‌ها از گنجایش برگه بیشتر شوند کل مقیاس کارت‌ها (فونت‌ها و کادرهای داخلی) با حفظ نسبت‌ها یکجا کوچک می‌شود">
+                  تعداد ستون:
+                  <input type="number" id="pack-graph-cols" min="1" max="8" step="1" inputmode="numeric"
+                         aria-label="تعداد ستون کارت‌ها در برگهٔ خروجی">
+                </label>
+                <!-- ۳٫۱۴ بند ۱۲: دکمه‌های خروجی کامل سمت چپ -->
+                <span class="tool-push-end" aria-hidden="true"></span>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-pdf"
+                        title="خروجی PDF همهٔ برگه‌های کامل A4 (جهت و تعداد ستون از تنظیمات کنار عنوان) — هیچ کارتی در میانهٔ برگه نمی‌شکند · تاریخ خروجی به شمسی روی هر برگه درج می‌شود">خروجی PDF</button>
+                <!-- ۳٫۱۹ بند ۱ — ورودی «برگهٔ تصویر»: خالی = همهٔ برگه‌ها (هر برگه یک تصویر جدا)؛
+                     عدد = خروجی تصویر فقط همان برگه -->
+                <label class="pg-perpage" title="برگهٔ خروجی تصویر — خالی بگذارید تا «همهٔ برگه‌ها» هر کدام یک تصویر کامل A4 جدا شوند؛ یا شمارهٔ برگهٔ دلخواه (۱ تا تعداد برگه‌ها) را وارد کنید تا فقط همان برگه تصویر شود">
+                  برگهٔ تصویر:
+                  <input type="number" id="pack-graph-png-page" min="1" step="1" inputmode="numeric" placeholder="همه"
+                         aria-label="شمارهٔ برگه برای خروجی تصویر — خالی یعنی همهٔ برگه‌ها">
+                </label>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-png"
+                        title="خروجی تصویر برگه(های) کامل A4 (عمودی/افقی از تنظیمات) — «برگهٔ تصویر» خالی = همهٔ برگه‌ها هر کدام یک تصویر جدا؛ با شمارهٔ برگه فقط همان برگه · تاریخ خروجی به شمسی روی تصویر درج می‌شود">خروجی تصویر</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="pack-graph-clear"
+                        title="حذف همهٔ بسته‌ها از نمایش گرافیکی">حذف همه</button>
+              </div>
+            </header>
+            <template id="help-pack-graph">
+              <p>کارت‌های این پنل از جدول «لیست بسته های قابل نمایش» بالای همین صفحه تغذیه می‌شوند — هر ویرایش (ترتیب، حذف/افزودن پالت و رول، مشخصات) بلافاصله روی کارت‌ها اعمال می‌شود. کارت‌ها <b>آزادانه</b> در عرض کامل همین پنل چیده می‌شوند و هر کارت <b>هم‌اندازهٔ محتوای خودش</b> است — پالت‌ها و رول‌های زیاد فقط کارت را بلندتر می‌کنند و هیچ‌چیز فشرده یا ناقص نمایش داده نمی‌شود. سربرگ هر کارت: عنوان رنگی بسته + <b>«ظرفیت n از m»</b> + «N پالت · M رول» + <b>عدد «عرض» بزرگ و بولد در سمت چپ نوار</b> (۳٫۱۹) + دکمهٔ <b>مداد ویرایش</b> کنار ضربدر که مستقیماً پنجرهٔ ویرایش همان بسته را باز می‌کند (پس از ذخیره، موقعیت صفحه در همان‌جا می‌ماند)؛ نوار مشخصات با ۴ کادر مستطیلی فیلم/ضخامت/گرید/نوع بسته؛ کادر و پس‌زمینهٔ پالت‌های هر کارت از «تم همان کارت» رنگ می‌گیرند و شمارهٔ رول‌ها و پالت‌ها درشت و تیره‌اند.</p>
+              <p>تنظیمات برگهٔ خروجی (۳٫۱۸): <b>«جهت صفحه»</b> (عمودی/افقی) و <b>«تعداد ستون»</b> (۱ تا ۸) را کنار عنوان پنل تعیین می‌کنید. کارت‌ها ردیفی چیده می‌شوند و هر ردیفی که به‌طور کامل در برگهٔ A4 جا نشود <b>به‌طور کامل</b> به برگهٔ بعد می‌رود — هیچ کارتی در میانهٔ برگه نمی‌شکند. با زیاد شدن ستون‌ها، کل مقیاس کارت‌ها (فونت‌ها و کادرهای داخلی) با حفظ نسبت‌ها یکجا کوچک می‌شود و هرگز بزرگ‌نمایی نمی‌شود. <b>تاریخ هر برگه به هجری شمسی</b> روی خروجی‌ها درج می‌شود و نام فایل‌های خروجی هم مهر تاریخ شمسی دارند (۳٫۱۹). خروجی PDF همهٔ برگه‌ها را می‌سازد؛ <b>خروجی تصویر</b> با «برگهٔ تصویر» خالی، همهٔ برگه‌ها را هر کدام یک تصویر کامل A4 جدا می‌سازد و با واردکردن شمارهٔ برگه، فقط همان برگه تصویر می‌شود (۳٫۱۹). انتخاب‌ها و ویرایش‌ها ماندگارند.</p>
+            </template>
+
+            <div id="pack-graph-wrap"></div>
+          </article>
+        </div>
+        <!-- استیج خروجی تصویر/PDF نمایش گرافیکی (خارج از دید — تم روشن ثابت) -->
+        <div id="pack-graph-stage" class="pack-graph-stage" hidden aria-hidden="true"></div>
+      </section>
+
+      <!-- ---------- ۷) تنظیمات ---------- -->
+      <section class="view" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+
+        <div class="settings-grid">
+
+          <!-- تنظیمات نمایش (تم) -->
+          <article class="panel">
+            <header class="panel-head">
+              <h3>تنظیمات نمایش (تم)
+                <button type="button" class="help-dot" data-help="settings-theme" data-help-title="راهنمای تنظیمات نمایش (تم)"
+                  aria-label="راهنمای تنظیمات نمایش (تم)">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-theme">
+                <p>انتخاب تم روشن یا تاریک — انتخاب شما در همین مرورگر ذخیره می‌شود و در دفعات بعدی اعمال خواهد شد.</p>
+              </template>
+            </header>
+            <div class="theme-options" role="radiogroup" aria-label="انتخاب تم برنامه">
+              <button type="button" class="theme-option" data-theme-pick="light" role="radio" aria-checked="true" id="theme-pick-light">
+                <span class="theme-swatch swatch-light" aria-hidden="true"></span>
+                <span class="theme-option-text">
+                  <b>روشن (پیش‌فرض)</b>
+                  <span class="muted">تم صنعتی روشن</span>
+                </span>
+              </button>
+              <button type="button" class="theme-option" data-theme-pick="dark" role="radio" aria-checked="false" id="theme-pick-dark">
+                <span class="theme-swatch swatch-dark" aria-hidden="true"></span>
+                <span class="theme-option-text">
+                  <b>تاریک</b>
+                  <span class="muted">تم تیره با کنتراست بالا</span>
+                </span>
+              </button>
+            </div>
+          </article>
+
+          <!-- حداکثر فاصلهٔ مجاز بین تولید و برش (نسخهٔ ۳٫۵ — تغییر ۹) -->
+          <article class="panel">
+            <header class="panel-head">
+              <h3>حداکثر فاصلهٔ مجاز بین تولید و برش
+                <button type="button" class="help-dot" data-help="settings-cut-hours" data-help-title="راهنمای حداکثر فاصلهٔ مجاز بین تولید و برش"
+                  aria-label="راهنمای حداکثر فاصلهٔ مجاز بین تولید و برش">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-cut-hours">
+                <p>حداکثر ساعت مجاز از «تاریخ تولید» (زمان متالایز) تا برش رول‌های متالایزشدهٔ برش‌نشده. اگر از این مقدار بگذرد، در «مرکز هشدار کیفیت داده» داشبورد هشدار داده می‌شود. خالی بگذارید تا این کنترل غیرفعال باشد.</p>
+              </template>
+            </header>
+            <div class="field">
+              <label for="allowed-cut-hours">مجاز (ساعت)</label>
+              <input type="text" id="allowed-cut-hours" inputmode="numeric" autocomplete="off" placeholder="۲۴">
+              <p class="field-hint" id="allowed-cut-hours-state">—</p>
+              <p class="field-error" id="err-allowed-cut-hours" hidden></p>
+            </div>
+          </article>
+
+          <!-- نگاشت ستون‌های اکسل (Mapping) -->
+          <article class="panel panel-wide">
+            <header class="panel-head">
+              <h3>نگاشت ستون‌های اکسل (Mapping)
+                <button type="button" class="help-dot" data-help="settings-mapping" data-help-title="راهنمای نگاشت ستون‌های اکسل (Mapping)"
+                  aria-label="راهنمای نگاشت ستون‌های اکسل (Mapping)">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-mapping">
+                <p>تعیین می‌کند هر فیلد منطقی برنامه از کدام ستون فایل اکسل خوانده شود — مستقل برای «رول‌های موجود»، «سابقه رول‌ها (آرشیو)» و «پالت‌ها (بسته‌بندی)». منطق برنامه به نام فیزیکی ستون‌ها وابسته نیست. پس از ذخیره، Dataset موجود با نگاشت جدید بازسازی می‌شود.</p>
+                <p>در «رول‌های موجود»، فیلد منطقی «عرض» (مبنای کلیدهای انطباق و تخصیص رول‌ها به ستاپ‌ها) به‌صورت پیش‌فرض از ستون «عرض» خوانده می‌شود. در «پالت‌ها»، ستون «لیست شماره رول‌ها» به رول‌های مستقل هر پالت تجزیه می‌شود و از «نوع بسته‌بندی» فقط قطر بوبین استخراج می‌شود.</p>
+              </template>
+            </header>
+            <div id="mapping-editor"></div>
+          </article>
+
+          <!-- قوانین متراژ استاندارد — تمام‌عرض (نسخهٔ ۲٫۶): ستون عملیات کامل جا شود -->
+          <article class="panel panel-wide">
+            <header class="panel-head">
+              <!-- ۳٫۹ — تغییر ۲: متن عنوان داخل span جدا تا به‌روزرسانی (ویرایش/ثبت) دکمهٔ راهنما را پاک نکند -->
+              <h3 id="rule-form-title"><span id="rule-form-title-text">تعریف قانون متراژ استاندارد جدید</span>
+                <button type="button" class="help-dot" data-help="settings-length-rule" data-help-title="راهنمای تعریف قانون متراژ استاندارد"
+                  aria-label="راهنمای تعریف قانون متراژ استاندارد">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-length-rule">
+                <p>هر قانون: ضخامت (میکرون) + بازهٔ متراژ واقعی (شامل مرزها) → متراژ استاندارد. بازه‌های یک ضخامت نباید هم‌پوشانی داشته باشند.</p>
+                <p>رول خام با ضخامت و متراژ منطبق، استانداردسازی می‌شود و با ستاپ‌ها تطبیق می‌گیرد؛ بدون قانون، رول «غیرقابل تطبیق» است. کوچکترین متراژ استاندارد هر ضخامت = رول ۱ ستی و مبنای «تعداد ست» است.</p>
+              </template>
+            </header>
+
+            <form id="rule-form" novalidate>
+              <div class="rule-grid">
+                <div class="field">
+                  <label for="r-thickness">ضخامت <span class="unit">(μ)</span> <b class="req">*</b></label>
+                  <input type="text" id="r-thickness" inputmode="numeric" placeholder="۲۰" required>
+                  <p class="field-error" id="err-r-thickness" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="r-min">حداقل متراژ <b class="req">*</b></label>
+                  <input type="text" id="r-min" inputmode="numeric" placeholder="۱۷۰۰۰" required>
+                  <p class="field-error" id="err-r-min" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="r-max">حداکثر متراژ <b class="req">*</b></label>
+                  <input type="text" id="r-max" inputmode="numeric" placeholder="۲۴۰۰۰" required>
+                  <p class="field-error" id="err-r-max" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="r-standard">متراژ استاندارد <b class="req">*</b></label>
+                  <input type="text" id="r-standard" inputmode="numeric" placeholder="۲۰۰۰۰" required>
+                  <p class="field-error" id="err-r-standard" hidden></p>
+                </div>
+                <div class="field field-actions">
+                  <button type="submit" class="btn btn-primary" id="btn-rule-save">ذخیره قانون</button>
+                  <button type="button" class="btn btn-ghost" id="rule-cancel-edit" hidden>انصراف از ویرایش</button>
+                </div>
+              </div>
+            </form>
+
+            <div id="rules-table-wrap" class="rules-wrap"></div>
+          </article>
+
+          <!-- قوانین زمان متالایز (هر دستگاه) — تغییرات جدید -->
+          <article class="panel panel-wide">
+            <header class="panel-head">
+              <!-- ۳٫۹ — تغییر ۲: متن عنوان داخل span جدا تا به‌روزرسانی (ویرایش/ثبت) دکمهٔ راهنما را پاک نکند -->
+              <h3 id="mt-form-title"><span id="mt-form-title-text">تعریف قانون زمان متالایز (هر دستگاه)</span>
+                <button type="button" class="help-dot" data-help="settings-time-rule" data-help-title="راهنمای تعریف قانون زمان متالایز (هر دستگاه)"
+                  aria-label="راهنمای تعریف قانون زمان متالایز (هر دستگاه)">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-time-rule">
+                <p>هر قانون: شماره دستگاه + متراژ استاندارد + تعداد رول در شیفت → مدت زمان متالایز هر رول به دقیقه (خودکار: شیفت ۱۲ ساعته = ۷۲۰ دقیقه؛ مدت زمان = ۷۲۰ ÷ تعداد). متراژ استاندارد فقط از میان متراژهای تعریف‌شده در «تعریف قانون متراژ استاندارد جدید» قابل انتخاب است.</p>
+                <p>این مدت‌ها مبنای ستون‌های «مانده زمان ستاپ» و «مانده زمان موجودی» گزارش ستاپ‌ها و کارت‌ها/نمودارهای داشبورد است؛ بدون قانون مطابق، مانده زمان محاسبه نمی‌شود.</p>
+              </template>
+            </header>
+
+            <form id="machine-time-form" novalidate>
+              <div class="rule-grid">
+                <div class="field">
+                  <label for="mt-machine">شماره دستگاه <b class="req">*</b></label>
+                  <select id="mt-machine" required>
+                    <option value="">— انتخاب کنید —</option>
+                    <option value="1">دستگاه ۱</option>
+                    <option value="2">دستگاه ۲</option>
+                    <option value="3">دستگاه ۳</option>
+                  </select>
+                  <p class="field-error" id="err-mt-machine" hidden></p>
+                </div>
+
+                <div class="field">
+                  <label for="mt-standard">متراژ استاندارد <b class="req">*</b></label>
+                  <select id="mt-standard" required>
+                    <option value="">— انتخاب کنید —</option>
+                  </select>
+                  <p class="field-error" id="err-mt-standard" hidden></p>
+                  <p class="field-hint" id="hint-mt-standard" hidden></p>
+                </div>
+
+                <div class="field">
+                  <label for="mt-qty">تعداد در شیفت <span class="unit">(رول)</span> <b class="req">*</b></label>
+                  <input type="text" id="mt-qty" inputmode="numeric" placeholder="مثلاً ۷" autocomplete="off" required>
+                  <p class="field-error" id="err-mt-qty" hidden></p>
+                </div>
+
+                <div class="field">
+                  <label>مدت زمان هر رول <span class="unit">(دقیقه — محاسبهٔ خودکار)</span></label>
+                  <div class="mt-duration" id="mt-duration" aria-live="polite">—</div>
+                  <p class="field-hint">۷۲۰ ÷ تعداد در شیفت (شیفت ۱۲ ساعته) — مثال: ۷ رول در شیفت → ۱۰۲ دقیقه</p>
+                </div>
+
+                <div class="field field-actions">
+                  <button type="submit" class="btn btn-primary" id="btn-mt-save">ذخیره قانون</button>
+                  <button type="button" class="btn btn-ghost" id="mt-cancel-edit" hidden>انصراف از ویرایش</button>
+                </div>
+              </div>
+            </form>
+
+            <div id="machine-time-rules-wrap"></div>
+          </article>
+
+          <!-- پشتیبان‌گیری -->
+          <article class="panel">
+            <header class="panel-head">
+              <h3>پشتیبان‌گیری و بازیابی
+                <button type="button" class="help-dot" data-help="settings-backup" data-help-title="راهنمای پشتیبان‌گیری و بازیابی"
+                  aria-label="راهنمای پشتیبان‌گیری و بازیابی">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-backup">
+                <p>فایل JSON شامل ستاپ‌ها، قوانین، تنظیمات، متادیتا و Datasetهای Import شده.</p>
+                <p>اطلاعات برنامه به‌صورت Local در مرورگر ذخیره می‌شود — برای جلوگیری از دست‌رفتن داده‌ها، به‌صورت دوره‌ای Backup تهیه کنید؛ «بازیابی از فایل» همه را جایگزین می‌کند.</p>
+              </template>
+            </header>
+
+            <div class="backup-warning" role="alert">
+              <b>⚠ هشدار مهم:</b> اطلاعات این برنامه به‌صورت Local در مرورگر ذخیره می‌شود. برای جلوگیری از از دست رفتن اطلاعات، به‌صورت دوره‌ای Backup تهیه کنید.
+            </div>
+
+            <div class="backup-actions">
+              <button type="button" class="btn btn-primary" id="btn-backup-export">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                ساخت فایل پشتیبان
+              </button>
+              <button type="button" class="btn btn-ghost" id="btn-restore-pick">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+                بازیابی از فایل
+              </button>
+              <input type="file" id="file-restore" accept=".json" hidden aria-hidden="true">
+            </div>
+          </article>
+
+          <!-- مدیریت داده‌ها -->
+          <article class="panel">
+            <header class="panel-head">
+              <h3>مدیریت داده‌ها
+                <button type="button" class="help-dot" data-help="settings-data" data-help-title="راهنمای مدیریت داده‌ها"
+                  aria-label="راهنمای مدیریت داده‌ها">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-data">
+                <p>پاک‌سازی Datasetها یا بازنشانی کامل برنامه (با تأیید).</p>
+                <p>«پاک‌سازی رول‌های موجود» / «پاک‌سازی سابقه رول‌ها» فقط همان Dataset را خالی می‌کند؛ «پاک‌سازی کامل برنامه» همهٔ داده‌ها (ستاپ‌ها، قوانین، تنظیمات و برنامه‌ریزی‌ها) را حذف می‌کند.</p>
+              </template>
+            </header>
+            <div class="backup-actions">
+              <button type="button" class="btn btn-ghost" id="btn-clear-rolls">پاک‌سازی رول‌های موجود</button>
+              <button type="button" class="btn btn-ghost" id="btn-clear-archived">پاک‌سازی سابقه رول‌ها (آرشیو)</button>
+              <button type="button" class="btn btn-danger" id="btn-clear-all">پاک‌سازی کامل برنامه</button>
+            </div>
+          </article>
+
+          <!-- سابقه Import -->
+          <article class="panel">
+            <header class="panel-head">
+              <h3>سابقهٔ Importها (نسخه‌بندی Dataset)
+                <button type="button" class="help-dot" data-help="settings-import-history" data-help-title="راهنمای سابقهٔ Importها"
+                  aria-label="راهنمای سابقهٔ Importها">!</button>
+              </h3>
+              <!-- ۳٫۹ — تغییر ۳: توضیحات به پاپ‌آپ دکمهٔ راهنما منتقل شد -->
+              <template id="help-settings-import-history">
+                <p>آخرین Importها — نام واقعی فایل‌ها برای Audit/Traceability نمایش داده می‌شود.</p>
+                <p>دکمهٔ «پاک‌کردن سابقهٔ Importها» فقط همین متادیتا را پاک می‌کند؛ Datasetها و رکوردهای رول‌ها دست‌نخورده می‌مانند.</p>
+              </template>
+            </header>
+            <div id="import-history-wrap"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ---------- ۷) راهنما ---------- -->
+      <section class="view" id="view-help" role="tabpanel" aria-labelledby="tab-help" hidden>
+        <article class="panel">
+          <header class="panel-head">
+            <h3>
+              <span class="panel-icon icon-setup" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+              </span>
+              راهنمای سامانه — قوانین محاسباتی و بخش‌های برنامه
+            </h3>
+            <p class="panel-desc">مرجع کامل قوانین محاسباتی، منطق تطبیق و راهنمای استفاده از هر بخش.</p>
+          </header>
+
+          <div class="help-sections">
+
+            <details class="help-section" open>
+              <summary>فرمول‌های محاسباتی و قوانین محاسبه</summary>
+              <div class="help-body">
+                <div class="help-formula">برش‌نشده = Σ [تعداد ستاپ − (خام موجود + متالایز)]</div>
+                <ul class="help-list">
+                  <li><b>رول خام:</b> ردیف‌های «رول‌های موجود» با نوع فیلم شامل R/r و شمارهٔ پالت خالی.</li>
+                  <li><b>متالایز:</b> رکوردهای «سابقه رول‌ها (آرشیو)» با R/r، یکتاشده بر اساس شمارهٔ رول.</li>
+                  <li><b>کلید تطبیق خام (۶فاکتوری):</b> عرض + متراژ استاندارد + شماره ستاپ + خط تولید + شماره سالن + عدد سال — هویت از شمارهٔ رول خوانده می‌شود (F=BOPP/K=CPP، رقم اول = سالن، رقم دوم = رقم آخر سال).</li>
+                  <li><b>کلید تطبیق متالایز (۶فاکتوری):</b> عرض + متراژ استاندارد + شماره ستاپ + خط تولید + شماره سالن + عدد سال — تخصیص ظرفیت‌محور بین دستگاه‌ها؛ متراژ استاندارد هر رول متالایز از قوانین (ضخامت + متراژ واقعی) حل می‌شود و رول‌های متالایز فقط به ستاپ‌های هم‌عرض و هم‌متراژ تخصیص می‌خورند.</li>
+                  <li><b>مغایرت ظرفیت:</b> اگر خام + متالایز &gt; تعداد ستاپ، مقدار منفی به‌صورت هشدار گزارش می‌شود (برش‌نشده صفر نمایش داده می‌شود).</li>
+                  <li><b>تخصیص ظرفیت‌محور:</b> ستاپ‌های با ظرفیت کمتر ابتدا پر می‌شوند؛ هر رول فقط به یک ستاپ تخصیص می‌یابد (بدون شمارش مضاعع) و نتیجه قطعی و تکرارپذیر است. در تخصیص متالایز، در آخرین مرحلهٔ تخصیص همهٔ رول‌های باقی‌مانده به آخرین رکورد هم‌کلید ستاپ تخصیص می‌خورند حتی اگر از ظرفیتش بیشتر باشد → «مغایرت ظرفیت» قرمز در مرکز هشدار؛ مازاد دیگر «تخصیص‌نیافته» نمی‌ماند.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>ورود داده‌ها (Import) + لیست رول‌ها و ویرایش رکورد</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>دو Dataset مستقل: «رول‌های موجود» و «سابقه رول‌ها (آرشیو)» — هر Import، Dataset قبلی همان بخش را <b>جایگزین</b> می‌کند (نه افزودن پیوسته) و پیش از جایگزینی، آمار قدیم/جدید نمایش داده می‌شود.</li>
+                  <li>نام واقعی فایل، شییت، تاریخ Import، شمارهٔ Dataset و هش فایل برای Audit در کارت وضعیت و سابقهٔ Importها نگهداری می‌شود.</li>
+                  <li>گزارشنمای کنترل صحت (بدون عرض/متراژ/ضخامت و…) قابل کلیک است و دقیقاً همان رکوردهای مشکل‌دار را نمایش می‌دهد. <b>۳٫۱۷:</b> شمارش گزارشنما مالِ لحظهٔ ورود فایل است و با ویرایش‌های بعدی عوض نمی‌شود؛ اگر رولی را که مشکل داشته با دکمهٔ ✎ اصلاح کرده باشید، آن رول در پنجرهٔ هشدار زیر بخش جدید «رول‌های ویرایش‌شده و اصلاح‌شده» با نمایش <b>قبل ← بعد</b> هر فیلد و تاریخ ویرایش دیده می‌شود تا معلوم باشد چه اصلاحی روی همان رول انجام شده و کی ویرایش شده است (بخش «رکوردهای همچنان مشکل‌دار» همان رکوردهای فعلی است).</li>
+                  <li>فایل تکراری (هش یکسان) هشدار می‌دهد. ستون‌های الزامی: شماره رول، عرض، متراژ، ضخامت، نوع فیلم، شماره پالت، شماره ستاپ.</li>
+                  <li><b>لیست رول‌ها (جدید):</b> زیر دو کادر Import، دو زبانهٔ «لیست رول های موجود» و «لیست سابقه رول ها» جدولی از همهٔ اطلاعات فایل مربوط نمایش می‌دهد — با فیلتر هر ستون (مانند گزارش ستاپ‌ها)، «پنل مرتب‌سازی»، «پنل ترتیب ستون‌ها» با قابلیت <b>نمایش/مخفی‌کردن هر ستون</b> (دکمهٔ چشم) و <b>ویرایش هر رکورد</b> (دکمهٔ ✎).</li>
+                  <li><b>ویرایش رکورد (جدید):</b> با ✎ هر رکورد، مودال تمام فیلدها باز می‌شود؛ ذخیره → اطلاعات ویرایش‌شده ماندگار می‌شود و از آن پس <b>جایگزین اطلاعات فایل ایمپورت‌شده</b> است (پس از هر Import هم دوباره اعمال می‌شود و در داشبورد/گزارش‌ها لحاظ می‌گردد). برای هر شماره رول یک رکورد ویرایش نگهداری می‌شود و ویرایش جدید روی قبلی ذخیره می‌شود؛ برگرداندن مقدار به مقدار اصلی فایل، ویرایش همان فیلد را حذف می‌کند.</li>
+                  <li><b>زبانهٔ «رول‌های ویرایش‌شده» (جدید):</b> لیست همهٔ رول‌های ویرایش‌شده + اطلاعات ویرایش‌شده + ویرایش مجدد + حذف ویرایش (بازگشت به فایل). این رکوردها در فایل پشتیبان (Backup) هم ذخیره/بازیابی می‌شوند.</li>
+                  <li><b>کنترل‌های کیفیت داده:</b> بالای جدول هر دو زبانهٔ «لیست رول های موجود» و «لیست سابقه رول ها»، ناحیهٔ «کنترل‌های کیفیت داده» سه کنترل را روی رکوردهای مؤثر (فایل + ویرایش‌ها) اجرا می‌کند: <b>۱)</b> یکسانی ضخامت در ستاپ — مبنا = ضخامت پرتکرار همان ستاپ؛ رول منحرف هشدار می‌شود و در صورت تساوی، همهٔ رول‌های همان ستاپ هشدارند؛ <b>۲)</b> تطبیق M/R — شمارهٔ رول دارای M/R باید در نوع فیلم هم M/R داشته باشد؛ <b>۳)</b> بعد از M در شمارهٔ رول حداکثر یک بازوی برش (R یا L) مجاز است. هویت هر ستاپ در این کنترل‌ها <b>سه‌بعدی</b> است: شماره ستاپ + سالن + سال (رقم اول بعد از F/K = سالن، رقم دوم = سال ۱۴۰X). همهٔ ردیف‌های مشکل‌دار بدون سقف تعداد و با قالب‌بندی کامل راست‌به‌چپ نمایش داده می‌شوند.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>نگاشت ستون‌های اکسل (Mapping)</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>در تب «تنظیمات» می‌توانید تعیین کنید هر فیلد منطقی از کدام ستون فایل خوانده شود — مستقل برای هر دو Dataset.</li>
+                  <li>پیش‌فرض‌ها خودکار رزولو می‌شوند؛ انتخاب سفارشی شما هنگام ذخیره اعتبارسنجی می‌شود (ستون باید در فایل وجود داشته باشد).</li>
+                  <li>پس از ذخیره، Dataset موجود با نگاشت جدید به‌صورت تراکنشی بازسازی می‌شود.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>قوانین متراژ استاندارد</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>هر قانون: ضخامت (میکرون) + بازهٔ متراژ واقعی (شامل مرزها) → متراژ استاندارد.</li>
+                  <li>رول خام با ضخامت و متراژ منطبق، استانداردسازی می‌شود و با ستاپ‌ها تطبیق می‌گیرد؛ بدون قانون، رول «غیرقابل تطبیق» است.</li>
+                  <li>بازه‌های یک ضخامت نباید هم‌پوشانی داشته باشند — ذخیره مسدود می‌شود.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>ستاپ‌ها — ثبت دستی و ثبت گروهی (Bulk Paste)</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>کلید یکتای ستاپ:</b> عرض مادر + شماره ستاپ + متراژ استاندارد + شماره دستگاه + الگوی برش (ترتیب قطعات الگو بی‌اثر — ۱۲۰۰-۱۰۵۰ با ۱۰۵۰-۱۲۰۰ یکی است).</li>
+                  <li><b>ارث‌بری ضخامت (کلید هویت):</b> ضخامت با کلید «شماره ستاپ + خط تولید + شماره سالن + عدد سال» از رکوردهای ثبت‌شده تعیین می‌شود: اگر رکوردی با همین هویت ضخامت داشته باشد → همان ضخامت خودکار و «قفل»؛ اگر چنین رکوردی نبود → کاربر ضخامت جدید را دستی وارد می‌کند. ستاپ‌هایی با شمارهٔ مشابه اما خط/سالن/سال متفاوت، ضخامت مستقل دارند.</li>
+                  <li><b>تاریخ ستاپ شمسی (کلید هویت):</b> در فرم تک‌رکوردی فیلد «تاریخ ستاپ» با قالب <code>YYYY/MM/DD</code> شمسی الزامی است؛ ارث‌بری با کلید «شماره ستاپ + خط تولید + شماره سالن + عدد سال» انجام می‌شود (عدد سال از خود تاریخ): یک تاریخ یکتا برای ستاپ+خط+سالن → همان تاریخ به‌صورت خودکار «پیشنهاد» می‌شود و با خروج از فیلد (تطبیق کلید کامل) قفل می‌شود؛ چند سال مختلف → کاربر تاریخ را وارد می‌کند و با تطبیق کلید کامل، تاریخ ثبت‌شدهٔ همان کلید قفل می‌شود؛ بدون رکورد یا سال جدید → ورود دستی تاریخ جدید.</li>
+                  <li><b>تاریخ Batch (کلید هویت ۴فاکتوری):</b> در ثبت گروهی، فیلد «تاریخ ستاپ (کل رکوردها)» بر اساس کلید <b>«شماره ستاپ + خط تولید + شماره سالن + عدد سال»</b> موجود در رکوردها تعیین می‌شود (نه فقط شماره ستاپ): اگر این هویت تاریخِ ثبت‌شدهٔ یکتا داشته باشد، همان تاریخ به‌صورت خودکار تعیین و <b>قفل</b> می‌شود (کاربر اجازهٔ تغییر ندارد)؛ اگر همین هویت در چند سال مختلف ثبت شده باشد، تاریخ را دستی وارد کنید و با تطبیق رقم سال (روی blur)، تاریخ ثبت‌شدهٔ همان کلید قفل می‌شود؛ و اگر هیچ رکوردی با این هویت ثبت نشده باشد، تاریخ جدید را دستی وارد کنید (آزاد). تغییر شماره ستاپ/خط/سالن، تاریخ را با کلید جدید بازبینی می‌کند.</li>
+                  <li><b>ستون تاریخ و مرتب‌سازی:</b> گزارش ستاپ‌ها ستون «تاریخ ستاپ» (پیش‌فرض مخفی — با چشم پنل ترتیب ستون‌ها نمایش دهید) و مرتب‌سازی بر اساس تاریخ را دارد؛ مقایسهٔ لغوی YYYY/MM/DD با صفر پیشین = ترتیب زمانی و مستقل از نمایش ستون کار می‌کند.</li>
+                  <li><b>الگوی برش:</b> مجموع قطعات باید ≤ عرض مادر باشد (کمتر مجاز — پرت عرض).</li>
+                  <li><b>تعداد ست (قانون جدید):</b> کوچکترین متراژ استاندارد هر ضخامت در جدول «تعریف قانون متراژ استاندارد جدید» = متراژ رول ۱ ستی؛ تعداد ست هر رکورد = متراژ استاندارد ÷ این پایه (ستون «تعداد ست» گزارش + Tooltip فرمول). مثال: ضخامت ۲۰ با استانداردهای ۲۰۰۰۰/۳۰۰۰۰/۴۰۰۰۰ → رول ۳۰۰۰۰ = ۱٫۵ ست و رول ۴۰۰۰۰ = ۲ ست. تعداد رول‌های الگوی برش (فرزند) = تعداد قطعه الگو × تعداد ست × تعداد رول مادر — در کارت‌های الگو (فرزند هر مادر)، ستون‌های «مقدار در ستاپ/برش‌نخورده» جدول برش‌خورده‌ها، آمار Bulk و Audit لحاظ می‌شود.</li>
+                  <li><b>کارت‌های الگوی برش (جدید):</b> به ازای «هر قطعهٔ» الگو یک کارت نمایش داده می‌شود — الگوی 1100-1100 برای مادر 2200 دو کارت 1100 می‌سازد. زیر کارت‌ها: اگر الگو نسبت به مادر پرت داشته باشد فقط «پرت عرض: X» نمایش داده می‌شود؛ در غیر این صورت خط «Σ مجموع · فرزند هر مادر: N رول».</li>
+                  <li><b>ثبت گروهی:</b> هر جفت خط Paste: خط فرد = عرض‌های الگو + تعداد رول در انتها، خط زوج = عرض مادرهای متناظر (سلول خالی = ادامهٔ مادر قبلی). پس از «تحلیل و پیش‌نمایش» همهٔ فیلدها قابل ویرایش است و ثبت فقط در صورت معتبر بودن کل رکوردها و در یک تراکنش واحد انجام می‌شود. ردیف تکراری با همتای معتبر، آیکون «ادغام» دارد (تعداد رول‌ها جمع می‌شود).</li>
+                  <li><b>دکمهٔ «ادغام ردیف‌های تکراری»:</b> در نوار ابزار ثبت گروهی، این دکمه همهٔ ردیف‌های هم‌کلید (عرض مادر + شماره ستاپ + متراژ استاندارد + دستگاه + الگوی برش) را یک‌جا در ردیف اول هر گروه ادغام می‌کند — تعداد رول جمع می‌شود؛ فقط وقتی ردیف هم‌کلیدی وجود داشته باشد فعال است.</li>
+                  <li><b>کنترل «تعداد مجاز» عرض‌های مادر (جدید):</b> پس از «تحلیل و پیش‌نمایش»، برای هر عرض یکتای مادر: «تعداد مجاز» دیتای پیست‌شده = عرض × (تعداد تکرار عرض در ردیف مادر × عدد انتهای ردیف الگوی بالایی) و «تعداد مجاز» پیش‌نمایش = عرض × (تعداد ست × تعداد رول) رکوردهای همان عرض. این دو باید «برابر» باشند؛ پیش‌نمایش کمتر → خطای «تعداد کمتر از دیتای ستاپ است» و بیشتر → «تعداد رول‌های آن عرض بیشتر از دیتای ستاپ است» روی همهٔ رکوردهای همان عرض. مثال: 1180 در دو جفت با اعداد انتهایی ۸ و ۲ → 1180×8 + 1180×2 = ۱۱۸۰۰؛ با رکورد ۱۱۸۰ (۱ ست، تعداد ۸) + رکورد ۱۱۸۰ (۲ ست، تعداد ۱) → 1180×8 + 1180×2 = ۱۱۸۰۰ ✓.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>رول‌ها — گروه‌بندی و وضعیت تطبیق</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>رول‌های خام با کلید (عرض + متراژ استاندارد + ستاپ + خط تولید + شماره سالن + عدد سال) گروه می‌شوند — هویت از شمارهٔ رول: F=BOPP/K=CPP، رقم اول = سالن، رقم دوم = رقم آخر سال.</li>
+                  <li>وضعیت هر گروه: ✓ دارای ستاپ / ⚠ بدون ستاپ / غیرقابل تطبیق (بدون قانون متراژ).</li>
+                  <li>دکمهٔ «جزئیات» هر گروه، رول‌های همان گروه را با ستون‌های Mapping‌شده نمایش می‌دهد (انتخاب و ترتیب ستون‌ها قابل تغییر و ذخیره است).</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>پنل مرتب‌سازی و فیلتر ستون‌ها</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>«پنل مرتب‌سازی» در صفحهٔ رول‌ها و گزارش ستاپ‌ها: فیلدها را چندمرحله‌ای اضافه کنید، جهت هر مرحله را تغییر دهید و چیپ‌ها را بکشید تا اولویت عوض شود.</li>
+                  <li>آخرین ترتیب مرتب‌سازی هر جدول ذخیره می‌شود و در دفعات بعدی همان‌گونه اعمال می‌گردد (بازنشانی = بازگشت به پیش‌فرض).</li>
+                  <li>در گزارش ستاپ‌ها، «فیلتر ستون‌ها» به شما امکان می‌دهد هر ستون را با مقدار خاصی محدود کنید: عدد = برابری عددی، متن = شامل بودن.</li>
+                  <li><b>دکمهٔ «پاک‌کردن همهٔ فیلترها»:</b> در بالای همهٔ جدول‌های فیلتردار پروژه (گزارش تولید ستاپ‌ها، لیست رول‌های موجود/سابقه، رول‌های خام، رول‌های برش‌خورده) یک دکمهٔ جمع‌وجور با شمارندهٔ فیلترهای فعال وجود دارد که همهٔ فیلترها و منطق «شامل نشود» را یک‌جا پاک می‌کند — وقتی فعالی نیست کم‌رنگ است.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>رول‌های برش‌خورده (فرزند)</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>کلید هر رکورد:</b> عرض برش‌خورده + شماره ستاپ + خط تولید + شماره سالن + عدد سال — رکوردها از تنوع عرض‌های الگوی برش ستاپ‌ها ساخته می‌شوند (مثلاً الگوی ۷۸۰+۷۰۰+۹۰۰ → سه رکورد با عرض‌های ۷۸۰، ۷۰۰ و ۹۰۰).</li>
+                  <li><b>تشخیص برش‌خورده در فایل موجود:</b> شناسهٔ رول باید چند کاراکتر بعد از M مشخصهٔ بازو (L یا R) داشته باشد — مثل <code>F3501940722R8M3311R1P1:0</code>؛ رول‌هایی مثل <code>F3504710071R8M21</code> هنوز برش نشده‌اند.</li>
+                  <li><b>مقدار موجود/گریدها/پای کار/پالت شده:</b> شمارش رول‌های برش‌خوردهٔ هم‌کلید در فایل «رول‌های موجود» — گرید = حرف لاتین اول ستون گرید (X/U/Q/T)؛ «پای کار» = عبارت موجود در ستون موقعیت فعلی (فیلد «وضعیت» در نگاشت)؛ «پالت شده» = شماره پالت غیرخالی.</li>
+                  <li><b>مقدار در ستاپ / برش‌نخورده:</b> از «گزارش تولید ستاپ‌ها» — جمع (تعداد تکرار عرض در الگو × <b>تعداد ست</b> × ستون تعداد/برش‌نشده) روی همهٔ رکوردهای همان شماره ستاپ؛ تعداد ست = متراژ استاندارد رکورد ÷ کوچکترین متراژ استاندارد همان ضخامت (رول ۱ ستی).</li>
+                  <li><b>وزن:</b> «مقدار در ستاپ» و «مقدار برش‌نخورده» = عرض × ۰٫۳۶۲ × تعداد (فرمول)؛ <b>مابقی ستون‌ها (موجود/گریدها/پای کار/پالت) = مجموع «وزن خالص» واقعی</b> رول‌های منطبق از فایل (ستون Mapping «وزن خالص») — رول بدون وزن خالص با فرمول برآورد می‌شود. نمایش سه‌رقمی با نقطه مثل <code>1.235.456</code>؛ عدد دقیق در محاسبات حفظ می‌شود.</li>
+                  <li><b>پنل مرتب‌سازی:</b> مشابه رول‌های خام (کشیدنی + ماندگار) با دکمهٔ مخفی/ظاهر برای صرفه‌جویی در فضا — مرتب‌سازی بر مبنای تعداد هر ستون.</li>
+                  <li><b>پنل ترتیب ستون‌ها:</b> دقیقاً مانند گزارش ستاپ‌ها — چیپ‌ها را بکشید تا ترتیب ستون‌ها عوض شود و عرض دلخواه هر ستون (px) را در باکس همان ستون وارد کنید (صفر/خالی = خودکار)؛ ترتیب و عرض‌ها ماندگارند و با دکمهٔ «بازنشانی» به پیش‌فرض برمی‌گردند.</li>
+                  <li><b>باکس‌های جمع:</b> زیر ستون‌های مقداری (موجود/در ستاپ/برش‌نخورده/X/U/Q/T/پای کار/پالت شده) جمع دو ردیفی (تعداد + وزن) نمایش داده می‌شود و همیشه با دیتای فیلترشدهٔ همان ستون به‌روز می‌شود.</li>
+                  <li><b>فیلتر پیشرفته:</b> باکس فیلتر هر ستون زیر سرستون همان ستون است و امکان فیلتر همزمان چند ستون را می‌دهد (عدد = برابری عددی؛ متن = شامل بودن در تعداد/وزن).</li>
+                  <li><b>ارتفاع بلند:</b> حداقل ۵۰ رکورد بدون صفحه‌بندی نمایش داده می‌شود؛ رکوردهای بیشتر با اسکرول داخلی (سرستون‌ها و فیلترها چسبان می‌مانند).</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>قوانین زمان متالایز و مانده زمان‌ها</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>تعریف قانون:</b> در تنظیمات برای هر ترکیب (دستگاه + متراژ استاندارد) تعداد رول در شیفت را تعیین کنید؛ مدت زمان هر رول خودکار = ۷۲۰ ÷ تعداد دقیقه (شیفت ۱۲ ساعته) — مثال: دستگاه ۲ با ۷ رول در شیفت → ۱۰۲ دقیقه برای هر رول ۲۰۰۰۰ متری.</li>
+                  <li>متراژ استاندارد فقط از میان متراژهای تعریف‌شده در «تعریف قانون متراژ استاندارد جدید» قابل انتخاب است؛ ترکیب دستگاه + متراژ یکتاست.</li>
+                  <li><b>مانده زمان ستاپ = (تعداد − متالایز) × مدت زمان</b> و <b>مانده زمان موجودی = خام موجود × مدت زمان</b> — دو ستون «گزارش تولید ستاپ‌ها» با فرمت تایم [H]:mm؛ مدت هر رول از «تعریف قانون زمان متالایز (هر دستگاه)» بر اساس شماره دستگاه و متراژ استاندارد استخراج می‌شود؛ اگر قانون مطابقی نباشد «بدون قانون» نمایش داده می‌شود. ستون <b>«وضعیت»</b>: «تمام شده» فقط وقتی «مانده زمان ستاپ» = ۰ «و» «مانده زمان موجودی» = ۰ باشد؛ اگر هر کدام از این دو مثبت باشد → «باقی مانده».</li>
+                  <li><b>داشبورد:</b> کارت‌های «مانده زمان متالایز — ستاپ/موجودی» + نمودار میله‌ای مانده زمان هر دستگاه به تفکیک دو مؤلفه + دو دونات زمان + نمودار ستونی مانده زمان موجودی همهٔ ستاپ‌ها.</li>
+                  <li><b>نمودار افقی عرض‌های رول:</b> هر میله یک عرض از رکوردهای جدول «گزارش تولید ستاپ‌ها» است — مرتب‌شده از عرض بزرگ به کوچک؛ روی هر میله تعداد رول همان عرض درج می‌شود و محور راست اندازهٔ عرض را نشان می‌دهد. مبنای نمودار با دکمه‌های کنار آن تعیین می‌شود: پیش‌فرض <b>«خام موجود»</b> (فقط عرض‌هایی که رول خام موجود — مقدار مثبت — دارند) و قابل تغییر به <b>«تعداد»</b> (همهٔ عرض‌های دارای تعداد مثبت)؛ انتخاب مبنا ماندگار است. با انتخابگر دستگاه کنار آن، فقط رکوردهای ستاپ‌های همان دستگاه در نمودار می‌آیند.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>هویت ستاپ (خط تولید + شماره سالن + عدد سال)</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>هویت هر ستاپ = شماره ستاپ + خط تولید + شماره سالن + عدد سال.</b> این ۳ مولفهٔ جدید در شمارهٔ رول‌ها هم موجود است (حرف اول F=BOPP/K=CPP، رقم اول بعد از آن = شماره سالن، رقم دوم = رقم آخر سال تولید) — ستاپ‌هایی با شمارهٔ مشابه اما خط/سالن/سال متفاوت، هویت‌های جداگانه‌اند و در «همهٔ» کلیدهای تطبیق جداگانه بررسی می‌شوند.</li>
+                  <li><b>خط تولید:</b> در ثبت تک‌رکوردی، پیش‌فرض = آخرین خطِ ثبت‌شدهٔ همان شماره ستاپ (قابل تغییر)؛ در ثبت گروهی، یک انتخاب سراسری BOPP/CPP برای کل Batch.</li>
+                  <li><b>شماره سالن:</b> ابتدا «شماره ستاپ» و «خط تولید» را انتخاب کنید؛ اگر کلید (ستاپ + خط تولید) قبلاً سالنی ثبت‌شده داشته باشد، همان سالن به‌صورت خودکار «پیشنهاد» می‌شود — اما قفل نیست و کاربر می‌تواند آن را ویرایش کند (سالن متفاوت = هویت متفاوت). در ثبت گروهی، یک انتخاب سراسری ۱ تا ۴.</li>
+                  <li><b>عدد سال:</b> رقم آخر سالِ تاریخ ستاپ (۱۴۰۵ → ۵) — فیلد جداگانه‌ای ندارد.</li>
+                  <li><b>کلیدهای تطبیق:</b> خام = عرض + متراژ استاندارد + ستاپ + هویت · متالایز = عرض + متراژ استاندارد + ستاپ + هویت (تخصیص ظرفیت‌محور) · برش‌خورده = عرض برش + ستاپ + هویت · کلید یکتای ستاپ = عرض مادر + ستاپ + متراژ + دستگاه + الگو (ترتیب بی‌اثر) + هویت.</li>
+                  <li><b>ستون‌های هویت در گزارش:</b> «خط تولید» (نشان BOPP/CPP) و «سالن» — قابل مرتب‌سازی/فیلتر/مخفی‌سازی مانند سایر ستون‌ها.</li>
+                  <li><b>رکوردهای قدیمی:</b> ستاپ‌هایی که خط تولید/سالن/تاریخ ندارند، به‌صورت خودکار از روی رول‌های همان شماره ستاپ (هویت پرتکرار + قدیمی‌ترین تاریخ تولید) تکمیل می‌شوند؛ اگر رولی نبود در هشدار «رکورد ناقص» گزارش می‌شوند.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>کادر کنترل‌های کیفیت و عرض آرشیو</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>کادر جداگانهٔ کنترل‌های کیفیت:</b> در زبانه‌های «لیست رول های موجود» و «لیست سابقه رول ها»، کنترل‌های کیفیت در کادر مستقلی (بالای لیست) با دکمهٔ «نمایش/مخفی» قرار دارند — وضعیت نمایش ماندگار است و چیپ تعداد مشکل همیشه در سر کادر دیده می‌شود.</li>
+                  <li><b>کنترل ۱ — یکسانی ضخامت:</b> رول‌های هر کلید هویت (ستاپ + خط تولید + سالن + سال) باید ضخامت واحد داشته باشند؛ مبنا = پرتکرارترین ضخامت همان کلید؛ رول‌های منحرف هشدار می‌شوند و در صورت تساوی، همهٔ رول‌های آن کلید هشدارند.</li>
+                  <li><b>کنترل ۲ — تطبیق M (دوطرفه):</b> شمارهٔ رول دارای M → نوع فیلم باید M داشته باشد؛ شمارهٔ رول بدون M → نوع فیلم نباید M داشته باشد.</li>
+                  <li><b>کنترل ۳ — بازوی برش بعد از M:</b> بعد از M حداکثر یک بازوی برش (R یا L) مجاز است.</li>
+                  <li><b>عرض رول‌های آرشیو:</b> عرض هر رول «سابقه رول‌ها (آرشیو)» در همهٔ محاسبات همان مقدار ستون «عرض» نگاشت اکسل آرشیو (خود رکورد) است.</li>
+                  <li><b>کلید تکراری ثبت گروهی:</b> کلید «شماره ستاپ + عدد سال + خط تولید + شماره سالن» نباید با رکوردهای ثبت‌شده تکراری باشد — در صورت تکراری‌بودن، فیلدهای شماره ستاپ/تاریخ/خط تولید/سالن خطا می‌گیرند و خطای جداگانهٔ «شماره ستاپ تکراری است» در ستون وضعیت همهٔ ردیف‌ها نمایش داده می‌شود؛ دکمهٔ ادغام (تک‌ردیفی و سراسری) در هر شرایطی قابل نمایش/استفاده است.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>برنامه‌ریزی و گانت چارت</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>صفحهٔ «برنامه‌ریزی»:</b> برای هر دستگاه (۱/۲/۳) برنامه‌ای مستقل می‌سازید — سوییچر بالای صفحه دستگاه فعال را عوض می‌کند و شمارندهٔ قلم‌های هر دستگاه را نشان می‌دهد.</li>
+                  <li><b>افزودن رول:</b> همهٔ رکوردهای «گزارش تولید ستاپ‌ها» با ستون وضعیت «باقی مانده» قابل انتخاب‌اند — <b>فارغ از اینکه به کدام دستگاه تخصیص داده شده‌اند</b>. هر گزینه فقط ۵ اطلاعات را نشان می‌دهد: ستاپ · عرض · متراژ استاندارد · تعداد در ستاپ · خام موجود. رولی که در برنامهٔ هر دستگاهی افزوده شده باشد در همهٔ لیست‌ها با «قبلاً افزوده شده» مشخص می‌شود (در همان دستگاه مسدود است؛ در دستگاه دیگر قابل افزودن با هشدار).</li>
+                  <li><b>فیلترهای پویا:</b> دو فیلد «شماره ستاپ» و «عرض» بالای لیست رول‌ها — هم‌زمان با تایپ، لیست لحظه‌ای فیلتر می‌شود (تطبیق دقیق عددی، ترکیب هر دو فیلتر) و شمارندهٔ «N از M رکورد» نتیجه را نشان می‌دهد.</li>
+                  <li><b>تعداد رول قبل از افزودن:</b> فیلد «تعداد» کنار لیست انتخاب رول — با انتخاب رول، پیش‌فرض = ستون «خام موجود» همان رکورد (صفر → ۱) قرار می‌گیرد و قبل از «افزودن به برنامه» قابل تغییر است؛ پس از افزودن نیز در جدول اولویت‌بندی قابل کم/زیاد است.</li>
+                  <li><b>لینک تعداد با «خام موجود»:</b> در جدول اولویت‌بندی، هر ردیف رول دکمهٔ کوچک زنجیر کنار فیلد تعداد دارد — فعال = تعداد زنده از رکورد (فیلد قفل می‌شود و «● لینک با خام موجود» نمایش داده می‌شود)؛ خاموش = تعداد دستی کاربر. اگر خام موجود رکورد صفر/نامعتبر باشد لینک فعال نمی‌شود و تعداد دستی معتبر می‌ماند.</li>
+                  <li><b>زمان هر رول:</b> تعداد انتخابی × مدت زمان متالایز هر رول از «قانون زمان متالایز (هر دستگاه)» در تنظیمات بر اساس دستگاهِ خودِ رکورد — پس همیشه مثبت و مشخص است.</li>
+                  <li><b>لگ / توقف / تاخیر:</b> با عنوان مشخص (مثلاً تعویض رول، استراحت، توقف فنی) و مقدار زمان مثبت (دقیقه). لگ‌ها مثل رول‌ها در جدول اولویت‌بندی جا می‌گیرند و عنوان/دقیقهٔ آنها درجا قابل ویرایش است.</li>
+                  <li><b>اولویت‌بندی:</b> ترتیب ردیف‌ها = ترتیب اجرا. با کشیدن دستگیرهٔ هر ردیف یا دکمه‌های ↑↓ جابه‌جا کنید. هر قلم بلافاصله پس از پایان قلم قبلی شروع می‌شود (زنجیرهٔ پیوسته).</li>
+                  <li><b>تاریخ چارت:</b> پیش‌فرض «خودکار» = همیشه تاریخ امروز (هر روز به‌طور خودکار بروزرسانی می‌شود)؛ با تایپ تاریخ، حالت «ثابت» فعال می‌شود و دکمهٔ ریز «امروز» داخل خانهٔ فیلد تاریخ، به حالت خودکار برمی‌گرداند.</li>
+                  <li><b>ساعت شروع چارت:</b> پیش‌فرض ۰۷:۰۰ و قابل تغییر (فرمت ساعت:دقیقه).</li>
+                  <li><b>کلید خط «اکنون»:</b> در کادر تنظیمات زمان‌بندی، کلید روشن/خاموش تعیین می‌کند خط عمودی قرمز «اکنون» در گانت نمایش داده شود یا نه — انتخاب برای هر دستگاه ماندگار است. خط فقط برای تاریخ امروز و داخل بازهٔ برنامه رسم می‌شود.</li>
+                  <li><b>گانت چارت:</b> محور عمودی سمت چپ = عرض برای رول‌ها و عنوان برای لگ‌ها؛ روی هر میله = تعداد و زمان برای رول‌ها و زمان برای لگ‌ها؛ ساعت شروع/پایان هر عملیات روی میله‌های عریض و در جدول زمان‌بندی زیر چارت. دکمه‌های +/−/متناسب زوم می‌کنند (کوچک‌نمایی تا ۰٫۲۲ برابرِ متناسب ممکن است — گام ساعت‌ها خودکار درشت‌تر می‌شود)؛ در برنامه‌های طولانی چارت به‌صورت افقی اسکرول می‌شود و ستون لیبل‌ها چسبان می‌ماند.</li>
+                  <li><b>خروجی PDF:</b> دکمهٔ «خروجی PDF» در هدر هر گانت — صفحات A4 افقی «استاندارد» با مقیاس خوانا (بدون کوچک‌نمایی): برنامه‌های کوتاه در یک صفحه؛ برنامه‌های بلند به چند صفحهٔ هم‌اندازه تقسیم می‌شوند — مرز صفحات روی ساعت‌های صحیح با برچسب لبه‌ها (برای تطبیق چاپی صفحات کنار هم)، تکرار ستون «قلم برنامه»، برش میله‌ها در مرز، نوار «ادامه» با بازهٔ زمانی و صفحهٔ پایانی خلاصه + جدول. لوگو (SVG داخلی — بدون وابستگی به فایل خارجی) و نام «سامانه مانیتورینگ متالایز»، تم روشن ثابت و شمارهٔ صفحه در فوتر همهٔ صفحات.</li>
+                  <li><b>خلاصهٔ زمان‌بندی:</b> زیر هر چارت، چیپ‌های خلاصه (تاریخ/شروع/پایان/زمان کل/رول‌ها/لگ‌ها/سهم لگ) + جدول زمان‌بندی کامل همهٔ اقلام با مدت و شروع/پایان — با طراحی ردیف‌کارت هوادار. زمان‌هایی که به روزهای بعد می‌رسند به‌جای «+n روز» با <b>تاریخ شمسی جلالی دقیق همان روز</b> (مثل ۱۴۰۵/۰۶/۲۹ ۱۷:۳۵ — با احتساب ماه‌های ۳۱/۳۰ روزه و اسفند کبیسه) نمایش داده می‌شوند.</li>
+                  <li><b>اقلام نامعتبر:</b> اگر رکورد رول حذف شود، قانون زمانش برداشته شود یا تعداد/زمان لگ نامعتبر شود، آن قلم قرمز می‌شود، از زنجیرهٔ زمان‌بندی و گانت کنار گذاشته می‌شود و دلیلش نمایش داده می‌شود.</li>
+                  <li><b>ماندگاری و پشتیبان:</b> برنامهٔ هر دستگاه در IndexedDB ذخیره می‌شود (خودکار پس از هر تغییر — شامل وضعیت لینک هر رول) و در «ساخت فایل پشتیبان» / «بازیابی از فایل» و «پاک‌سازی کامل برنامه» به‌طور کامل پوشش داده می‌شود.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>بسته‌بندی — برنامهٔ بهینهٔ پالت‌ها</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>ورود فایل:</b> خروجی اکسل «مدیریت پالت‌ها» (نرم‌افزار مدیریت رول) را در کادر بالای صفحهٔ «بسته‌بندی» وارد کنید — فقط ردیف‌هایی که «نوع فیلم» آنها شامل حرف <b>M</b> است وارد برنامه می‌شوند (بقیه فقط شمرده می‌شوند) و هر Import، Dataset قبلی را کامل جایگزین می‌کند. ستون‌های فایل از «تنظیمات ← نگاشت ستون‌های اکسل ← پالت‌ها» قابل تعریف‌اند (پیش‌فرض: شناسه پالت، شماره پالت، نوع فیلم، ضخامت، عرض، نوع بسته بندی، گرید، لیست شماره رول ها، انبار و…).</li>
+                  <li><b>رول‌های هر پالت:</b> مقدار ستون «لیست شماره رول‌ها» با کاما تجزیه می‌شود و هر رول شناسهٔ مستقل با ردیابی کامل است (پالت مبدأ ← بسته‌بندی ← نقش ← پالت مقصد ← وضعیت نهایی). ویژگی‌های پنج‌گانهٔ هر رول از پالت خودش به ارث می‌رسد.</li>
+                  <li><b>پنج ویژگی سازگار:</b> نوع فیلم + عرض + ضخامت + گرید + قطر بوبین — فقط رول‌هایی با هر پنج ویژگی یکسان می‌توانند در یک بسته‌بندی نهایی قرار گیرند.</li>
+                  <li><b>خط تولید:</b> حرف اول نوع فیلم — <b>F=BOPP</b> و <b>K=CPP</b>.</li>
+                  <li><b>قطر بوبین:</b> عدد انتهای ستون «نوع بسته‌بندی» اکسل (H6→۶، V3→۳). اگر مقدار خالی/ناقص باشد یا قطر قابل استخراج نباشد، پالت وارد برنامه نمی‌شود و در «هشدارهای داده‌ای» گزارش می‌شود؛ پردازش سایر ردیف‌ها متوقف نمی‌شود.</li>
+                  <li><b>نوع بسته‌بندی محاسبه‌شده (مستقل از اکسل):</b> بوبین ۳ همیشه V (عرض ≥ ۸۰۰ → ۱ طبقه × ۴ رول؛ کمتر → ۲ طبقه × ۴)؛ بوبین ۶ BOPP (عرض ≥ ۸۵۰ → H با ۲×۱؛ کمتر → V با ۲×۱)؛ بوبین ۶ CPP (عرض ≥ ۶۰۰ → H با ۲×۱؛ کمتر → H با ۲×۲). نتیجه با مقدار اکسل مقایسه می‌شود — تفاوت = هشدار «مغایرت نوع بسته‌بندی» (پالت همچنان در برنامه است).</li>
+                  <li><b>ظرفیت هدف:</b> بوبین ۶ = فقط ظرفیت استاندارد (۲ یا ۴ — اولویت پایین‌تر وجود ندارد)؛ بوبین ۳ با استاندارد ۸ → اولویت‌های ۸، ۷، ۴، ۳ و با استاندارد ۴ → ۴، ۳؛ اگر حتی کمترین اولویت هم دست‌نیافتنی باشد پالت «غیرقابل بسته‌بندی» است.</li>
+                  <li><b>بهینه‌سازی:</b> پالت‌های کامل بدون اقدام می‌مانند؛ پالت‌های ناقص (به‌ترتیب تعداد رول بیشتر) برای هر هدف به ترتیب اولویت تکمیل می‌شوند — انتخاب اهداکنندگان با کمترین تعداد پالت مشارکت‌کننده و کمترین تقسیم (ترجیح تخلیهٔ کامل پالت اهداکننده به‌جای برداشت جزئی) و امکان انتقال «بخشی» از رول‌های یک پالت. بیش از ظرفیت استاندارد مجاز نیست (مازاد جدا می‌شود) و نتیجهٔ محاسبه قطعی/تکرارپذیر است.</li>
+                  <li><b>دامنه (فروش‌شده‌ها کنار):</b> پالت‌هایی که مقدار «انبار» آنها شامل کلمهٔ «فروش» است همیشه به‌صورت خودکار از برنامه کنار گذاشته می‌شوند؛ همهٔ پالت‌های دیگر (چه «انبار …» و چه «پای کار …») در برنامه مشارکت می‌کنند — پالت «پای کار» در سالن تولید است و نیازی به برگشت از انبار ندارد.</li>
+                  <li><b>تفکیک صادراتی‌ها (۳٫۱۴ · کلید برقی در ۳٫۱۷):</b> پالت‌هایی که شمارهٔ آنها به حرف <b>E</b> ختم می‌شود (مانند FFG07013059E) صادراتی‌اند؛ دکمهٔ «تفکیک صادراتی‌ها» بالای جدول برنامه مانند یک کلید برقی است — <b>روشن</b> (پیش‌فرض): رول‌های این پالت‌ها فقط با رول‌های پالت‌های صادراتی دیگر بسته می‌شوند؛ <b>خاموش</b>: با معمولی‌ها هم بسته می‌شوند. سوییچ کوچک داخل دکمه وضعیت را نشان می‌دهد و انتخاب ماندگار است و برنامه بلافاصله بازسازی می‌شود.</li>
+                  <li><b>فریز نوار زیرتب‌ها (۳٫۱۷):</b> نوار چهار دکمهٔ زیرتب‌های بسته‌بندی («برنامهٔ بسته‌بندی»، «پالت‌ها»، «رول‌ها و ردیابی»، «نمایش گرافیکی») هنگام اسکرول به پایین، درست زیر نوار اصلی برنامه فریز می‌شود تا این چهار دکمه همیشه در دسترس باشد و با بازگشت به موقعیت اصلی خود، به‌طور طبیعی رها می‌شود.</li>
+                  <li><b>بسته‌های ترکیبی U+X (۳٫۱۷):</b> پس از بهینه‌سازی عادی و پیش از رزرو شدن باقی‌مانده‌ها، رول‌های باقی‌ماندهٔ گرید <b>U</b> و <b>X</b> که همهٔ مشخصه‌های دیگرشان (نوع فیلم، ضخامت، عرض، قطر بوبین) یکی است، در «بستهٔ ترکیبی» بسته می‌شوند و پس از بسته‌های عادی شماره می‌گیرند. این بسته‌ها <b>نیازمند تأیید واحد کنترل کیفیت</b>‌اند: ردیفشان در جدول‌های «برنامهٔ بسته‌بندی» و «لیست بسته های قابل نمایش» با رنگ نارنجی هایلایت می‌شود، ستون «گرید» گرید هر رول را در یک ستون، هم‌تراز شمارهٔ همان رول و فقط با متن بولد (بدون کادر رنگی — ۳٫۱۸) نشان می‌دهد و در خروجی اکسل سایر ستون‌ها نارنجی #FDE9D9 و ستون گرید خط‌به‌خط رنگی می‌شود.</li>
+                  <li><b>چهار زیرتب:</b> «برنامهٔ بسته‌بندی» (فقط بسته‌های قابل اقدام با <b>شماره‌گذاری پیوسته</b> — هر بسته: <b>پالت‌های هر بسته</b> (همهٔ پالت‌ها؛ پای کار = رنگ کهربایی و کادر ظریف) · <b>رول‌های هر بسته</b> (رول‌های هر پالت زیر شمارهٔ همان پالت) — این دو ستون چون مقدارشان لاتین است چپ‌نویس (LTR) هستند · فیلم/عرض/ضخامت/گرید/قطر مجزا · ظرفیت «فعلی از استاندارد» · رزرو · جابه‌جایی + دکمه‌های «جزئیات»، «+ نمایش» (افزودن به نمایش گرافیکی — بدون پرش اسکرول) و «خروجی اکسل» استایل‌دار) · «پالت‌ها» (وضعیت هر پالت + نوع اکسل در برابر محاسبه‌شده + وضعیت در برنامه) · «رول‌ها و ردیابی» (ردیابی کامل تک‌تک رول‌ها) · «نمایش گرافیکی» (جدول واسط قابل ویرایش + کارت‌های آزاد گرافیکی + خروجی تصویر/PDF). هر سه جدول بلند، پنل‌های «ترتیب ستون‌ها» و «مرتب‌سازی» دارند و همه با فیلتر ستونی + دکمهٔ «جزئیات» + «ردیف‌های قابل نمایش» ماندگار.</li>
+                  <li><b>نمایش گرافیکی (۳٫۱۶ · دو تم ردیفی در ۳٫۱۷ · تنظیمات برگه در ۳٫۱۸ · کارت‌ها و خروجی‌ها در ۳٫۱۹):</b> دو پنل تفکیک‌شده — <b>«لیست بسته های قابل نمایش»</b> (جدول کامل با فیلتر ستونی و «ردیف‌های قابل نمایش» مثل سایر جدول‌ها + درگ ردیف ⠿ و ▲▼ برای ترتیب + دکمهٔ «ویرایش» هر بسته در پنجرهٔ کامل: تغییر مشخصات، حذف/بازگردانی پالت، حذف رول تکی و افزودن رول دستی یا پالت دستی حتی خارج از دیتای اصلی — همه فقط نمایشی و ماندگار؛ ۳٫۲۱: متن راهنمای فیلدها با فونت اصلی پروژه (وزیر) و دو فیلد پایانی «شماره پالت دستی» و «شماره رول های دستی» عنوان بالای فیلد + توضیح زیر فیلد دارند؛ ۳٫۲۲: هر پارامتری از بسته که در همان پنجره به‌صورت دستی ویرایش شده باشد (مشخصات، پالت‌ها/رول‌ها و ظرفیت نمایش) در این جدول با نشان خیلی کوچک «دستی» کنار همان پارامتر علامت می‌خورد) و <b>«نمایش گرافیکی بسته‌بندی»</b> با کارت‌های آزاد (هم‌اندازهٔ محتوا و در عرض کامل پنل) — سربرگ با «ظرفیت n از m»، <b>عدد «عرض» بزرگ و بولد در سمت چپ نوار بالا</b> و نوار مشخصات با ۴ کادر مستطیلی (فیلم/ضخامت/گرید/نوع بسته — ۳٫۱۹)، بدون نوار رزرو. رنگ کارت‌ها (۳٫۱۷): هر «ردیف» از کارت‌ها یکی از دو تم رنگی (سبز زمردی و رز) را می‌گیرد؛ ۳٫۱۸: کادر و پس‌زمینهٔ پالت‌های هر کارت نیز از همان تم کارت رنگ می‌گیرد (تک‌رنگ)؛ ۳٫۱۹: شمارهٔ رول‌ها و پالت‌ها درشت و تیره‌اند و <b>دکمهٔ مداد کنار ضربدر هر کارت</b> مستقیماً همان پنجرهٔ ویرایش را باز می‌کند (پس از ذخیره، موقعیت صفحه ثابت می‌ماند). خروجی (۳٫۱۸ + ۳٫۱۹ + ۳٫۲۰): «جهت صفحه» (عمودی/افقی) و «تعداد ستون» (۱ تا ۸) — کارت‌ها هرگز در میانهٔ برگه نمی‌شکنند و با زیاد شدن ستون‌ها کل مقیاس با حفظ نسبت‌ها کوچک می‌شود؛ <b>تاریخ هر برگه به هجری شمسی درج می‌شود</b>؛ خروجی تصویر با «برگهٔ تصویر» خالی همهٔ برگه‌ها را هر کدام یک تصویر کامل A4 جدا می‌سازد و با شمارهٔ برگه فقط همان برگه را؛ PDF همهٔ برگه‌های کامل A4 را می‌سازد؛ ۳٫۲۰: چگالی رندر تصویر/PDF به ۳x (۲۸۸dpi معادل) و کیفیت JPEG داخل PDF به 0.95 افزایش یافت و در کارت‌های ترکیبی، عبارت «تأیید QC» فقط در نوار بالایی کارت باقی است (چیپ گرید نوار مشخصات فقط «U + X» را نشان می‌دهد).</li>
+                  <li><b>رول رزرو:</b> رول‌های باقی‌ماندهٔ هم‌ویژگی (پنج مورد یکسان) هر گروه، رزرو همهٔ بسته‌های همان گروه‌اند — اگر QC یکی از رول‌های بسته را رد کند، از همین فهرست جایگزین انتخاب می‌شود.</li>
+                  <li><b>هشدارهای داده‌ای:</b> مخصوص همین صفحه (جزو هشدارهای داشبورد نیستند): مغایرت نوع بسته‌بندی، نوع بسته‌بندی نامعتبر/قطر نامشخص، عرض نامشخص و خط تولید نامشخص — با کلیک، پالت‌ها و رول‌های درگیر نمایش داده می‌شوند.</li>
+                  <li><b>پشتیبان:</b> پالت‌های واردشده در «ساخت فایل پشتیبان» / «بازیابی از فایل» و «پاک‌سازی کامل برنامه» پوشش داده می‌شوند.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>داشبورد</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li><b>کارت‌های بالای داشبورد:</b> «رول‌های خام»، «متالایز»، «تعداد ستاپ» و «رول‌های برش‌نشده» — هر کدام آمار کل سامانه را در یک نگاه نشان می‌دهند.</li>
+                  <li><b>ردیف‌های کلیک‌پذیر کارت «رول‌های خام»:</b> «رول‌های خام با گرید T» و «رول هایی که ستاپ ندارند» — با کلیک، رکوردهای همان دسته در مودال با پنل شخصی‌سازی ستون‌های جزئیات (انتخاب و ترتیب — ذخیره می‌شود) نمایش داده می‌شوند.</li>
+                  <li><b>ردیف کلیک‌پذیر کارت «رول‌های برش‌نشده»:</b> «عرض های برش نشده ستاپ» — با کلیک، رکوردهای «گزارش تولید ستاپ‌ها» که رول برش‌نشده دارند (فرمول: تعداد − (خام موجود + متالایز)) در مودال با ۱۶ ستون قابل انتخاب/جابه‌جایی (ماندگار) نمایش داده می‌شوند.</li>
+                  <li><b>مانده زمان متالایز به تفکیک دستگاه:</b> نمودار میله‌ای هر دستگاه با دو مؤلفه (رول‌های موجود / رول‌های ستاپ) + دو دونات «مانده زمان موجودی» و «مانده زمان ستاپ».</li>
+                  <li><b>جدول ماتریسی مانده زمان:</b> زیر نمودار تفکیک دستگاه، جدول ۲×۲ با ستون‌های «رول‌های موجود» و «رول‌های ستاپ» و ردیف‌های «کمترین مانده زمان» (به‌همراه شمارهٔ دستگاه کمینه) و «میانگین دستگاه‌ها» — در ردیف میانگین، آیکون‌های ریز شمارهٔ دستگاه‌ها با کلیک روشن/خاموش می‌شوند و میانگین فقط از دستگاه‌های روشن محاسبه می‌شود (انتخاب ماندگار).</li>
+                  <li><b>نمودار ستونی مانده زمان موجودی و ستاپ همهٔ ستاپ‌ها (۳٫۱۷ · فاصلهٔ بین ستون‌ها در ۳٫۱۸):</b> به‌ازای هر ستاپ دو ستون — کهربایی = مجموع مانده زمان موجودی (Σ [خام موجود × مدت]) و فیروزه‌ای = مجموع مانده زمان ستاپ (Σ [تعداد − متالایز] × مدت) با فاصلهٔ کمی بین دو ستونِ هر ستاپ تا دیتالیبل‌ها خوانا بمانند؛ راهنمای سری‌ها بالای نمودار و مقادیر هر دو ستون در تولتیپ است.</li>
+                  <li><b>نمودار افقی عرض‌های رول:</b> هر میله یک عرض از رکوردهای «گزارش تولید ستاپ‌ها» — مرتب از بزرگ به کوچک با دیتالیبل «N رول» (مقدار همان عرض/گروه در مبنای انتخابی — ۳٫۲۲؛ دیگر ستون «تعداد در ستاپ» نیست) روی هر میله؛ مبنای «خام موجود / تعداد» (۳٫۲۱: «تعداد» = مجموع ستون‌های «برش‌نشده» + «خام موجود» — فقط مقادیر بزرگ‌تر از صفر) و انتخابگر دستگاه (همه / ۱ / ۲ / ۳) کنار آن است و انتخاب‌ها ماندگارند. منوی <b>«تفکیک‌ها» (۳٫۲۰)</b>: با روشن‌کردن «متراژ استاندارد»، «خط تولید» و «ضخامت»، رکوردهای هر عرض بر اساس ترکیب مقادیر همان تفکیک‌ها گروه می‌شوند و <b>به‌ازای هر گروه یک میلهٔ مستقل تمام‌قد</b> رسم می‌شود؛ میله‌های هر عرض در نزدیک هم و عرض‌های مختلف با فاصلهٔ زیاد از هم قرار می‌گیرند، همهٔ میله‌های یک عرض هم‌رنگ‌اند و رنگ عرض‌ها یکی‌درمیان بین <b>فیروزه‌ای و کهربایی</b> (همان دو رنگ نمودار «مانده زمان متالایز به تفکیک دستگاه») عوض می‌شود — طراحی میله‌ها (انحنا و بدون بردر) و فاصله‌گذاری‌شان هم الگوی همان نمودار است (۳٫۲۱). عدد عرض در سمت راست چارت <b>درشت و بولد</b> و دقیقاً <b>وسط میله‌های همان عرض</b> درج می‌شود (۳٫۲۱). دیتالیبل هر میله «N رول | مقدار تفکیک‌های روشن» است — فقط تفکیک‌هایی که تیکشان خورده در لیبل می‌آیند (متراژ با رقم لاتین)؛ طول میله‌ها همیشه از مبنای انتخابی شما حساب می‌شود. دیتالیبل‌ها همیشه داخل کادر چارت جا می‌شوند (در صورت نیاز میله‌ها یکجا کوچک‌تر می‌شوند) و تولتیپ هر میله «عرض — لیبل گروه» را همراه تعداد رول‌ها و برش‌نشده‌های هر دستگاه برای رکوردهای همان میله نشان می‌دهد؛ دستگاه‌های بدون رولِ مبنای فعال و بدون برش‌نشده در تولتیپ نمی‌آیند (۳٫۲۲).</li>
+                  <li><b>مرکز هشدار کیفیت داده:</b> در بالای داشبورد (بین کارت‌ها و نمودارهای زمان) قرار دارد تا خطاها در بالاترین نقطه دیده شوند — بخش بعدی.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>مرکز هشدار کیفیت داده</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>مرکز هشدار در بالای داشبورد (بین کارت‌ها و «مانده زمان متالایز به تفکیک دستگاه») قرار دارد تا خطاها در بالاترین نقطهٔ صفحه دیده شوند.</li>
+                  <li>هشدارهای مهم (قرمز): <b>«مغایرت ظرفیت»</b> (خام موجود + متالایز تخصیص‌یافته بیش از تعداد رول ستاپ — در ستون برش‌نشده ستاره‌دار نمایش داده می‌شود)، <b>«رول متالایز با عرض تعریف‌نشده در ستاپ»</b> (کلید «متراژ استاندارد + ستاپ + خط تولید + سالن + سال» رول با ستاپ مطابق است ولی کلید کاملِ شامل عرض با هیچ رکوردی مطابق نیست — یعنی رول به یکی از ستاپ‌ها تعلق دارد ولی عرض آن در آن ستاپ تعریف نشده؛ رکوردها به‌صورت گروه‌بندی‌شده با کلید «عرض + متراژ استاندارد + ستاپ + خط + سالن + سال» نمایش داده می‌شوند)، <b>«رول متالایز با مهلت برش گذشته»</b> (رول متالایزشدهٔ برش‌نشدهٔ دارای متراژ استاندارد که از مهلت مجاز تولید تا برش گذشته — اولویت برش)، <b>هم‌پوشانی قوانین متراژ</b> و <b>نبود هرگونه قانون متراژ</b>.</li>
+                  <li>هشدارهای عادی (کهربایی): رول‌های خام بدون قانون متراژ پوشش‌دهنده، گروه‌های خام بدون ستاپ، رول‌های خام/متالایز تخصیص‌نیافته (ظرفیت ناکافی)، رکوردهای ستاپ ناقص (ضخامت/متراژ/هویت)، رکوردهای بدون قانون زمان متالایز، داده‌های ناقص اکسل (بدون عرض/متراژ/ضخامت/شماره رول/نوع فیلم — به تفکیک هر Dataset) و <b>«رول متالایز شده برش نشده متراژ پایین»</b> (رول‌های ازمهلت‌گذشتهٔ بدون متراژ استاندارد).</li>
+                  <li><b>مهلت مجاز تولید تا برش:</b> حداکثر ساعت مجاز از «تاریخ تولید» (زمان متالایز) تا برش رول‌های متالایزشدهٔ برش‌نشده — در صفحهٔ تنظیمات کنار کادر «تنظیمات نمایش (تم)» تعیین می‌شود؛ خالی = کنترل غیرفعال؛ پیش‌فرض ۲۴ ساعت.</li>
+                  <li>همهٔ هشدارها دارای دکمهٔ <b>«مشاهدهٔ رکوردها»</b> هستند و هر Drill-down دقیقاً رکوردهای عامل همان هشدار را با ستون‌های Mapping‌شدهٔ شما و پنل شخصی‌سازی ستون‌ها نشان می‌دهد — بدون جست‌وجوی دستی.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="help-section">
+              <summary>پشتیبان‌گیری، تم و آفلاین بودن</summary>
+              <div class="help-body">
+                <ul class="help-list">
+                  <li>همهٔ داده‌ها در IndexedDB همان مرورگر ذخیره می‌شود؛ Backup JSON دوره‌ای تهیه کنید و با «بازیابی از فایل» بازگردانید.</li>
+                  <li>فایل Backup شامل ستاپ‌ها، قوانین، تنظیمات، متادیتای Importها، Datasetهای رول‌ها و <b>ویرایش‌های رول‌ها</b> است و بازیابی همه را جایگزین می‌کند.</li>
+                  <li>جدول «سابقهٔ Importها (نسخه‌بندی Dataset)» در تنظیمات دکمهٔ <b>«پاک‌کردن سابقهٔ Importها»</b> دارد — فقط رکوردهای همان جدول (متادیتا) پاک می‌شود؛ Datasetها و رکوردهای رول‌ها دست‌نخورده می‌مانند و شماره‌گذاری نسخهٔ Dataset از ۱ شروع می‌شود.</li>
+                  <li>تم روشن/تاریک در تنظیمات قابل انتخاب است و در همین مرورگر ذخیره می‌شود.</li>
+                  <li>برنامه کاملاً آفلاین است: هیچ درخواستی به اینترنت ارسال نمی‌شود و کتابخانه‌ها/فونت‌ها لوکال بارگذاری می‌شوند.</li>
+                </ul>
+              </div>
+            </details>
+
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <!-- ================= پاصفحه ================= -->
+    <footer class="app-footer">
+      <p>سامانه مانیتورینگ متالایز — نسخهٔ ۳٫۲۲ · تمام پردازش‌ها و ذخیره‌سازی‌ها محلی (IndexedDB) · بدون سرور، بدون CDN</p>
+    </footer>
+  </div>
+
+  <!-- ================= مودال تأیید ================= -->
+  <div class="modal-overlay" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-msg">
+      <h3 id="modal-title">تأیید عملیات</h3>
+      <div id="modal-msg" class="modal-msg"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-cancel">انصراف</button>
+        <button type="button" class="btn btn-danger" id="modal-confirm">بله، انجام بده</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= مودال اطلاعاتی (Audit) ================= -->
+  <div class="modal-overlay" id="modal-info" hidden>
+    <div class="modal-card modal-info-card" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
+      <h3 id="modal-info-title">جزئیات</h3>
+      <div id="modal-info-body" class="modal-msg modal-info-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="modal-info-close">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= مودال ویرایش رکورد (تغییر ۳) ================= -->
+  <div class="modal-overlay" id="modal-edit" hidden>
+    <div class="modal-card modal-edit-card" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+      <h3 id="modal-edit-title">ویرایش رکورد</h3>
+      <div id="modal-edit-body" class="modal-msg modal-edit-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="modal-edit-cancel">انصراف</button>
+        <button type="button" class="btn btn-primary" id="modal-edit-save">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          ذخیرهٔ تغییرات
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= اعلان‌ها ================= -->
+  <div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ================= اسکریپت‌های لوکال (بدون CDN) ================= -->
+  <!-- کتابخانه‌ها -->
+  <script src="lib/dexie.min.js"></script>
+  <script src="lib/xlsx.full.min.js"></script>
+  <!-- ۳٫۱۴ بند ۳ — خروجی اکسل استایل‌دار (Border/رنگ/وسط‌چین RTL/فریز هدر) -->
+  <script src="lib/exceljs.min.js"></script>
+  <script src="lib/echarts.min.js"></script>
+  <script src="lib/html2canvas.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <!-- هستهٔ سیستم (ترتیب بارگذاری مهم است) -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/normalize.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/edits.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/setups.js"></script>
+  <script src="js/quality.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/import.js"></script>
+  <script src="js/packaging.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/planning.js"></script>
+  <script src="js/ui.js"></script>
+  <!-- نماها -->
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/import.js"></script>
+  <script src="js/views/rolls.js"></script>
+  <script src="js/views/cutrolls.js"></script>
+  <script src="js/views/lists.js"></script>
+  <script src="js/views/setup.js"></script>
+  <script src="js/views/planning.js"></script>
+  <script src="js/views/packaging.js"></script>
+  <script src="js/views/settings.js"></script>
+  <!-- راه‌انداز -->
+  <script src="js/app.js"></script>
+</body>
+</html>
