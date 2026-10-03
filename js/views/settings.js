@@ -147,28 +147,34 @@
 
   SettingsView.THEME_KEY = 'rm-theme';
 
+  /* ۳٫۲۳ بند ۱ — اعمال تم به‌صورت تابع مشترک (نه فقط داخل initThemePicker)
+     تا مسیر «بازیابی پشتیبان» هم بتواند تم ذخیره‌شده در فایل را فوری اعمال کند */
+  SettingsView.applyThemeValue = function (theme, { persist = true, notify = false } = {}) {
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    if (persist) {
+      try { localStorage.setItem(SettingsView.THEME_KEY, theme === 'dark' ? 'dark' : 'light'); } catch { /* حالت خصوصی */ }
+    }
+    // به‌روزرسانی وضعیت دکمه‌ها
+    document.querySelectorAll('[data-theme-pick]').forEach((btn) => {
+      const active = btn.dataset.themePick === theme;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-checked', String(active));
+    });
+    if (notify) {
+      UI.toast(theme === 'dark' ? 'تم تاریک فعال شد.' : 'تم روشن فعال شد.', 'success');
+    }
+  };
+
   SettingsView.initThemePicker = function () {
     const buttons = document.querySelectorAll('[data-theme-pick]');
     if (!buttons.length) return;
 
     const apply = (theme, { persist = true, notify = false } = {}) => {
-      if (theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      } else {
-        document.documentElement.removeAttribute('data-theme');
-      }
-      if (persist) {
-        try { localStorage.setItem(SettingsView.THEME_KEY, theme); } catch { /* حالت خصوصی */ }
-      }
-      // به‌روزرسانی وضعیت دکمه‌ها
-      buttons.forEach((btn) => {
-        const active = btn.dataset.themePick === theme;
-        btn.classList.toggle('active', active);
-        btn.setAttribute('aria-checked', String(active));
-      });
-      if (notify) {
-        UI.toast(theme === 'dark' ? 'تم تاریک فعال شد.' : 'تم روشن فعال شد.', 'success');
-      }
+      SettingsView.applyThemeValue(theme, { persist, notify });
     };
 
     // مقدار ذخیره‌شده (پیش‌فرض: روشن)
@@ -526,10 +532,12 @@
   SettingsView.exportBackup = async function () {
     try {
       const { fileName, counts } = await Backup.exportFile();
+      /* ۳٫۲۳ بند ۱ — شمارش تنظیمات/وضعیت‌ها در پیام (شفافیت محتوای فایل) */
       UI.toast(
         `پشتیبان «${U.escapeHtml(fileName)}» ساخته شد — ` +
         `${U.faNum(counts.setupRolls)} ستاپ · ${U.faNum(counts.standardLengthRules)} قانون · ` +
-        `${U.faNum(counts.rolls + counts.archivedRolls)} رکورد اکسل`,
+        `${U.faNum(counts.rolls + counts.archivedRolls)} رکورد اکسل · ` +
+        `${U.faNum(counts.settings || 0)} تنظیم/وضعیت (شامل تم)`,
         'success',
         6000
       );
@@ -559,12 +567,13 @@
 
       const c = payload.counts;
 
-      // تأیید بازیابی (§70 — عملیات خطرناک)
+      // تأیید بازیابی (§70 — عملیات خطرناک) + شمارش تنظیمات (۳٫۲۳ بند ۱)
       const ok = await UI.confirm({
         title: 'تأیید بازیابی Backup',
         html: `<div class="confirm-stats">
           <div>ستاپ‌ها: <b>${U.faNum(c.setupRolls)}</b> · قوانین: <b>${U.faNum(c.standardLengthRules)}</b></div>
           <div>رکوردهای rolls: <b>${U.faNum(c.rolls)}</b> · آرشیو: <b>${U.faNum(c.archivedRolls)}</b></div>
+          <div>تنظیمات و وضعیت‌ها: <b>${U.faNum(c.settings || 0)}</b> مورد · تم: <b>${payload.ui && payload.ui.theme === 'dark' ? 'تاریک' : 'روشن'}</b></div>
           <div>تاریخ پشتیبان: <b>${U.faDate(payload.exportedAt)}</b></div>
         </div>`,
         message: 'تمام داده‌های فعلی برنامه با محتوای این فایل جایگزین خواهد شد. ادامه می‌دهید؟',
@@ -579,7 +588,20 @@
         return;
       }
 
-      UI.toast('بازیابی با موفقیت انجام شد — همهٔ محاسبات به‌روزرسانی گردید.', 'success');
+      /* ۳٫۲۳ بند ۱ — تم پشتیبان فوری اعمال می‌شود (فایل‌های قدیمی بدون بخش ui
+         → تم فعلی دست‌نخورده می‌ماند) */
+      let themeApplied = false;
+      if (payload.ui && (payload.ui.theme === 'dark' || payload.ui.theme === 'light')) {
+        SettingsView.applyThemeValue(payload.ui.theme, { persist: true });
+        themeApplied = true;
+      }
+
+      UI.toast(
+        themeApplied
+          ? 'بازیابی با موفقیت انجام شد — داده‌ها، تنظیمات و تم به‌روزرسانی گردید.'
+          : 'بازیابی با موفقیت انجام شد — همهٔ محاسبات به‌روزرسانی گردید.',
+        'success'
+      );
       await RM.refreshAll();
       await SettingsView.renderAll();
     } catch (err) {

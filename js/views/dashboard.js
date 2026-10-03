@@ -499,13 +499,19 @@
          ستون‌ها: «رول‌های موجود» (مانده زمان موجودی — کهربایی، هماهنگ با چارت)
                   «رول‌های ستاپ»  (مانده زمان ستاپ — فیروزه‌ای، هماهنگ با چارت)
          ردیف‌ها: «کمترین مانده زمان» (دستگاه دارای کمترین مانده زمان موجودی)
-                  «میانگین دستگاه‌ها» (جمع ÷ تعداد دستگاه‌ها)
+                  «میانگین دستگاه‌ها» (انتخاب دستگاه‌ها + کمترین‌ها — ۳٫۲۳)
        هر سلول: مقدار [H]:mm درشت + «معادل روزانه: X روز» — طراحی کارت‌ماتریسی
        کاربرپسند با هدرهای رنگی و اعداد فارسی خوانا در یک نگاه.
        نسخهٔ ۳٫۵ — تغییر ۴: در ردیف «میانگین دستگاه‌ها» آیکون‌های ریز کلیک‌پذیر
-       دستگاه‌ها درج شد — میانگین هر دو ستون فقط از دستگاه‌های روشن محاسبه
-       می‌شود (مثلاً دستگاه ۱ و ۳ روشن → جمع مقادیرشان ÷ ۲). انتخاب ماندگار
-       است (appSettings: matrixAvgMachines). */
+       دستگاه‌ها درج شد — دامنهٔ محاسبه فقط دستگاه‌های روشن است. انتخاب ماندگار
+       است (appSettings: matrixAvgMachines).
+       نسخهٔ ۳٫۲۳ — بند ۳: سلول‌های ردیف «میانگین دستگاه‌ها» از میانگینِ سطح
+       دستگاه به «کمترین مانده زمان از ستاپ‌های دستگاه‌های روشن» تغییر کرد —
+       مقدارها دقیقاً از همان فرمول ستون‌های «مانده زمان موجودی» و «مانده زمان
+       ستاپ» جدول ستاپ‌ها (گزارش تولید ستاپ‌ها) خوانده می‌شوند؛ ستاپ‌های تمام‌شده
+       (مقدار ۰) از کمترین‌گیری خارج‌اند تا عدد همیشه صفر نشود؛ اگر هیچ ستاپ
+       مثبتی نباشد ۰:۰۰ نمایش داده می‌شود. تولتیپ هر سلول شمارهٔ ستاپِ صاحب
+       کمترین را نشان می‌دهد. ردیف «کمترین مانده زمان» (سطح دستگاه) دست‌نخورده است. */
     const producedOf = (m) => (s.machineTime[m] ? s.machineTime[m].produced : 0);
     const setupOf = (m) => (s.machineTime[m] ? s.machineTime[m].setup : 0);
     let minMachine = machines[0];
@@ -514,22 +520,44 @@
       if (producedOf(m) < minProduced) { minProduced = producedOf(m); minMachine = m; }
     }
 
-    const mtCell = (minutes, cls) => `
-      <div class="mtx-cell ${cls}">
+    const mtCell = (minutes, cls, title) => `
+      <div class="mtx-cell ${cls}"${title ? ` title="${title}"` : ''}>
         <span class="mtx-value">${U.faHMM(minutes)}</span>
         <span class="mtx-days">معادل روزانه: ${U.faDaysOf(minutes)}</span>
       </div>`;
 
-    /* ماتریس با آیکون‌های دستگاه + میانگینِ دستگاه‌های روشن (رندر مجدد بدون چارت) */
+    /* ماتریس با آیکون‌های دستگاه + کمترین‌های ستاپ‌های دستگاه‌های روشن (۳٫۲۳) */
     const renderMatrix = () => {
       const avgOn = Dashboard._avgMachines && Dashboard._avgMachines.length
         ? Dashboard._avgMachines.filter((m) => machines.includes(m))
         : [...machines];   // پیش‌فرض: همهٔ دستگاه‌ها روشن
       const machineCount = avgOn.length;
-      const sumProduced = avgOn.reduce((acc, m) => acc + producedOf(m), 0);
-      const sumSetup = avgOn.reduce((acc, m) => acc + setupOf(m), 0);
-      const avgProduced = machineCount ? sumProduced / machineCount : 0;
-      const avgSetup = machineCount ? sumSetup / machineCount : 0;
+
+      /* ۳٫۲۳ بند ۳ — کمترین مانده زمان‌ها از ستاپ‌های دستگاه‌های روشن:
+         مقدارها از همان فرمول ستون‌های «مانده زمان موجودی» و «مانده زمان
+         ستاپ» جدول ستاپ‌ها (state.setupReport) خوانده می‌شوند؛ ستاپ‌های
+         تمام‌شده (مقدار ۰) لحاظ نمی‌شوند. */
+      const setupsOn = (state.setupReport || []).filter((r) =>
+        r && avgOn.includes(r.machineNumber) &&
+        r.remainingSetupTime !== null && r.remainingSetupTime !== undefined);
+      let minInvTime = 0, minInvRow = null;
+      let minSetupTime = 0, minSetupRow = null;
+      for (const r of setupsOn) {
+        if ((r.remainingProducedTime || 0) > 0 &&
+            (minInvRow === null || r.remainingProducedTime < minInvTime)) {
+          minInvTime = r.remainingProducedTime; minInvRow = r;
+        }
+        if (r.remainingSetupTime > 0 &&
+            (minSetupRow === null || r.remainingSetupTime < minSetupTime)) {
+          minSetupTime = r.remainingSetupTime; minSetupRow = r;
+        }
+      }
+      const invTitle = minInvRow
+        ? `کمترین «مانده زمان موجودی» از ستاپ‌های دستگاه‌های روشن — ستاپ ${U.faNum(minInvRow.setupNumber)} (دستگاه ${U.faNum(minInvRow.machineNumber)})`
+        : 'ستاپی با مانده زمان موجودی مثبت در دستگاه‌های روشن نیست';
+      const setupTitle = minSetupRow
+        ? `کمترین «مانده زمان ستاپ» از ستاپ‌های دستگاه‌های روشن — ستاپ ${U.faNum(minSetupRow.setupNumber)} (دستگاه ${U.faNum(minSetupRow.machineNumber)})`
+        : 'ستاپی با مانده زمان ستاپ مثبت در دستگاه‌های روشن نیست';
 
       document.getElementById('machine-time-footer').innerHTML = `
         <div class="mt-matrix" role="table" aria-label="مانده زمان متالایز — کمترین و میانگین به تفکیک رول‌های موجود و رول‌های ستاپ">
@@ -553,22 +581,22 @@
             ${mtCell(setupOf(minMachine), 'mtx-setup')}
           </div>
           <div class="mtx-row" role="row">
-            <span class="mtx-rowhead" role="rowheader">
+            <span class="mtx-rowhead" role="rowheader" title="کمترین مانده زمانِ موجودی و ستاپ از ستاپ‌های دستگاه‌های روشن (ستون‌های «مانده زمان موجودی» و «مانده زمان ستاپ» جدول ستاپ‌ها — ۳٫۲۳)">
               میانگین دستگاه‌ها
-              <span class="mtx-sub">${machineCount ? `${U.faNum(machineCount)} دستگاه` : 'دستگاهی انتخاب نشده'}</span>
-              <span class="mtx-mach-btns" role="group" aria-label="انتخاب دستگاه‌های شرکت‌کننده در میانگین">
+              <span class="mtx-sub">${machineCount ? `${U.faNum(machineCount)} دستگاه · کمترین ستاپ‌ها` : 'دستگاهی انتخاب نشده'}</span>
+              <span class="mtx-mach-btns" role="group" aria-label="انتخاب دستگاه‌های شرکت‌کننده در محاسبهٔ کمترین‌ها">
                 ${machines.map((m) => `
                   <button type="button" class="mtx-mach${avgOn.includes(m) ? ' on' : ''}" data-mtx-mach="${m}"
                           aria-pressed="${avgOn.includes(m) ? 'true' : 'false'}"
                           title="${avgOn.includes(m)
-                            ? `دستگاه ${U.faNum(m)} در میانگین است — برای حذف از میانگین کلیک کنید`
-                            : `دستگاه ${U.faNum(m)} در میانگین نیست — برای افزودن به میانگین کلیک کنید`}">
+                            ? `ستاپ‌های دستگاه ${U.faNum(m)} در کمترین‌ها لحاظ می‌شود — برای حذف کلیک کنید`
+                            : `ستاپ‌های دستگاه ${U.faNum(m)} در کمترین‌ها لحاظ نمی‌شود — برای افزودن کلیک کنید`}">
                     <span class="mtx-mach-num">${U.faNum(m)}</span>
                   </button>`).join('')}
               </span>
             </span>
             ${machineCount
-              ? mtCell(avgProduced, 'mtx-inv') + mtCell(avgSetup, 'mtx-setup')
+              ? mtCell(minInvTime, 'mtx-inv', invTitle) + mtCell(minSetupTime, 'mtx-setup', setupTitle)
               : `<div class="mtx-cell mtx-inv"><span class="mtx-value muted">—</span><span class="mtx-days">دستگاهی روشن نیست</span></div>
                  <div class="mtx-cell mtx-setup"><span class="mtx-value muted">—</span><span class="mtx-days">دستگاهی روشن نیست</span></div>`}
           </div>
@@ -589,8 +617,8 @@
           renderMatrix();
           UI.toast(
             current.includes(m)
-              ? `دستگاه ${U.faNum(m)} به میانگین اضافه شد.`
-              : `دستگاه ${U.faNum(m)} از میانگین حذف شد.`,
+              ? `ستاپ‌های دستگاه ${U.faNum(m)} به محاسبهٔ کمترین‌ها اضافه شد.`
+              : `ستاپ‌های دستگاه ${U.faNum(m)} از محاسبهٔ کمترین‌ها حذف شد.`,
             'info', 1800
           );
         });
@@ -1569,17 +1597,20 @@
         axisLabel: {
           color: P.text,
           fontFamily: P.fontFamily,
-          /* ۳٫۲۱ بند ۱-ز — عدد عرض در کل نمودار چند درجه درشت‌تر و بولدتر؛
-             خط دور هم‌رنگ ۰٫۵px برای ضخامت بصری بیشتر (وزن ۸۰۰ + stroke) */
+          /* ۳٫۲۱ بند ۱-ز — عدد عرض درشت و بولد؛ ۳٫۲۳ بند ۲ — بولدیِ میانه:
+             وزن از ۸۰۰ به ۵۰۰ کاهش یافت. وزیر فقط ۳ وزن دارد (400/500/700)
+             پس ۸۰۰ عملاً Bold رندر می‌شد (+ استروک ۰٫۵px) و اعداد «N رول»
+             روی میله‌ها را می‌بلعید؛ اکنون ۵۰۰ = Medium + همان استروک ≈ بولدِ
+             ملایم‌تر — همچنان بولد، ولی اعداد خود نمود برجسته می‌شوند. */
           fontSize: widthLblSize,
-          fontWeight: 800,
+          fontWeight: 500,
           interval: 0,
           textBorderColor: P.text,
           textBorderWidth: 0.5,
           rich: {
             t: {
               fontSize: widthLblSize,
-              fontWeight: 800,
+              fontWeight: 500,
               color: P.text,
               fontFamily: P.fontFamily,
               textBorderColor: P.text,

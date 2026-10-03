@@ -4,6 +4,9 @@
    Export:  JSON شامل ستاپ‌ها + قوانین + تنظیمات + متادیتا + Datasetها
    Restore: اعتبارسنجی ساختار → تأیید کاربر → جایگزینی تراکنشی (§14)
    نام فایل: RollMonitor-Backup-YYYY-MM-DD.json با تاریخ شمسی (نسخهٔ ۲٫۴)
+   نسخهٔ ۳٫۲۳ — بند ۱: پوشش کامل وضعیت‌ها — بخش جدید ui (تم روشن/تاریک از
+   localStorage) + counts.settings (تعداد کلیدهای تنظیمات/وضعیت‌های ماندگار)
+   تا فایل پشتیبان علاوه بر داده‌ها، چهرهٔ کامل برنامه را نیز بازسازی کند.
    ========================================================================= */
 
 'use strict';
@@ -20,6 +23,9 @@
    * ساخت شیء کامل پشتیبان از تمام داده‌های برنامه.
    * Datasetهای Import شده نیز پوشش داده می‌شوند (§61).
    * تغییر ۳: ویرایش‌های رول‌ها (rollEdits) هم پشتیبان/بازیابی می‌شوند.
+   * ۳٫۲۳ بند ۱: بخش ui با تم فعلی (localStorage) اضافه شد + counts.settings —
+   * تعداد کلیدهای appSettings (تنظیمات/وضعیت‌های ماندگار: عرض ستون‌ها،
+   * پنهان‌سازی، مرتب‌سازی‌ها، وضعیت چارت‌ها، ویرایش‌های نمایشی و…).
    */
   Backup.build = async function () {
     const [setupRolls, standardLengthRules, appSettings, importMetadata, rolls, archivedRolls, rollEdits, pallets] =
@@ -34,6 +40,10 @@
         db.pallets.toArray(),   // نسخهٔ ۳٫۱۲ — فایل مدیریت پالت‌ها (صفحهٔ بسته‌بندی)
       ]);
 
+    /* ۳٫۲۳ — تم فعلی از localStorage (تنها وضعیتِ بیرون از IndexedDB) */
+    let theme = 'light';
+    try { theme = localStorage.getItem('rm-theme') || 'light'; } catch { /* حالت خصوصی */ }
+
     return {
       app: RM.config.APP_NAME,
       schemaVersion: 2,
@@ -46,7 +56,9 @@
         importMetadata: importMetadata.length,
         rollEdits: rollEdits.length,
         pallets: pallets.length,   // نسخهٔ ۳٫۱۲
+        settings: appSettings.length,   // ۳٫۲۳ — تعداد تنظیمات/وضعیت‌های ماندگار
       },
+      ui: { theme },   // ۳٫۲۳ — تم روشن/تاریک
       data: { setupRolls, standardLengthRules, appSettings, importMetadata, rolls, archivedRolls, rollEdits, pallets },
     };
   };
@@ -136,6 +148,15 @@
     // پالت‌های بسته‌بندی (نسخهٔ ۳٫۱۲) — اختیاری (فایل‌های قدیمی فاقد آن‌اند)
     if (d.pallets !== undefined && !Array.isArray(d.pallets)) {
       errors.push('جدول «pallets» (پالت‌های بسته‌بندی) در فایل معتبر نیست.');
+    }
+
+    // ۳٫۲۳ بند ۱ — بخش ui (تم) اختیاری است (فایل‌های قدیمی فاقد آن‌اند)
+    if (payload.ui !== undefined) {
+      if (!payload.ui || typeof payload.ui !== 'object' || Array.isArray(payload.ui)) {
+        errors.push('بخش «ui» فایل معتبر نیست.');
+      } else if (payload.ui.theme !== undefined && payload.ui.theme !== 'light' && payload.ui.theme !== 'dark') {
+        errors.push('مقدار تم در فایل پشتیبان معتبر نیست.');
+      }
     }
 
     return { ok: errors.length === 0, payload, errors };

@@ -1463,7 +1463,7 @@
   PlanningView.pdfFootHtml = function (pageNum, totalPages, note) {
     return `
       <footer class="pp-foot">
-        <span>سامانه مانیتورینگ متالایز · نسخهٔ ۳٫۲۲</span>
+        <span>سامانه مانیتورینگ متالایز · نسخهٔ ۳٫۲۳</span>
         <span>${note ? `${note} · ` : ''}صفحهٔ ${U.faNum(pageNum)} از ${U.faNum(totalPages)}</span>
       </footer>`;
   };
