@@ -1079,8 +1079,65 @@
       </li>`;
   }
 
-  /** HTML کارت یک کلید (لیست پارامترها + افزودن + ذخیره/بازگردانی) */
-  function mkKeyCardHtml(def, params, isModified) {
+  /**
+   * HTML بلوک ستون نمایندهٔ «عرض» (نسخهٔ ۳٫۲۷) — در کارت هر کلیدِ بخش رول‌ها که
+   * فاکتور عرض (یا عرض برش) در ترکیب فعلی‌اش دارد و widthPolicy دارد:
+   *   · کلیدهای پالت‌ها و کلیدهای بدون فاکتور عرض → بدون بلوک
+   *   · setupOnly (کلید یکتایی ستاپ) → یادداشت: عرض فقط از فیلد عرض ستاپ
+   *   · دیگر کلیدها → دراپ‌داون جداگانه برای هر منبع (رول‌های موجود/آرشیو)
+   * ctx.archInitialWidthMapped: آیا ستون «عرض رول اولیه» آرشیو در Dataset فعلی
+   * نگاشت شده؟ (null = Dataset آرشیو موجود نیست — بدون هشدار)
+   */
+  function mkWidthSourcesHtml(def, params, ctx) {
+    const policy = def.widthPolicy;
+    if (!policy) return '';                          // کلید پالتی یا بدون فاکتور عرض
+    const param = policy.param || 'width';
+    if (!params.includes(param)) return '';          // فاکتور عرض در ترکیب فعلی نیست
+    const P = RM.config.MATCH_KEY_PARAMS;
+    const paramLabel = (P[param] || { label: 'عرض' }).label;
+
+    /* یادداشت کلیدهای دوسمتتی ستاپ (بدون ستون رولی) */
+    if (policy.setupOnly) {
+      return `
+        <div class="mk-wsrc mk-wsrc-note">
+          <span class="mk-wsrc-title">ستون نمایندهٔ «${U.escapeHtml(paramLabel)}»:</span>
+          <p>در این کلید، «${U.escapeHtml(paramLabel)}» فقط از <b>فیلد عرض خودِ ستاپ</b> خوانده می‌شود — هر دو سمتِ مقایسه رکورد ستاپ‌اند و ستونی از فایل‌های رول در آن مشارکت ندارد.</p>
+        </div>`;
+    }
+    if (!policy.sources) return '';
+
+    const SIDE_LABELS = { raw: 'در رول‌های موجود', archived: 'در آرشیو (سابقهٔ رول‌ها)' };
+    const rows = Object.keys(policy.sources).map((src) => {
+      const current = RM.keys.widthSourceOf(def.id, src) || policy.sources[src];
+      const fields = RM.config.WIDTH_SOURCE_FIELDS[src] || {};
+      const options = Object.entries(fields).map(([f, meta]) => {
+        /* هشدار گزینهٔ «عرض اولیه» آرشیو وقتی در فایل فعلی نگاشت نشده */
+        let hint = '';
+        if (src === 'archived' && f === 'initialWidth' && ctx && ctx.archInitialWidthMapped === false) {
+          hint = ' — در Dataset فعلی نگاشت نشده';
+        }
+        return `<option value="${f}" ${f === current ? 'selected' : ''}>${U.escapeHtml(meta.label)} (ستون «${U.escapeHtml(meta.column)}»${U.escapeHtml(hint)})</option>`;
+      }).join('');
+      const warn = (src === 'archived' && current === 'initialWidth' && ctx && ctx.archInitialWidthMapped === false)
+        ? `<p class="mk-wsrc-warn">توجه: ستون «عرض رول اولیه» آرشیو در Dataset فعلی نگاشت نشده است — تا زمان نگاشت («تنظیمات ← نگاشت ستون‌های اکسل»)، عرض رول‌های آرشیو خالی خوانده می‌شود و تطبیق متالایز عملی نخواهد بود.</p>`
+        : '';
+      return `
+          <label class="mk-wsrc-row">
+            <span class="mk-wsrc-side">${SIDE_LABELS[src] || src}</span>
+            <select data-mk-width="${src}" aria-label="ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» ${SIDE_LABELS[src] || src} در ${U.escapeHtml(def.label)}">${options}</select>
+          </label>${warn}`;
+    }).join('');
+
+    return `
+        <div class="mk-wsrc">
+          <span class="mk-wsrc-title">ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» در این کلید:</span>
+          ${rows}
+          <p class="mk-wsrc-hint">هر سمت مستقل از سمت‌های دیگر تنظیم می‌شود — می‌توانید عرض رول‌های موجود را یک ستون و عرض آرشیو را ستونی دیگر معرفی کنید؛ سمت ستاپ همیشه فیلد عرض خودِ ستاپ است.</p>
+        </div>`;
+  }
+
+  /** HTML کارت یک کلید (لیست پارامترها + افزودن + ستون نمایندهٔ عرض ۳٫۲۷ + ذخیره/بازگردانی) */
+  function mkKeyCardHtml(def, params, isModified, ctx) {
     const P = RM.config.MATCH_KEY_PARAMS;
     const paramsHtml = params
       .map((p, i) => mkParamRowHtml(p, i, params.length, P[p] || { label: p, desc: '' }))
@@ -1103,6 +1160,7 @@
         </div>
         <p class="mk-key-desc">${U.escapeHtml(def.desc)}</p>
         <ul class="mk-params" data-mk-list>${paramsHtml}</ul>
+        ${mkWidthSourcesHtml(def, params, ctx)}
         <div class="mk-add-row">
           <select data-mk-select aria-label="افزودن پارامتر به ${U.escapeHtml(def.label)}">${addOptions}</select>
           <button type="button" class="btn btn-ghost btn-sm" data-mk-add ${remaining.length ? '' : 'disabled'}>افزودن پارامتر</button>
@@ -1112,8 +1170,23 @@
           <button type="button" class="btn btn-ghost btn-sm" data-mk-reset ${isModified ? '' : 'disabled'}
             title="${isModified ? 'بازگردانی ترکیب کارخانه‌ای همین کلید (کلید حذف نمی‌شود)' : 'این کلید در ترکیب پیش‌فرض است'}">بازگردانی به پیش‌فرض</button>
         </div>
-        <p class="mk-key-hint">ترکیب فعلی: ${U.escapeHtml(RM.keys.describe(def.id))}</p>
+        <p class="mk-key-hint">ترکیب فعلی: ${U.escapeHtml(RM.keys.describe(def.id))}${mkWidthSummary(def, params)}</p>
       </div>`;
+  }
+
+  /** خلاصهٔ ستون‌های نمایندهٔ عرض فعلی یک کلید (۳٫۲۷) — پیوست ردیف «ترکیب فعلی» */
+  function mkWidthSummary(def, params) {
+    const policy = def.widthPolicy;
+    if (!policy || !policy.sources) return '';
+    const param = policy.param || 'width';
+    if (!params.includes(param)) return '';
+    const SIDE = { raw: 'رول‌های موجود', archived: 'آرشیو' };
+    const parts = Object.keys(policy.sources).map((src) => {
+      const fld = RM.keys.widthSourceOf(def.id, src) || policy.sources[src];
+      const meta = (RM.config.WIDTH_SOURCE_FIELDS[src] || {})[fld];
+      return `${SIDE[src] || src} ← «${meta ? meta.label : fld}»`;
+    });
+    return ` · منبع «${U.escapeHtml((RM.config.MATCH_KEY_PARAMS[param] || { label: 'عرض' }).label)}»: ${parts.map(U.escapeHtml).join(' · ')}`;
   }
 
   /** رندر پنل کلیدهای تطبیق — ۹ کلید در ۴ دسته (دسته‌بندی از رجیستری) */
@@ -1121,6 +1194,20 @@
     const wrap = document.getElementById('matchkeys-editor');
     if (!wrap) return;
     await RM.keys.ensure();   // مصرف همگام مطمئن
+
+    /* ۳٫۲۷ — آیا ستون «عرض اولیه» آرشیو در Dataset فعلی نگاشت شده؟
+       (null = Dataset آرشیو هنوز وارد نشده — بدون هشدار). مبنای هشدار گزینهٔ
+       «عرض اولیه» منبع عرض آرشیو در کارت کلید متالایز. */
+    let archInitialWidthMapped = null;
+    try {
+      const headers = await RM.normalize.getDatasetHeaders('archived');
+      if (headers.length) {
+        const overrides = (await RM.normalize.getUserMapping()).archived || {};
+        const mapping = RM.normalize.buildFieldMapping('archived', headers, overrides);
+        archInitialWidthMapped = !!mapping.initialWidth;
+      }
+    } catch { /* دیتابیس در دسترس نیست — بدون هشدار */ }
+    const ctx = { archInitialWidthMapped };
 
     /* گروه‌بندی کلیدها بر اساس دستهٔ رجیستری (ترتیب اعلان حفظ می‌شود) */
     const categories = [];
@@ -1139,7 +1226,7 @@
           <span class="chip">${U.faNum(byCat.get(cat).length)} کلید</span>
         </h4>
         <div class="mk-keys-grid">
-          ${byCat.get(cat).map((def) => mkKeyCardHtml(def, RM.keys.paramsOf(def.id), RM.keys.isModified(def.id))).join('')}
+          ${byCat.get(cat).map((def) => mkKeyCardHtml(def, RM.keys.paramsOf(def.id), RM.keys.isModified(def.id), ctx)).join('')}
         </div>
       </div>`).join('');
 
@@ -1231,8 +1318,14 @@
       return;
     }
 
+    /* ۳٫۲۷ — ستون‌های نمایندهٔ عرض همین کلید (فقط کارت‌های دارای بلوک عرض) */
+    const widthSelects = card.querySelectorAll('[data-mk-width]');
+    const widthSources = {};
+    widthSelects.forEach((sel) => { widthSources[sel.dataset.mkWidth] = sel.value; });
+    const hasWidthBlock = widthSelects.length > 0;
+
     try {
-      const res = await RM.keys.saveOverride(keyId, params);
+      const res = await RM.keys.saveOverride(keyId, params, hasWidthBlock ? widthSources : undefined);
       if (!res.ok) {
         UI.toast(res.error || 'ذخیرهٔ کلید ممکن نشد.', 'error', 5000);
         return;
@@ -1243,8 +1336,17 @@
       await RM.refreshAll();
 
       const label = def.label;
+      /* ۳٫۲۷ — خلاصهٔ منابع عرض در توست ذخیره (کارت‌های دارای بلوک عرض) */
+      let srcTxt = '';
+      if (hasWidthBlock) {
+        const SIDE = { raw: 'رول‌های موجود', archived: 'آرشیو' };
+        srcTxt = ' · منبع عرض: ' + Object.keys(widthSources).map((src) => {
+          const meta = (RM.config.WIDTH_SOURCE_FIELDS[src] || {})[widthSources[src]];
+          return `${SIDE[src] || src} ← «${meta ? meta.label : widthSources[src]}»`;
+        }).join(' · ');
+      }
       UI.toast(
-        `کلید «${label}» با ${U.faNum(res.params.length)} پارامتر ذخیره شد — محاسبات و جداول بازسازی شدند.`,
+        `کلید «${label}» با ${U.faNum(res.params.length)} پارامتر ذخیره شد${srcTxt} — محاسبات و جداول بازسازی شدند.`,
         'success',
         6000
       );
@@ -1260,7 +1362,7 @@
     if (!def) return;
     const ok = await UI.confirm({
       title: 'بازگردانی کلید به پیش‌فرض',
-      message: `ترکیب سفارشی شما برای «${def.label}» حذف و ترکیب پیش‌فرض (${RM.keys.describe(keyId)}) اعمال می‌شود. کلید حذف نمی‌شود و پس از تأیید، کل محاسبات و جداول بازسازی خواهند شد. ادامه می‌دهید؟`,
+      message: `ترکیب سفارشی شما برای «${def.label}» — شامل ستون‌های نمایندهٔ «عرض» در صورت تغییر — حذف و ترکیب پیش‌فرض (${RM.keys.describe(keyId)}) اعمال می‌شود. کلید حذف نمی‌شود و پس از تأیید، کل محاسبات و جداول بازسازی خواهند شد. ادامه می‌دهید؟`,
       confirmText: 'بله، بازگردانی کن',
     });
     if (!ok) return;
@@ -1269,7 +1371,7 @@
       await RM.keys.resetOverride(keyId);
       RM.calcEngine.invalidate();
       await RM.refreshAll();
-      UI.toast(`کلید «${def.label}» به پیش‌فرض بازگردانی شد و محاسبات بازسازی شد.`, 'success', 6000);
+      UI.toast(`کلید «${def.label}» به پیش‌فرض بازگردانی شد (ترکیب پارامترها و ستون نمایندهٔ عرض) و محاسبات بازسازی شد.`, 'success', 6000);
     } catch (err) {
       console.error('[ResetMatchKey]', err);
       UI.toast('خطا در بازگردانی کلید.', 'error');

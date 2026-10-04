@@ -1517,6 +1517,9 @@ button.status-row, .status-row-link {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* ۳٫۲۷ — عرضِ ذاتیِ دراپ‌داون بلوک منبع عرض نباید عرض کارت را در موبایل
+     بشکند (min-content ردیف گرید)؛ خودِ select با min-width:0 جمع می‌شود */
+  min-width: 0;
 }
 
 .mk-key-head {
@@ -1645,10 +1648,80 @@ button.status-row, .status-row-link {
   line-height: 1.8;
 }
 
+/* ---------- ۳٫۲۷) بلوک ستون نمایندهٔ «عرض» در کارت کلید ---------- */
+.mk-wsrc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  margin: 2px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-1);
+}
+
+.mk-wsrc-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mk-wsrc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mk-wsrc-side {
+  flex: 0 0 auto;
+  min-width: 150px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.mk-wsrc-row select {
+  flex: 1 1 180px;
+  min-width: 0;   /* گزینه‌های بلند نباید عرض کارت را در موبایل بشکنند */
+  font-size: 0.74rem;
+  padding: 7px 10px;
+}
+
+.mk-wsrc-hint {
+  margin: 2px 0 0;
+  font-size: 0.64rem;
+  color: var(--text-faint);
+  line-height: 1.8;
+}
+
+/* یادداشت کلیدهای دوسمتتی ستاپ (setupUnique) — بدون دراپ‌داون */
+.mk-wsrc-note p {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.9;
+}
+
+/* هشدار گزینهٔ نگاشت‌نشده (عرض اولیهٔ آرشیو) */
+.mk-wsrc-warn {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--uncut);
+  background: var(--uncut-soft);
+  border: 1px solid rgba(190, 18, 60, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  line-height: 1.8;
+}
+
 @media (max-width: 640px) {
   .mk-section .mk-keys-grid { grid-template-columns: 1fr; }
   .mk-add-row { flex-direction: column; align-items: stretch; }
   .mk-add-row .btn { width: 100%; }
+  /* ۳٫۲۷ — در حالت ستونی، wrap خطِ جدا به پهنای ذاتیِ select می‌سازد؛
+     nowrap + stretch دراپ‌داون را هم‌عرض ردیف می‌کند */
+  .mk-wsrc-row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+  .mk-wsrc-side { min-width: 0; }
 }
 
 /* ---------- ۲۶) Toast ---------- */

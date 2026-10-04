@@ -70,9 +70,9 @@
 
       // هویت رول از شمارهٔ رول (نسخهٔ ۲٫۹)
       const id = N.parseRollIdentity(roll.rollNumber);
-      /* ۳٫۹ — تغییر ۱: فیلد «عرض» (cutWidth — ستون «عرض» فایل رول‌های موجود)
-         مبنای کلید انطباق/تخصیص است؛ جایگزین «عرض اولیه» (width) شد. */
-      const matchWidth = roll.cutWidth;
+      /* ۳٫۲۷ — ستون نمایندهٔ «عرض» رول‌های موجود از widthPolicy تنظیمات کلید خام خوانده می‌شود
+         (پیش‌فرض جدید: ستون «عرض اولیه» فیلد width — تا ۳٫۶ ستون «عرض» cutWidth بود). */
+      const matchWidth = RM.keys.widthValue('rawMatch', 'raw', roll);
       /* ۳٫۲۶ — کلید قابل تنظیم: مقادیر همهٔ فاکتورهای مجاز عرضه می‌شوند و
          RM.keys فقط فاکتورهای ترکیب فعلی را در رشتهٔ کلید می‌گنجاند. */
       const key = RM.keys.build('rawMatch', {
@@ -156,9 +156,12 @@
       const id = N.parseRollIdentity(roll.rollNumber);
       const standardLength = R.resolveStandardLength(rules, roll.thickness, roll.actualLength);
       /* ۳٫۲۶ — کلیدهای قابل تنظیم: مقادیر همهٔ فاکتورهای مجاز (metMatch
-         با width آرشیو؛ metFive همان pool بدون عرض — ترکیب از تنظیمات). */
+         با width آرشیو؛ metFive همان pool بدون عرض — ترکیب از تنظیمات).
+         ۳٫۲۷ — ستون نمایندهٔ عرض آرشیو مستقل از رول‌های موجود: پیش‌فرض ستون
+         «عرض» (فیلد width)؛ گزینهٔ «عرض اولیه» فیلد initialWidth (نگاشت اختیاری آرشیو). */
+      const archWidth = RM.keys.widthValue('metMatch', 'archived', roll);
       const metValues = {
-        width: roll.width,
+        width: archWidth,
         standardLength,
         setupNumber: roll.setupNumber,
         thickness: roll.thickness,
@@ -173,7 +176,7 @@
       let group = groups.get(key);
       if (!group) {
         group = {
-          key, width: roll.width, standardLength,               // نسخهٔ ۳٫۱ — تغییر ۳
+          key, width: archWidth, standardLength,               // ۳٫۲۷ — ستون نمایندهٔ عرض آرشیو (نسخهٔ ۳٫۱ — تغییر ۳
           setupNumber: roll.setupNumber,
           line: id.line, hall: id.hall, yearDigit: id.yearDigit,   // نسخهٔ ۲٫۹
           count: 0, rollNumbers: [],
@@ -332,25 +335,33 @@
     let cutTotal = 0;
     let cutUnmatchable = 0;       // برش‌خورده بدون عرض/ستاپ — در هیچ رکوردی نمی‌نشیند
 
-    /** وزن مؤثر یک رول برش‌خورده: وزن خالص واقعی یا فرمول (تغییر ۳) */
-    const rollWeight = (roll) =>
+    /** وزن مؤثر یک رول برش‌خورده: وزن خالص واقعی یا فرمول (تغییر ۳)
+        ۳٫۲۷ — عرضِ فرمول = عرض مؤثرِ تنظیم‌شدهٔ کلید (هم‌قالب با کلید تطبیق) */
+    const rollWeight = (roll, effWidth) =>
       (roll.netWeight !== null && roll.netWeight !== undefined && Number.isFinite(roll.netWeight))
         ? roll.netWeight
-        : roll.cutWidth * W_PER_MM;
+        : effWidth * W_PER_MM;
 
     for (const roll of rolls) {
       if (!N.isCutRoll(roll)) continue;
       cutTotal++;
-      if (roll.cutWidth === null || roll.setupNumber === null) {
+      /* ۳٫۲۷ — عرض مؤثر برش‌خورده = ستون نمایندهٔ تنظیم‌شدهٔ کلید cutMatch
+         (پیش‌فرض ستون «عرض» — فیلد cutWidth؛ گزینش «عرض اولیه» نیز مجاز است).
+         گیت «برش‌خورده بدون عرض/ستاپ» و برآورد وزنِ بدون‌وزن هر دو با همین
+         عرض مؤثر کار می‌کنند تا با کلید تطبیق همیشه هم‌قالب بمانند. */
+      const effCutWidth = RM.keys.widthValue('cutMatch', 'raw', roll);
+      if (effCutWidth === null || roll.setupNumber === null) {
         cutUnmatchable++;
         continue;
       }
       const cid = N.parseRollIdentity(roll.rollNumber);   // نسخهٔ ۲٫۹ — هویت از شمارهٔ رول
       /* ۳٫۲۶ — کلید قابل تنظیم (cutMatch): مقادیر همهٔ فاکتورهای مجاز از
          سمت رول برش‌خورده (متراژ استاندارد در صورت حضور در ترکیب، از
-         قوانین حل می‌شود — هم‌قالب با سمت الگوی برش ستاپ). */
+         قوانین حل می‌شود — هم‌قالب با سمت الگوی برش ستاپ).
+         ۳٫۲۷ — ستون نمایندهٔ «عرض برش» رول‌های موجود از widthPolicy همین کلید
+         (پیش‌فرض ستون «عرض» فیلد cutWidth — قابل تغییر به «عرض اولیه»). */
       const key = RM.keys.build('cutMatch', {
-        cutWidth: roll.cutWidth,
+        cutWidth: effCutWidth,
         setupNumber: roll.setupNumber,
         thickness: roll.thickness,
         standardLength: R.resolveStandardLength(rules, roll.thickness, roll.actualLength),
@@ -375,7 +386,7 @@
         cutIndex.set(key, bucket);
       }
       bucket.count++;
-      const w = rollWeight(roll);
+      const w = rollWeight(roll, effCutWidth);
       bucket.netWeightSum += w;
       const g = N.gradeLetter(roll);
       if (g) {

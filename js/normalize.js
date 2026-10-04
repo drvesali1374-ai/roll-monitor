@@ -10,6 +10,8 @@
        width        عرض اولیه (نمایشی — از ستون «عرض رول اولیه»؛ مبنای محاسبات نیست)
        cutWidth     عرض فعلی/برش‌خورده (از ستون «عرض» — مبنای کلیدهای انطباق/تخصیص
                     رول‌های خام و محاسبات رول‌های فرزند — ۳٫۹ تغییر ۱)
+       initialWidth عرض اولیهٔ آرشیو (۳٫۲۷ — فقط فایل آرشیو، ستون «عرض رول اولیه»
+                    اختیاری؛ فیلد نمایندهٔ دوم «منبع عرض آرشیو» در کلید متالایز)
        actualLength متراژ واقعی
        thickness    ضخامت (میکرون)
        filmType     نوع فیلم
@@ -104,7 +106,9 @@
 
     const get = (field) => {
       const col = mapping[field];
-      return col === null ? '' : row[col];
+      /* ۳٫۲۷ — فیلدهای خارج از نگاشت این منبع (مثل initialWidth در رول‌های موجود)
+         هم مثل ستون یافت‌نشده رفتار می‌کنند ('' → null) */
+      return (col === null || col === undefined) ? '' : row[col];
     };
 
     const rollNumberRaw = get('rollNumber');
@@ -114,6 +118,7 @@
       rollNumber: String(rollNumberRaw ?? '').trim(),   // شماره رول همیشه String (§97)
       width: U.parseNumber(get('width')),
       cutWidth: U.parseNumber(get('cutWidth')),
+      initialWidth: U.parseNumber(get('initialWidth')),   // ۳٫۲۷ — منبع دوم عرض آرشیو
       actualLength: U.parseNumber(get('actualLength')),
       thickness: U.parseNumber(get('thickness')),
       filmType: String(get('filmType') ?? '').trim(),

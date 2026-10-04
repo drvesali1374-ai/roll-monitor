@@ -1876,9 +1876,12 @@
           const idn = RM.normalize.parseRollIdentity(rec.rollNumber);
           const std = RM.rulesEngine.resolveStandardLength(rules, rec.thickness, rec.actualLength);
           /* ۳٫۲۶ — همان کلید metMatch موتور محاسبه (RM.keys — همیشه هم‌قالب
-             با تخصیص متالایز؛ ترکیب از «تنظیمات ← کلیدهای تطبیق»). */
+             با تخصیص متالایز؛ ترکیب از «تنظیمات ← کلیدهای تطبیق»).
+             ۳٫۲۷ — عرض کلید و نمایش گروه هر دو از ستون نمایندهٔ تنظیم‌شدهٔ
+             منبع عرض آرشیو (widthPolicy کلید متالایز — پیش‌فرض ستون «عرض»). */
+          const recWidth = RM.keys.widthValue('metMatch', 'archived', rec);
           const key = RM.keys.build('metMatch', {
-            width: rec.width,
+            width: recWidth,
             standardLength: std,
             setupNumber: rec.setupNumber,
             thickness: rec.thickness,
@@ -1889,7 +1892,7 @@
           let g = groupMap.get(key);
           if (!g) {
             g = {
-              key, width: rec.width, standardLength: std, setupNumber: rec.setupNumber,
+              key, width: recWidth, standardLength: std, setupNumber: rec.setupNumber,   // ۳٫۲۷ — عرض مناسب منبع آرشیو
               line: idn.line, hall: idn.hall, yearDigit: idn.yearDigit, records: [],
             };
             groupMap.set(key, g);

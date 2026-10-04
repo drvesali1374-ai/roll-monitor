@@ -56,6 +56,8 @@ RM.config = {
     rollNumber:     'شماره رول',
     width:          'عرض',
     cutWidth:       'عرض',
+    /* ۳٫۲۷ — ستون «عرض رول اولیه» فایل آرشیو (فیلد نمایندهٔ دوم منبع عرض آرشیو) */
+    initialWidth:   'عرض اولیه',
     actualLength:   'متراژ',
     thickness:      'ضخامت',
     filmType:       'نوع فیلم',
@@ -117,6 +119,10 @@ RM.config = {
     archived: {
       rollNumber:     { primary: 'شماره رول',   fallbacks: ['شمارهرول'] },
       width:          { primary: 'عرض',          fallbacks: ['عرضرول'] },
+      /* ۳٫۲۷ — عرض اولیهٔ آرشیو (اختیاری): فیلد نمایندهٔ دوم «منبع عرض آرشیو» در
+         کلیدهای تطبیق (تنظیمات ← کلیدهای تطبیق). فایل‌های آرشیوی که این ستون را
+         ندارند بی‌خطراند — فقط تا زمانی نگاشت نشود به‌عنوان منبع انتخاب نشود. */
+      initialWidth:   { primary: 'عرض رول اولیه', fallbacks: ['عرض اولیه'], optional: true },
       actualLength:   { primary: 'متراژ اولیه', fallbacks: ['متراژ', 'متراجاولیه'] },
       thickness:      { primary: 'ضخامت',       fallbacks: ['ضخامتفیلم'] },
       filmType:       { primary: 'نوع فیلم',     fallbacks: ['نوعفیلم'] },
@@ -437,7 +443,7 @@ RM.config = {
 
   /** نسخهٔ فعلی برنامه — ۳٫۲۴ بند ۱: در فایل پشتیبان (appVersion) درج و در
       پنجرهٔ تأیید بازیابی نمایش داده می‌شود تا منشأ فایل پشتیبان معلوم باشد. */
-  APP_VERSION: '3.26',
+  APP_VERSION: '3.27',
 
   /* ---------------- کلیدهای تطبیق (نسخهٔ ۳٫۲۶) ----------------
      رجیستری مرکزی همهٔ کلیدهای تطبیق/هویت/گروه‌بندی پروژه. هر کلید دقیقاً
@@ -450,7 +456,10 @@ RM.config = {
 
   /** کاتالوگ فاکتورهای کلید — منبع مقدار هر فاکتور در سمت‌های مختلف */
   MATCH_KEY_PARAMS: {
-    width:          { label: 'عرض',            desc: 'رول‌های موجود: ستون «عرض» (Mapping) · آرشیو: ستون «عرض» · ستاپ: فیلد عرض' },
+    /* ۳٫۲۷ — شرح فاکتور عرض با پیش‌فرض جدید: سمت «رول‌های موجود» از ستون
+       «عرض اولیه» می‌خواند (تا ۳٫۲۶ ستون «عرض» بود)؛ ستون نمایندهٔ هر سمت
+       در کارت هر کلید قابل تغییر است (widthPolicy — تنظیمات ← کلیدهای تطبیق). */
+    width:          { label: 'عرض',            desc: 'رول‌های موجود: ستون «عرض اولیه» (Mapping) · آرشیو: ستون «عرض» (Mapping) · ستاپ: فیلد عرض' },
     cutWidth:       { label: 'عرض برش',        desc: 'رول برش‌خورده: ستون «عرض» (Mapping) · سمت ستاپ: هر عرض الگوی برش' },
     standardLength: { label: 'متراژ استاندارد', desc: 'رول: حل از قوانین متراژ (ضخامت + متراژ واقعی) · ستاپ: فیلد متراژ استاندارد' },
     setupNumber:    { label: 'شماره ستاپ',      desc: 'ستون «شماره ستاپ» فایل‌های رول · فیلد شماره ستاپ' },
@@ -465,7 +474,27 @@ RM.config = {
     diameter:       { label: 'قطر بوبین',       desc: 'مشتق از ستون «نوع بسته‌بندی» فایل پالت‌ها (عدد انتهای عنوان)' },
   },
 
-  /** رجیستری کلیدهای تطبیق — defaults = ترکیب فعلی ۳٫۲۲+ (پیش‌فرض همیشه موجود) */
+  /** کاتالوگ منابع ستون «عرض» (نسخهٔ ۳٫۲۷) — ستون نمایندهٔ عرض در هر سمتِ فایل‌های رول‌ها
+      (پایهٔ widthPolicy هر کلید). گزینه‌های هر سمت = فیلدهای عرض‌مانندِ نگاشت همان فایل:
+        · raw (رول‌های موجود): width = ستون «عرض رول اولیه» (عرض اولیه) · cutWidth = ستون «عرض»
+        · archived (سابقه رول‌ها): width = ستون «عرض» · initialWidth = ستون «عرض رول اولیه» (اختیاری) */
+  WIDTH_SOURCE_FIELDS: {
+    raw: {
+      width:        { label: 'عرض اولیه', column: 'عرض رول اولیه' },
+      cutWidth:     { label: 'عرض',       column: 'عرض' },
+    },
+    archived: {
+      width:        { label: 'عرض',       column: 'عرض' },
+      initialWidth: { label: 'عرض اولیه', column: 'عرض رول اولیه' },
+    },
+  },
+
+  /** رجیستری کلیدهای تطبیق — defaults = ترکیب فعلی ۳٫۲۶+ (پیش‌فرض همیشه موجود)
+      widthPolicy (۳٫۲۷): سیاست ستون نمایندهٔ عرضِ هر کلید —
+        · param: فاکتور هدف ('width' پیش‌فرض یا 'cutWidth')
+        · sources: سمت‌های رول‌ای مشارکت‌کننده + فیلد پیش‌فرض هر سمت
+        · setupOnly: عرض فقط از فیلد عرض ستاپ خوانده می‌شود (یادداشت در پنل)
+      کلیدهای پالت‌ها عمداً widthPolicy ندارند (خارج از دامنهٔ سند کاربر ۳٫۲۷). */
   MATCH_KEYS: [
     {
       id: 'rawMatch',
@@ -474,6 +503,9 @@ RM.config = {
       desc: 'گروه‌بندی رول‌های خام فایل «رول‌های موجود» و تطبیقشان با ستاپ‌ها (تخصیص ظرفیت‌محور، برش‌نشده، هشدار «بدون ستاپ» و گزارش ستاپ‌ها).',
       pool: ['width', 'standardLength', 'setupNumber', 'thickness', 'line', 'hall', 'yearDigit'],
       defaults: ['width', 'standardLength', 'setupNumber', 'line', 'hall', 'yearDigit'],
+      /* ۳٫۲۷ — پیش‌فرض جدید: عرض رول‌های موجود در کلید = ستون «عرض اولیه»
+         (فیلد width — تا ۳٫۲۶ ستون «عرض» cutWidth بود)؛ سمت ستاپ فیلد عرض. */
+      widthPolicy: { param: 'width', sources: { raw: 'width' } },
     },
     {
       id: 'metMatch',
@@ -482,6 +514,9 @@ RM.config = {
       desc: 'تطبیق رول‌های متالایزشدهٔ یکتای «سابقه رول‌ها» با ستاپ‌ها — ستون «مانده زمان متالایز»، مازاد متالایز و گروه‌های داشبورد.',
       pool: ['width', 'standardLength', 'setupNumber', 'thickness', 'line', 'hall', 'yearDigit'],
       defaults: ['width', 'standardLength', 'setupNumber', 'line', 'hall', 'yearDigit'],
+      /* ۳٫۲۷ — منبع عرض آرشیو مستقل از رول‌های موجود: پیش‌فرض ستون «عرض»؛
+         گزینهٔ «عرض اولیه» نیازمند نگاشت ستون «عرض رول اولیه» آرشیو است. */
+      widthPolicy: { param: 'width', sources: { archived: 'width' } },
     },
     {
       id: 'metFive',
@@ -498,6 +533,9 @@ RM.config = {
       desc: 'تطبیق رول‌های برش‌خوردهٔ موجود (دارای بازوی R/L) با رکوردهای حاصل از تنوع عرض‌های الگوی برش ستاپ‌ها — گزارش «رول‌های برش‌خورده».',
       pool: ['cutWidth', 'setupNumber', 'thickness', 'standardLength', 'line', 'hall', 'yearDigit'],
       defaults: ['cutWidth', 'setupNumber', 'line', 'hall', 'yearDigit'],
+      /* ۳٫۲۷ — منبع «عرض برش» رول‌های برش‌خورده (فایل رول‌های موجود):
+         پیش‌فرض ستون «عرض» (رفتار همیشگی)؛ ستون نماینده قابل تغییر است. */
+      widthPolicy: { param: 'cutWidth', sources: { raw: 'cutWidth' } },
     },
     {
       id: 'setupUnique',
@@ -506,6 +544,9 @@ RM.config = {
       desc: 'جلوگیری از ثبت رکورد ستاپِ تکراری در فرم ثبت/ویرایش و ردیف‌های ثبت گروهی (Bulk).',
       pool: ['width', 'setupNumber', 'standardLength', 'thickness', 'machineNumber', 'cuttingPattern', 'line', 'hall', 'yearDigit'],
       defaults: ['width', 'setupNumber', 'standardLength', 'machineNumber', 'cuttingPattern', 'line', 'hall', 'yearDigit'],
+      /* ۳٫۲۷ — هر دو سمتِ این کلید رکورد ستاپ‌اند: عرض فقط از فیلد عرض ستاپ
+         خوانده می‌شود و ستونی از فایل رول‌ها در آن مشارکت ندارد (یادداشت پنل). */
+      widthPolicy: { setupOnly: true },
     },
     {
       id: 'setupIdentity',
