@@ -1051,6 +1051,232 @@
   };
 
   /* ================================================================
+     ۵-ب) پنل کلیدهای تطبیق (نسخهٔ ۳٫۲۶)
+     -------------------------------------------------------------------------
+     ساخت و ویرایش ترکیب همهٔ کلیدهای تطبیق پروژه (رجیستری
+     RM.config.MATCH_KEYS — ۹ کلید). قواعد سند کاربر:
+       · هر کلید دقیقاً یک نمونه دارد — دکمهٔ حذف کلید وجود ندارد
+       · حداقل یک پارامتر همیشه باید بماند (× آخری غیرفعال + گارد ذخیره)
+       · پارامترها فقط از pool مجاز همان کلید (دو سمتِ تطبیق قابل محاسبه)
+       · ذخیره → appSettings: matchingKeys → بازمحاسبهٔ کل سیستم (refreshAll)
+       · بازگردانی به پیش‌فرض = حذف Override همان کلید (کلید می‌ماند)
+     ================================================================ */
+
+  /** HTML ردیف یک پارامتر در کارت کلید */
+  function mkParamRowHtml(paramId, idx, total, param) {
+    const canDelete = total > 1;   // حداقل ۱ پارامتر — × آخری غیرفعال
+    return `
+      <li class="mk-param" data-mk-param="${paramId}">
+        <span class="mk-param-idx">${U.faNum(idx + 1)}</span>
+        <span class="mk-param-label" title="${U.escapeHtml(param.desc)}">${U.escapeHtml(param.label)}</span>
+        <span class="mk-param-actions">
+          <button type="button" class="mk-mini" data-mk-up ${idx === 0 ? 'disabled' : ''} title="جابه‌جایی به بالا" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به بالا">▲</button>
+          <button type="button" class="mk-mini" data-mk-down ${idx === total - 1 ? 'disabled' : ''} title="جابه‌جایی به پایین" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به پایین">▼</button>
+          <button type="button" class="mk-mini mk-del" data-mk-del ${canDelete ? '' : 'disabled'}
+            title="${canDelete ? `حذف «${U.escapeHtml(param.label)}» از این کلید` : 'کلید بدون پارامتر معنا و کاربرد ندارد — حداقل یک پارامتر باید بماند'}"
+            aria-label="حذف پارامتر ${U.escapeHtml(param.label)}">✕</button>
+        </span>
+      </li>`;
+  }
+
+  /** HTML کارت یک کلید (لیست پارامترها + افزودن + ذخیره/بازگردانی) */
+  function mkKeyCardHtml(def, params, isModified) {
+    const P = RM.config.MATCH_KEY_PARAMS;
+    const paramsHtml = params
+      .map((p, i) => mkParamRowHtml(p, i, params.length, P[p] || { label: p, desc: '' }))
+      .join('');
+
+    /* گزینه‌های افزودن: فقط پارامترهای مجاز pool که هنوز در کلید نیستند */
+    const remaining = def.pool.filter((p) => !params.includes(p));
+    const addOptions = remaining.length
+      ? remaining.map((p) => `<option value="${p}">${U.escapeHtml(P[p].label)}</option>`).join('')
+      : '<option value="">— همهٔ پارامترهای مجاز استفاده شده —</option>';
+
+    return `
+      <div class="mk-key" data-mk-id="${def.id}">
+        <div class="mk-key-head">
+          <h4 class="mk-key-title">${U.escapeHtml(def.label)}</h4>
+          <span class="chip">${U.faNum(params.length)} پارامتر</span>
+          ${isModified
+            ? '<span class="chip chip-warn" title="ترکیب این کلید توسط شما ویرایش شده است">ویرایش‌شده</span>'
+            : '<span class="chip chip-ok" title="ترکیب پیش‌فرض کارخانه‌ای">پیش‌فرض</span>'}
+        </div>
+        <p class="mk-key-desc">${U.escapeHtml(def.desc)}</p>
+        <ul class="mk-params" data-mk-list>${paramsHtml}</ul>
+        <div class="mk-add-row">
+          <select data-mk-select aria-label="افزودن پارامتر به ${U.escapeHtml(def.label)}">${addOptions}</select>
+          <button type="button" class="btn btn-ghost btn-sm" data-mk-add ${remaining.length ? '' : 'disabled'}>افزودن پارامتر</button>
+        </div>
+        <div class="field-actions mk-actions">
+          <button type="button" class="btn btn-primary btn-sm" data-mk-save>ذخیرهٔ این کلید</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-mk-reset ${isModified ? '' : 'disabled'}
+            title="${isModified ? 'بازگردانی ترکیب کارخانه‌ای همین کلید (کلید حذف نمی‌شود)' : 'این کلید در ترکیب پیش‌فرض است'}">بازگردانی به پیش‌فرض</button>
+        </div>
+        <p class="mk-key-hint">ترکیب فعلی: ${U.escapeHtml(RM.keys.describe(def.id))}</p>
+      </div>`;
+  }
+
+  /** رندر پنل کلیدهای تطبیق — ۹ کلید در ۴ دسته (دسته‌بندی از رجیستری) */
+  SettingsView.renderMatchKeysPanel = async function () {
+    const wrap = document.getElementById('matchkeys-editor');
+    if (!wrap) return;
+    await RM.keys.ensure();   // مصرف همگام مطمئن
+
+    /* گروه‌بندی کلیدها بر اساس دستهٔ رجیستری (ترتیب اعلان حفظ می‌شود) */
+    const categories = [];
+    const byCat = new Map();
+    for (const def of RM.config.MATCH_KEYS) {
+      if (!byCat.has(def.category)) {
+        byCat.set(def.category, []);
+        categories.push(def.category);
+      }
+      byCat.get(def.category).push(def);
+    }
+
+    const html = categories.map((cat) => `
+      <div class="mapping-section mk-section">
+        <h4 class="mapping-section-title">${U.escapeHtml(cat)}
+          <span class="chip">${U.faNum(byCat.get(cat).length)} کلید</span>
+        </h4>
+        <div class="mk-keys-grid">
+          ${byCat.get(cat).map((def) => mkKeyCardHtml(def, RM.keys.paramsOf(def.id), RM.keys.isModified(def.id))).join('')}
+        </div>
+      </div>`).join('');
+
+    wrap.innerHTML = html;
+
+    /* --- رویدادها (جابه‌جایی/حذف/افزودن — همه روی DOM کارت، پیش از ذخیره) --- */
+    wrap.querySelectorAll('.mk-key').forEach((card) => {
+      const list = card.querySelector('[data-mk-list]');
+
+      const rerenderRows = () => {
+        const def = RM.keys.defOf(card.dataset.mkId);
+        const params = [...list.querySelectorAll('[data-mk-param]')].map((li) => li.dataset.mkParam);
+        list.innerHTML = params
+          .map((p, i) => mkParamRowHtml(p, i, params.length, RM.config.MATCH_KEY_PARAMS[p] || { label: p, desc: '' }))
+          .join('');
+        /* بازگرداندن رویدادها به دکمه‌های تازه */
+        bindRowButtons();
+        refreshAddRow(def, params);
+      };
+
+      const refreshAddRow = (def, params) => {
+        const remaining = def.pool.filter((p) => !params.includes(p));
+        const sel = card.querySelector('[data-mk-select]');
+        const addBtn = card.querySelector('[data-mk-add]');
+        sel.innerHTML = remaining.length
+          ? remaining.map((p) => `<option value="${p}">${U.escapeHtml(RM.config.MATCH_KEY_PARAMS[p].label)}</option>`).join('')
+          : '<option value="">— همهٔ پارامترهای مجاز استفاده شده —</option>';
+        addBtn.disabled = !remaining.length;
+      };
+
+      const bindRowButtons = () => {
+        list.querySelectorAll('[data-mk-param]').forEach((li, idx) => {
+          li.querySelector('[data-mk-up]').addEventListener('click', () => {
+            if (idx === 0) return;
+            const rows = [...list.querySelectorAll('[data-mk-param]')];
+            list.insertBefore(rows[idx], rows[idx - 1]);
+            rerenderRows();
+          });
+          li.querySelector('[data-mk-down]').addEventListener('click', () => {
+            const rows = [...list.querySelectorAll('[data-mk-param]')];
+            if (idx === rows.length - 1) return;
+            list.insertBefore(rows[idx + 1], rows[idx]);
+            rerenderRows();
+          });
+          li.querySelector('[data-mk-del]').addEventListener('click', () => {
+            const rows = list.querySelectorAll('[data-mk-param]');
+            if (rows.length <= 1) return;   // گارد: حداقل ۱ پارامتر
+            li.remove();
+            rerenderRows();
+          });
+        });
+      };
+      bindRowButtons();
+
+      card.querySelector('[data-mk-add]').addEventListener('click', () => {
+        const sel = card.querySelector('[data-mk-select]');
+        const p = sel.value;
+        if (!p) return;
+        const def = RM.keys.defOf(card.dataset.mkId);
+        if (!def.pool.includes(p)) return;
+        const params = [...list.querySelectorAll('[data-mk-param]')].map((li) => li.dataset.mkParam);
+        if (params.includes(p)) return;   // بدون تکرار
+        const tmp = document.createElement('li');
+        tmp.dataset.mkParam = p;
+        list.appendChild(tmp);
+        rerenderRows();
+      });
+
+      card.querySelector('[data-mk-save]').addEventListener('click', () => SettingsView.saveMatchKey(card.dataset.mkId));
+      const resetBtn = card.querySelector('[data-mk-reset]');
+      if (!resetBtn.disabled) {
+        resetBtn.addEventListener('click', () => SettingsView.resetMatchKey(card.dataset.mkId));
+      }
+    });
+  };
+
+  /** ذخیرهٔ ترکیب یک کلید — خواندن ترتیب DOM + گارد حداقل ۱ پارامتر */
+  SettingsView.saveMatchKey = async function (keyId) {
+    const card = document.querySelector(`.mk-key[data-mk-id="${keyId}"]`);
+    if (!card) return;
+    const def = RM.keys.defOf(keyId);
+    if (!def) return;
+
+    const params = [...card.querySelectorAll('[data-mk-list] [data-mk-param]')]
+      .map((li) => li.dataset.mkParam);
+
+    if (!params.length) {
+      UI.toast('کلید بدون پارامتر معنا و کاربرد ندارد — حداقل یک پارامتر لازم است.', 'error', 5000);
+      return;
+    }
+
+    try {
+      const res = await RM.keys.saveOverride(keyId, params);
+      if (!res.ok) {
+        UI.toast(res.error || 'ذخیرهٔ کلید ممکن نشد.', 'error', 5000);
+        return;
+      }
+
+      /* بازمحاسبهٔ کل سیستم — اثر کلید تازه در همهٔ صفحات دیده می‌شود */
+      RM.calcEngine.invalidate();
+      await RM.refreshAll();
+
+      const label = def.label;
+      UI.toast(
+        `کلید «${label}» با ${U.faNum(res.params.length)} پارامتر ذخیره شد — محاسبات و جداول بازسازی شدند.`,
+        'success',
+        6000
+      );
+    } catch (err) {
+      console.error('[SaveMatchKey]', err);
+      UI.toast('خطا در ذخیرهٔ کلید — تغییری اعمال نشد.', 'error');
+    }
+  };
+
+  /** بازگردانی یک کلید به پیش‌فرض (کلید حذف نمی‌شود — فقط Override پاک می‌شود) */
+  SettingsView.resetMatchKey = async function (keyId) {
+    const def = RM.keys.defOf(keyId);
+    if (!def) return;
+    const ok = await UI.confirm({
+      title: 'بازگردانی کلید به پیش‌فرض',
+      message: `ترکیب سفارشی شما برای «${def.label}» حذف و ترکیب پیش‌فرض (${RM.keys.describe(keyId)}) اعمال می‌شود. کلید حذف نمی‌شود و پس از تأیید، کل محاسبات و جداول بازسازی خواهند شد. ادامه می‌دهید؟`,
+      confirmText: 'بله، بازگردانی کن',
+    });
+    if (!ok) return;
+
+    try {
+      await RM.keys.resetOverride(keyId);
+      RM.calcEngine.invalidate();
+      await RM.refreshAll();
+      UI.toast(`کلید «${def.label}» به پیش‌فرض بازگردانی شد و محاسبات بازسازی شد.`, 'success', 6000);
+    } catch (err) {
+      console.error('[ResetMatchKey]', err);
+      UI.toast('خطا در بازگردانی کلید.', 'error');
+    }
+  };
+
+  /* ================================================================
      ۶) رندر کل نما
      ================================================================ */
 
@@ -1058,6 +1284,7 @@
     await SettingsView.renderRules();
     await SettingsView.renderImportHistory();
     await SettingsView.renderMappingPanel();
+    await SettingsView.renderMatchKeysPanel();   // ۳٫۲۶ — پنل کلیدهای تطبیق
     await SettingsView.renderMachineTimeRules();
 
     // به‌روزرسانی دراپ‌داون متراژ فرم زمان با قوانین تازه (§90)

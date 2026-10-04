@@ -1,5 +1,5 @@
 /* =========================================================================
-   packaging.js — موتور مرکزی صفحهٔ «بسته‌بندی» (نسخهٔ ۳٫۲۵)
+   packaging.js — موتور مرکزی صفحهٔ «بسته‌بندی» (نسخهٔ ۳٫۲۶)
    -------------------------------------------------------------------------
    منطق واحد و مرکزی برنامهٔ بسته‌بندی پالت‌ها — همهٔ بخش‌های UI صفحه
    (برنامهٔ بسته‌بندی، جدول پالت‌ها، جدول رول‌ها/ردیابی، هشدارها و آمار)
@@ -143,9 +143,20 @@
     return p;
   };
 
-  /** کلید گروه پنج‌ویژگی سازگار (§3): نوع فیلم | ضخامت | عرض | گرید | قطر بوبین */
+  /** کلید گروه پنج‌ویژگی سازگار (§3): نوع فیلم | ضخامت | عرض | گرید | قطر بوبین
+   *  نسخهٔ ۳٫۲۶: ترکیب از «تنظیمات ← کلیدهای تطبیق» (RM.keys — id:
+   *  palletGroup؛ پیش‌فرض همان ۵ ویژگی) خوانده می‌شود. توجه: اگر فاکتوری
+   *  که قواعد ظرفیت به آن وابسته‌اند (نوع فیلم/عرض/قطر) از ترکیب حذف شود،
+   *  گروه‌هایی با قواعد ظرفیت متفاوت ممکن است هم‌گروه شوند — مسئولیت
+   *  انتخاب ترکیب با کاربر است؛ الگوریتم از مشخصات پالت اصلی گروه استفاده می‌کند. */
   P.featureKey = function (p) {
-    return `${p.filmType}|${p.thickness ?? ''}|${p.width}|${p.grade}|${p.diameter}`;
+    return RM.keys.build('palletGroup', {
+      filmType: p.filmType,
+      thickness: p.thickness,
+      width: p.width,
+      grade: p.grade,
+      diameter: p.diameter,
+    });
   };
 
   /* ================================================================
@@ -665,8 +676,15 @@
       if (gk !== 'U' && gk !== 'X') continue;
       const candidates = (p.rollObjs || []).filter((robj) => !robj._planned);
       if (!candidates.length) continue;
-      const key = `${p.filmType}|${p.thickness ?? ''}|${p.width}|${p.diameter}`
-        + (separateExport && p.isExport ? '|EXPORT' : '');
+      /* ۳٫۲۶ — کلید گروه ترکیبی از «تنظیمات ← کلیدهای تطبیق» (RM.keys —
+         id: palletMix؛ پیش‌فرض چهارمشخصهٔ بدون گرید تا ترکیب U+X ممکن شود). */
+      const key = RM.keys.build('palletMix', {
+        filmType: p.filmType,
+        thickness: p.thickness,
+        width: p.width,
+        diameter: p.diameter,
+        grade: p.grade,
+      }) + (separateExport && p.isExport ? '|EXPORT' : '');
       p.mixSpecKey = key;   // مبنای رزرو بسته‌های ترکیبی همین گروه
       if (!mixedBySpec.has(key)) mixedBySpec.set(key, { key, rollMap: new Map() });
       const grp = mixedBySpec.get(key);

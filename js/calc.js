@@ -54,6 +54,10 @@
    * و منطق کلیدهاست و هیچ تغییر ظاهری ندارد. متالایز (آرشیو) از قبل
    * با ستون «عرض» آرشیو و رول‌های برش‌خورده از قبل با cutWidth کار
    * می‌کنند — کلید سمت ستاپ (setup.width) نیز دست‌نخورده است.
+   *
+   * نسخهٔ ۳٫۲۶: ترکیب کلید از «تنظیمات ← کلیدهای تطبیق» خوانده می‌شود
+   * (RM.keys — پیش‌فرض همان ۶ فاکتور بالا؛ فاکتورهای مجاز pool رجیستری).
+   * سمت ستاپ (گام ۵) همان مقادیر را با مبنای فیلدهای خودش می‌سازد.
    */
   function buildRawRollGroups(rawRolls, rules) {
     const groups = new Map();   // key → group object
@@ -69,7 +73,17 @@
       /* ۳٫۹ — تغییر ۱: فیلد «عرض» (cutWidth — ستون «عرض» فایل رول‌های موجود)
          مبنای کلید انطباق/تخصیص است؛ جایگزین «عرض اولیه» (width) شد. */
       const matchWidth = roll.cutWidth;
-      const key = U.formatKey(matchWidth, standardLength, roll.setupNumber, id.line, id.hall, id.yearDigit);
+      /* ۳٫۲۶ — کلید قابل تنظیم: مقادیر همهٔ فاکتورهای مجاز عرضه می‌شوند و
+         RM.keys فقط فاکتورهای ترکیب فعلی را در رشتهٔ کلید می‌گنجاند. */
+      const key = RM.keys.build('rawMatch', {
+        width: matchWidth,
+        standardLength,
+        setupNumber: roll.setupNumber,
+        thickness: roll.thickness,
+        line: id.line,
+        hall: id.hall,
+        yearDigit: id.yearDigit,
+      });
       let group = groups.get(key);
 
       if (!group) {
@@ -118,6 +132,8 @@
      = متراژ استاندارد + شماره ستاپ + خط تولید + شماره سالن + عدد سال) هم
      برمی‌گردد — مبنای هشدار «رول متالایز با عرض تعریف‌نشده در ستاپ» در
      مرکز هشدار کیفیت دادهٔ داشبورد.
+   * نسخهٔ ۳٫۲۶: هر دو کلید از «تنظیمات ← کلیدهای تطبیق» (RM.keys) ساخته
+     می‌شوند — پیش‌فرض همان ترکیب‌های ۶/۵فاکتوری بالا.
    */
   function buildMetallizedGroups(archivedRolls, rules) {
     const uniqueByRollNumber = new Map();   // rollNumber → رکورد یونیک
@@ -139,8 +155,19 @@
     for (const roll of uniqueByRollNumber.values()) {
       const id = N.parseRollIdentity(roll.rollNumber);
       const standardLength = R.resolveStandardLength(rules, roll.thickness, roll.actualLength);
-      const key = U.formatKey(roll.width, standardLength, roll.setupNumber, id.line, id.hall, id.yearDigit);
-      const fiveKey = U.formatKey(standardLength, roll.setupNumber, id.line, id.hall, id.yearDigit);   // بدون عرض (۳٫۷ — تغییر ۳)
+      /* ۳٫۲۶ — کلیدهای قابل تنظیم: مقادیر همهٔ فاکتورهای مجاز (metMatch
+         با width آرشیو؛ metFive همان pool بدون عرض — ترکیب از تنظیمات). */
+      const metValues = {
+        width: roll.width,
+        standardLength,
+        setupNumber: roll.setupNumber,
+        thickness: roll.thickness,
+        line: id.line,
+        hall: id.hall,
+        yearDigit: id.yearDigit,
+      };
+      const key = RM.keys.build('metMatch', metValues);
+      const fiveKey = RM.keys.build('metFive', metValues);   // بدون عرض (۳٫۷ — تغییر ۳)
       keyByRollNumber[String(roll.rollNumber ?? '')] = key;
       fiveKeyByRollNumber[String(roll.rollNumber ?? '')] = fiveKey;
       let group = groups.get(key);
@@ -287,8 +314,14 @@
    *    - مابقی (موجود/گریدها/پای کار/پالت) = Σ «وزن خالص» واقعی رول‌های
    *      منطبق از فایل (ستون Mapping «وزن خالص»)؛ برای رول بی‌وزن، همان
    *      رول با فرمول (عرض × ۰٫۳۶۲) برآورد می‌شود.
+   *
+   *  نسخهٔ ۳٫۲۶: کلید هر دو سمت (رول برش‌خورده موجود + رکورد الگوی برش
+   *  ستاپ) با RM.keys از «تنظیمات ← کلیدهای تطبیق» ساخته می‌شود — دو سمت
+   *  همیشه یک ترکیب دارند تا با هم تطبیق بگیرند. اگر «متراژ استاندارد»
+   *  به ترکیب اضافه شود، سمت رول آن را از قوانین (ضخامت + متراژ واقعی)
+   *  حل می‌کند — به همین دلیل rules نیز به این تابع پاس می‌شود.
    */
-  function buildCutRollsReport(rolls, setupReport) {
+  function buildCutRollsReport(rolls, setupReport, rules) {
     const GRADES = RM.config.GRADE_LETTERS;
     const W_PER_MM = RM.config.CUT_WEIGHT_PER_MM;
 
@@ -313,7 +346,18 @@
         continue;
       }
       const cid = N.parseRollIdentity(roll.rollNumber);   // نسخهٔ ۲٫۹ — هویت از شمارهٔ رول
-      const key = U.formatKey(roll.cutWidth, roll.setupNumber, cid.line, cid.hall, cid.yearDigit);
+      /* ۳٫۲۶ — کلید قابل تنظیم (cutMatch): مقادیر همهٔ فاکتورهای مجاز از
+         سمت رول برش‌خورده (متراژ استاندارد در صورت حضور در ترکیب، از
+         قوانین حل می‌شود — هم‌قالب با سمت الگوی برش ستاپ). */
+      const key = RM.keys.build('cutMatch', {
+        cutWidth: roll.cutWidth,
+        setupNumber: roll.setupNumber,
+        thickness: roll.thickness,
+        standardLength: R.resolveStandardLength(rules, roll.thickness, roll.actualLength),
+        line: cid.line,
+        hall: cid.hall,
+        yearDigit: cid.yearDigit,
+      });
       let bucket = cutIndex.get(key);
       if (!bucket) {
         bucket = {
@@ -361,7 +405,17 @@
 
       const sid = N.setupIdentity(sr);
       for (const part of parsed.parts) {
-        const key = U.formatKey(part, sr.setupNumber, sid.line, sid.hall, sid.yearDigit);
+        /* ۳٫۲۶ — سمت الگوی برش ستاپ: همان کلید cutMatch با مقادیر ستاپ
+           (cutWidth = هر عرض الگو؛ متراژ استاندارد = فیلد ستاپ). */
+        const key = RM.keys.build('cutMatch', {
+          cutWidth: part,
+          setupNumber: sr.setupNumber,
+          thickness: sr.thickness,
+          standardLength: sr.standardLength,
+          line: sid.line,
+          hall: sid.hall,
+          yearDigit: sid.yearDigit,
+        });
         if (!recordsMap.has(key)) {
           recordsMap.set(key, {
             key,
@@ -478,6 +532,11 @@
    * این تابع تنها منبع حقیقت کل رابط کاربری است.
    */
   async function calculateProductionState() {
+    /* --- ۳٫۲۶: کلیدهای تطبیق قابل تنظیم — بازخوانی قطعی پیش از محاسبه
+       (ارزان: یک خواندن Dexie؛ پس از ذخیرهٔ پنل کلیدها یا بازیابی پشتیبان،
+       ترکیب تازه همین‌جا وارد محاسبات می‌شود) --- */
+    await RM.keys.load();
+
     const { rolls, archivedRolls, setupRolls, rules, importMetadata } = await DB.loadAllSources();
 
     /* --- قوانین زمان متالایز (تنظیمات — تغییرات جدید) --- */
@@ -506,7 +565,10 @@
        نسخهٔ ۳٫۷ — تغییر ۳: metFiveKeys = مجموعهٔ کلیدهای ۵فاکتوریِ ستاپ‌های
        کامل «بدون عرض» (متراژ استاندارد + ستاپ + خط + سالن + سال) — مبنای
        هشدار «رول متالایز با عرض تعریف‌نشده در ستاپ»: رولی که کلید ۵فاکتوری‌اش
-       با ستاپ مطابق است ولی کلید کامل (با عرض) با هیچ رکوردی مطابق نیست. */
+       با ستاپ مطابق است ولی کلید کامل (با عرض) با هیچ رکوردی مطابق نیست.
+       نسخهٔ ۳٫۲۶: هر سه کلید با RM.keys از «تنظیمات ← کلیدهای تطبیق» ساخته
+       می‌شوند — سمت ستاپ همان فاکتورهای مجاز را از فیلدهای خودش مقداردهی
+       می‌کند (width = فیلد عرض ستاپ). گیت کامل‌بودن (§25) دست‌نخورده است. */
     const rawIndex = new Map();
     const metIndex = new Map();
     const metFiveKeys = new Set();
@@ -518,16 +580,26 @@
         N.setupIdentityComplete(setup);
       if (isComplete) {
         const sid = N.setupIdentity(setup);
-        const rawKey = U.formatKey(setup.width, setup.standardLength, setup.setupNumber, sid.line, sid.hall, sid.yearDigit);
+        /* ۳٫۲۶ — مقادیر فاکتورهای مجاز از فیلدهای ستاپ (برای هر سه کلید) */
+        const setupValues = {
+          width: setup.width,
+          standardLength: setup.standardLength,
+          setupNumber: setup.setupNumber,
+          thickness: setup.thickness,
+          line: sid.line,
+          hall: sid.hall,
+          yearDigit: sid.yearDigit,
+        };
+        const rawKey = RM.keys.build('rawMatch', setupValues);
         if (!rawIndex.has(rawKey)) rawIndex.set(rawKey, []);
         rawIndex.get(rawKey).push(setup);
 
-        const metKey = U.formatKey(setup.width, setup.standardLength, setup.setupNumber, sid.line, sid.hall, sid.yearDigit);   // نسخهٔ ۳٫۱ — تغییر ۳: + متراژ استاندارد
+        const metKey = RM.keys.build('metMatch', setupValues);   // نسخهٔ ۳٫۱ — تغییر ۳: + متراژ استاندارد
         if (!metIndex.has(metKey)) metIndex.set(metKey, []);
         metIndex.get(metKey).push(setup);
 
         // نسخهٔ ۳٫۷ — تغییر ۳: کلید ۵فاکتوری بدون عرض (متراژ استاندارد + ستاپ + خط + سالن + سال)
-        metFiveKeys.add(U.formatKey(setup.standardLength, setup.setupNumber, sid.line, sid.hall, sid.yearDigit));
+        metFiveKeys.add(RM.keys.build('metFive', setupValues));
       }
     }
 
@@ -685,8 +757,10 @@
       };
     });
 
-    /* --- ۸-ب) گزارش رول‌های برش‌خورده (فرزند) — تغییرات جدید --- */
-    const cutRolls = buildCutRollsReport(rolls, setupReport);
+    /* --- ۸-ب) گزارش رول‌های برش‌خورده (فرزند) — تغییرات جدید ---
+       ۳٫۲۶: rules پاس می‌شود تا در صورت حضور «متراژ استاندارد» در ترکیب
+       کلید cutMatch، سمت رول آن را از قوانین حل کند. */
+    const cutRolls = buildCutRollsReport(rolls, setupReport, rules);
 
     /* --- ۹) هشدارهای مرکزی کیفیت داده (§52 + Drill-down) ---
        هر هشدار می‌تواند drill داشته باشد: { source, issue?, filter? }

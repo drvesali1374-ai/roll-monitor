@@ -68,11 +68,20 @@
     const arms = [];
 
     /* ---------- کنترل ۱: ضخامت به تفکیک کلید هویت (ستاپ + خط + سالن + سال — نسخهٔ ۲٫۹) ---------- */
+    /* ۳٫۲۶ — کلید هویت از «تنظیمات ← کلیدهای تطبیق» (RM.keys — id:
+       qualityIdentity؛ پیش‌فرض همان ۴ فاکتور). سال کامل ۱۴۰X و «رقم سال»
+       هم‌ارز گروه‌بندیند (نگاشت یک‌به‌یک 140X ↔ X) — سال رول از
+       parseRollIdentity به رقم سال تبدیل و به کلید پاس می‌شود. */
     const bySetup = new Map();
     for (const r of recs) {
       if (r.setupNumber === null || r.setupNumber === undefined) continue;   // بدون ستاپ → خارج از این کنترل
       const id = Quality.parseRollIdentity(r.rollNumber);
-      const key = `${r.setupNumber}|${id.line ?? '?'}|${id.hall ?? '?'}|${id.year ?? '?'}`;
+      const key = RM.keys.build('qualityIdentity', {
+        setupNumber: r.setupNumber,
+        line: id.line,
+        hall: id.hall,
+        yearDigit: id.yearDigit,
+      });
       if (!bySetup.has(key)) {
         bySetup.set(key, {
           setupNumber: r.setupNumber, line: id.line, hall: id.hall, year: id.year, rolls: [],

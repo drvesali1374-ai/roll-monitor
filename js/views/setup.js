@@ -1231,12 +1231,15 @@
   };
 
   /** کلید یکتای یک ردیف Bulk (برای یافتن همتای هم‌کلید در پیش‌نمایش) —
-      هویت Batch (خط/سالن/تاریخ) هم بخشی از کلید است (نسخهٔ ۲٫۹). */
+      هویت Batch (خط/سالن/تاریخ) هم بخشی از کلید است (نسخهٔ ۲٫۹).
+      ۳٫۲۶: ضخامت مشترک Batch نیز پاس می‌شود تا در صورت حضور در ترکیبِ
+      تنظیم‌شدهٔ کلید یکتایی، سمت Bulk و سمت DB هم‌قالب بمانند. */
   SetupView.bulkRowKey = function (d, common) {
     return Setups.uniqueKey({
       width: U.parseNumber(d.motherToken),
       setupNumber: U.parseInt(common.setupNumber),
       standardLength: U.parseNumber(d.standardLength),
+      thickness: U.parseNumber(common.thickness),
       machineNumber: U.parseInt(d.machineNumber),
       cuttingPattern: d.patternText,
       productionLine: common.productionLine,

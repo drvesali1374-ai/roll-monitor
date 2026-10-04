@@ -93,6 +93,10 @@
       /* --- ۲-ب) ارتقای نرم رکوردهای قدیمی به مدل فعلی (فیلد عرض برش‌خورده) --- */
       await RM.db.ensureModelFields();
 
+      /* --- ۲-پ) ۳٫۲۶ — بارگذاری کلیدهای تطبیق قابل تنظیم (پیش از هر محاسبه/
+         نما؛ Overrideهای کاربر از appSettings — پاک‌سازی و اعتبارسنجی داخلی) --- */
+      await RM.keys.load();
+
       badgeDb.classList.add('ok');
       badgeDbText.textContent = 'پایگاه‌داده آماده';
 

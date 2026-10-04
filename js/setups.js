@@ -116,12 +116,26 @@
    * کلید یکتای ستاپ: عرض + شماره ستاپ + متراژ استاندارد + شماره دستگاه
    * + الگوی نرمال‌شدهٔ برش (ترتیب قطعات مهم نیست)
    * + خط تولید + شماره سالن + عدد سال (از تاریخ ستاپ — نسخهٔ ۲٫۹).
+   *
+   * نسخهٔ ۳٫۲۶: ترکیب این کلید از «تنظیمات ← کلیدهای تطبیق» خوانده می‌شود
+   * (RM.keys — id: setupUnique؛ پیش‌فرض همان ۸ فاکتور بالا). مقادیر همهٔ
+   * فاکتورهای مجاز pool از فیلدهای همین رکورد ستاپ مقداردهی می‌شوند تا
+   * فرم‌های ثبت/ویرایش، Bulk و کنترل تکراری همیشه هم‌قالب بمانند.
    */
   Setups.uniqueKey = function (setup) {
     const patternKey = Setups.normalizePatternKey(setup.cuttingPattern);
     const id = N.setupIdentity(setup);
-    return `${setup.width}-${setup.setupNumber}-${setup.standardLength}-${setup.machineNumber}-${patternKey}` +
-      `-${id.line ?? '?'}-${id.hall ?? '?'}-${id.yearDigit ?? '?'}`;
+    return RM.keys.build('setupUnique', {
+      width: setup.width,
+      setupNumber: setup.setupNumber,
+      standardLength: setup.standardLength,
+      thickness: setup.thickness,
+      machineNumber: setup.machineNumber,
+      cuttingPattern: patternKey,
+      line: id.line,
+      hall: id.hall,
+      yearDigit: id.yearDigit,
+    });
   };
 
   /**
@@ -129,15 +143,26 @@
    *   شماره ستاپ + عدد سال (از تاریخ) + خط تولید + شماره سالن
    * برای بررسی تکراری‌بودن ستاپ در ثبت گروهی (Bulk) — این کلید نباید
    * با رکوردهای ثبت‌شده تکراری باشد.
+   *
+   * نسخهٔ ۳٫۲۶: ترکیب از «تنظیمات ← کلیدهای تطبیق» (RM.keys — id:
+   * setupIdentity؛ پیش‌فرض همان ۴ فاکتور بالا). امضای تابع برای سازگاری
+   * فراخوانی‌های موجود حفظ شد؛ ضخامت (فقط فاکتور مجاز اضافی pool) از
+   * arg اختیاری مقدار می‌گیرد — در ثبت گروهی مقدار مشترک Batch است.
    */
-  Setups.identityKey = function (setupNumber, yearDigit, productionLine, hallNumber) {
-    return `${setupNumber ?? '?'}|${yearDigit ?? '?'}|${productionLine ?? '?'}|${hallNumber ?? '?'}`;
+  Setups.identityKey = function (setupNumber, yearDigit, productionLine, hallNumber, thickness) {
+    return RM.keys.build('setupIdentity', {
+      setupNumber,
+      yearDigit,
+      line: productionLine,
+      hall: hallNumber,
+      thickness: typeof thickness === 'number' ? thickness : null,
+    });
   };
 
   /** کلید هویت یک رکورد ستاپ ثبت‌شده */
   Setups.identityKeyOf = function (setup) {
     const id = N.setupIdentity(setup);
-    return Setups.identityKey(setup.setupNumber, id.yearDigit, id.line, id.hall);
+    return Setups.identityKey(setup.setupNumber, id.yearDigit, id.line, id.hall, setup.thickness);
   };
 
   /* ---------------- اعتبارسنجی کامل فرم (§26) ---------------- */
@@ -813,7 +838,9 @@
       Setups.PRODUCTION_LINES.includes(commonLine) &&
       Setups.VALID_HALLS.includes(commonHall)
     ) {
-      const batchIdKey = Setups.identityKey(commonSetupNo, batchYearDigit, commonLine, commonHall);
+      /* ۳٫۲۶ — ضخامت مشترک Batch نیز به کلید هویت پاس می‌شود (فقط در صورتی
+         که در ترکیب تنظیم‌شدهٔ کلید حضور داشته باشد اثر می‌گذارد). */
+      const batchIdKey = Setups.identityKey(commonSetupNo, batchYearDigit, commonLine, commonHall, commonThickness);
       const dupRecord = allSetups.find((s) => Setups.identityKeyOf(s) === batchIdKey) || null;
       if (dupRecord) {
         dupIdentity = {
@@ -852,10 +879,13 @@
 
       // کلید یکتای این ردیف (نمایشی — ترتیب قطعات الگو بی‌اثر؛ هویت Batch هم
       // بخشی از کلید است — نسخهٔ ۲٫۹ — تا با کلیدهای DB هم‌قالب بماند)
+      // ۳٫۲۶: ضخامت مشترک Batch نیز پاس می‌شود (فقط در صورت حضور در ترکیب
+      // تنظیم‌شدهٔ کلید یکتایی اثر می‌گذارد — هم‌قالبی با سمت DB).
       const rowKey = Setups.uniqueKey({
         width: U.parseNumber(draft.motherToken),
         setupNumber: U.parseInt(common.setupNumber),
         standardLength: U.parseNumber(draft.standardLength),
+        thickness: commonThickness,
         machineNumber: U.parseInt(draft.machineNumber),
         cuttingPattern: draft.patternText,
         productionLine: commonLine,

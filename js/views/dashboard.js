@@ -1870,11 +1870,22 @@
         const records = await RM.edits.applyToRecords('archived', got.filter(Boolean));
 
         const rules = await db.standardLengthRules.toArray();
+        await RM.keys.ensure();   // ۳٫۲۶ — ترکیب کلید متالایز (مصرف همگام مطمئن)
         const groupMap = new Map();   // key → گروه
         for (const rec of records) {
           const idn = RM.normalize.parseRollIdentity(rec.rollNumber);
           const std = RM.rulesEngine.resolveStandardLength(rules, rec.thickness, rec.actualLength);
-          const key = U.formatKey(rec.width, std, rec.setupNumber, idn.line, idn.hall, idn.yearDigit);
+          /* ۳٫۲۶ — همان کلید metMatch موتور محاسبه (RM.keys — همیشه هم‌قالب
+             با تخصیص متالایز؛ ترکیب از «تنظیمات ← کلیدهای تطبیق»). */
+          const key = RM.keys.build('metMatch', {
+            width: rec.width,
+            standardLength: std,
+            setupNumber: rec.setupNumber,
+            thickness: rec.thickness,
+            line: idn.line,
+            hall: idn.hall,
+            yearDigit: idn.yearDigit,
+          });
           let g = groupMap.get(key);
           if (!g) {
             g = {

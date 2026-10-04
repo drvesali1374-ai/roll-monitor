@@ -1501,6 +1501,156 @@ button.status-row, .status-row-link {
 .mapping-field select { font-size: 0.8rem; padding: 8px 10px; }
 .mapping-hint { font-size: 0.65rem; padding: 3px 8px; }
 
+/* ---------- ۲۵-ب) پنل کلیدهای تطبیق (نسخهٔ ۳٫۲۶) ---------- */
+.mk-section .mk-keys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.mk-key {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mk-key-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mk-key-title {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mk-key-desc {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.9;
+  color: var(--text-muted);
+}
+
+.mk-params {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mk-param {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-soft);
+}
+
+.mk-param-idx {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--setup-soft);
+  color: var(--setup);
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mk-param-label {
+  flex: 1 1 auto;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: help;
+}
+
+.mk-param-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.mk-mini {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mk-mini:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.mk-mini:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mk-mini.mk-del:hover:not(:disabled) {
+  background: var(--uncut-soft);
+  color: var(--uncut);
+  border-color: rgba(190, 18, 60, 0.4);
+}
+
+.mk-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mk-add-row select {
+  flex: 1 1 auto;
+  font-size: 0.76rem;
+  padding: 7px 10px;
+}
+
+.mk-actions {
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.mk-key-hint {
+  margin: 0;
+  font-size: 0.64rem;
+  color: var(--text-faint);
+  line-height: 1.8;
+}
+
+@media (max-width: 640px) {
+  .mk-section .mk-keys-grid { grid-template-columns: 1fr; }
+  .mk-add-row { flex-direction: column; align-items: stretch; }
+  .mk-add-row .btn { width: 100%; }
+}
+
 /* ---------- ۲۶) Toast ---------- */
 .toast-stack {
   position: fixed;

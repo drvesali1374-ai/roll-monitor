@@ -437,5 +437,107 @@ RM.config = {
 
   /** نسخهٔ فعلی برنامه — ۳٫۲۴ بند ۱: در فایل پشتیبان (appVersion) درج و در
       پنجرهٔ تأیید بازیابی نمایش داده می‌شود تا منشأ فایل پشتیبان معلوم باشد. */
-  APP_VERSION: '3.25',
+  APP_VERSION: '3.26',
+
+  /* ---------------- کلیدهای تطبیق (نسخهٔ ۳٫۲۶) ----------------
+     رجیستری مرکزی همهٔ کلیدهای تطبیق/هویت/گروه‌بندی پروژه. هر کلید دقیقاً
+     یک نمونه دارد (قابل حذف نیست) و ترکیب پارامترهایش از طریق پنل
+     «کلیدهای تطبیق» تنظیمات توسط کاربر قابل ویرایش است (appSettings:
+     matchingKeys — فقط Overrideها ذخیره می‌شوند؛ نبودِ Override = پیش‌فرض).
+     پارامترهای هر کلید فقط از میان فاکتورهایی انتخاب می‌شوند که در هر دو
+     سمتِ همان تطبیق قابل محاسبه‌اند (ستون‌های شناسایی‌شدهٔ Mapping و
+     فاکتورهای مشتق از ستون‌های Mapping) تا تطبیق هرگز خطا ندهد. */
+
+  /** کاتالوگ فاکتورهای کلید — منبع مقدار هر فاکتور در سمت‌های مختلف */
+  MATCH_KEY_PARAMS: {
+    width:          { label: 'عرض',            desc: 'رول‌های موجود: ستون «عرض» (Mapping) · آرشیو: ستون «عرض» · ستاپ: فیلد عرض' },
+    cutWidth:       { label: 'عرض برش',        desc: 'رول برش‌خورده: ستون «عرض» (Mapping) · سمت ستاپ: هر عرض الگوی برش' },
+    standardLength: { label: 'متراژ استاندارد', desc: 'رول: حل از قوانین متراژ (ضخامت + متراژ واقعی) · ستاپ: فیلد متراژ استاندارد' },
+    setupNumber:    { label: 'شماره ستاپ',      desc: 'ستون «شماره ستاپ» فایل‌های رول · فیلد شماره ستاپ' },
+    thickness:      { label: 'ضخامت',          desc: 'ستون «ضخامت» (Mapping) در فایل رول / پالت · فیلد ضخامت ستاپ' },
+    line:           { label: 'خط تولید',        desc: 'رول: حرف آغازین شمارهٔ رول (F=BOPP · K=CPP) · ستاپ: فیلد خط تولید' },
+    hall:           { label: 'شماره سالن',      desc: 'رول: رقم اول بعد از حرف شمارهٔ رول · ستاپ: فیلد شمارهٔ سالن' },
+    yearDigit:      { label: 'رقم سال',         desc: 'رول: رقم دوم بعد از حرف شمارهٔ رول (۱۴۰X) · ستاپ: رقم آخر سالِ تاریخ ستاپ' },
+    machineNumber:  { label: 'شماره دستگاه',    desc: 'فیلد شماره دستگاه متالایز ستاپ (۱ تا ۳)' },
+    cuttingPattern: { label: 'الگوی برش',       desc: 'فیلد الگوی برش ستاپ (ترتیب قطعات بی‌اثر — نرمال‌شده)' },
+    filmType:       { label: 'نوع فیلم',        desc: 'ستون «نوع فیلم» (Mapping) — فایل پالت‌ها / رول‌ها' },
+    grade:          { label: 'گرید',            desc: 'ستون «گرید» (Mapping)' },
+    diameter:       { label: 'قطر بوبین',       desc: 'مشتق از ستون «نوع بسته‌بندی» فایل پالت‌ها (عدد انتهای عنوان)' },
+  },
+
+  /** رجیستری کلیدهای تطبیق — defaults = ترکیب فعلی ۳٫۲۲+ (پیش‌فرض همیشه موجود) */
+  MATCH_KEYS: [
+    {
+      id: 'rawMatch',
+      category: 'تطبیق رول‌ها با ستاپ‌ها',
+      label: 'کلید تطبیق رول‌های خام با ستاپ‌ها',
+      desc: 'گروه‌بندی رول‌های خام فایل «رول‌های موجود» و تطبیقشان با ستاپ‌ها (تخصیص ظرفیت‌محور، برش‌نشده، هشدار «بدون ستاپ» و گزارش ستاپ‌ها).',
+      pool: ['width', 'standardLength', 'setupNumber', 'thickness', 'line', 'hall', 'yearDigit'],
+      defaults: ['width', 'standardLength', 'setupNumber', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'metMatch',
+      category: 'تطبیق رول‌ها با ستاپ‌ها',
+      label: 'کلید تطبیق متالایز (آرشیو) با ستاپ‌ها',
+      desc: 'تطبیق رول‌های متالایزشدهٔ یکتای «سابقه رول‌ها» با ستاپ‌ها — ستون «مانده زمان متالایز»، مازاد متالایز و گروه‌های داشبورد.',
+      pool: ['width', 'standardLength', 'setupNumber', 'thickness', 'line', 'hall', 'yearDigit'],
+      defaults: ['width', 'standardLength', 'setupNumber', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'metFive',
+      category: 'تطبیق رول‌ها با ستاپ‌ها',
+      label: 'کلید ۵فاکتوری هشدار «عرض تعریف‌نشده»',
+      desc: 'هشدار مرکز کیفیت دادهٔ داشبورد: رول متالایزی که کلید بدون «عرض»اش با ستاپ منطبق است ولی با عرضِ ستاپ‌ها منطبق نیست.',
+      pool: ['standardLength', 'setupNumber', 'thickness', 'line', 'hall', 'yearDigit'],
+      defaults: ['standardLength', 'setupNumber', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'cutMatch',
+      category: 'تطبیق رول‌ها با ستاپ‌ها',
+      label: 'کلید تطبیق رول‌های برش‌خورده با ستاپ‌ها',
+      desc: 'تطبیق رول‌های برش‌خوردهٔ موجود (دارای بازوی R/L) با رکوردهای حاصل از تنوع عرض‌های الگوی برش ستاپ‌ها — گزارش «رول‌های برش‌خورده».',
+      pool: ['cutWidth', 'setupNumber', 'thickness', 'standardLength', 'line', 'hall', 'yearDigit'],
+      defaults: ['cutWidth', 'setupNumber', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'setupUnique',
+      category: 'هویت و یکتایی ستاپ‌ها',
+      label: 'کلید یکتایی رکورد ستاپ',
+      desc: 'جلوگیری از ثبت رکورد ستاپِ تکراری در فرم ثبت/ویرایش و ردیف‌های ثبت گروهی (Bulk).',
+      pool: ['width', 'setupNumber', 'standardLength', 'thickness', 'machineNumber', 'cuttingPattern', 'line', 'hall', 'yearDigit'],
+      defaults: ['width', 'setupNumber', 'standardLength', 'machineNumber', 'cuttingPattern', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'setupIdentity',
+      category: 'هویت و یکتایی ستاپ‌ها',
+      label: 'کلید هویت ستاپ در ثبت گروهی',
+      desc: 'کنترل تکراری‌بودن هویت Batch هنگام ثبت گروهی — فقط فاکتورهای مشترک کل Batch (شماره ستاپ/تاریخ/خط/سالن/ضخامت).',
+      pool: ['setupNumber', 'yearDigit', 'line', 'hall', 'thickness'],
+      defaults: ['setupNumber', 'yearDigit', 'line', 'hall'],
+    },
+    {
+      id: 'qualityIdentity',
+      category: 'کنترل کیفیت داده',
+      label: 'کلید هویت کنترل کیفیت ضخامت',
+      desc: 'گروه‌بندی رول‌ها برای کنترل «یکسانی ضخامت در ستاپ» در کنترل‌های کیفیت دادهٔ لیست رول‌ها.',
+      pool: ['setupNumber', 'line', 'hall', 'yearDigit'],
+      defaults: ['setupNumber', 'line', 'hall', 'yearDigit'],
+    },
+    {
+      id: 'palletGroup',
+      category: 'بسته‌بندی (پالت‌ها)',
+      label: 'کلید گروه‌بندی پالت‌ها (پنج‌ویژگی)',
+      desc: 'گروه‌بندی پالت‌های سازگار برای بهینه‌سازی بسته‌بندی در صفحهٔ «بسته‌بندی».',
+      pool: ['filmType', 'thickness', 'width', 'grade', 'diameter'],
+      defaults: ['filmType', 'thickness', 'width', 'grade', 'diameter'],
+    },
+    {
+      id: 'palletMix',
+      category: 'بسته‌بندی (پالت‌ها)',
+      label: 'کلید گروه ترکیبی U+X بسته‌بندی',
+      desc: 'گروه‌بندی باقی‌مانده‌های گرید U و X در فاز ترکیبی بسته‌بندی (پیش‌فرض بدون گرید تا ترکیب ممکن شود).',
+      pool: ['filmType', 'thickness', 'width', 'diameter', 'grade'],
+      defaults: ['filmType', 'thickness', 'width', 'diameter'],
+    },
+  ],
 };
