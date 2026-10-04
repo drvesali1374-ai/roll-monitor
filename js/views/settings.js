@@ -1062,53 +1062,43 @@
        · بازگردانی به پیش‌فرض = حذف Override همان کلید (کلید می‌ماند)
      ================================================================ */
 
-  /** HTML ردیف یک پارامتر در کارت کلید */
-  function mkParamRowHtml(paramId, idx, total, param) {
-    const canDelete = total > 1;   // حداقل ۱ پارامتر — × آخری غیرفعال
-    return `
-      <li class="mk-param" data-mk-param="${paramId}">
-        <span class="mk-param-idx">${U.faNum(idx + 1)}</span>
-        <span class="mk-param-label" title="${U.escapeHtml(param.desc)}">${U.escapeHtml(param.label)}</span>
-        <span class="mk-param-actions">
-          <button type="button" class="mk-mini" data-mk-up ${idx === 0 ? 'disabled' : ''} title="جابه‌جایی به بالا" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به بالا">▲</button>
-          <button type="button" class="mk-mini" data-mk-down ${idx === total - 1 ? 'disabled' : ''} title="جابه‌جایی به پایین" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به پایین">▼</button>
-          <button type="button" class="mk-mini mk-del" data-mk-del ${canDelete ? '' : 'disabled'}
-            title="${canDelete ? `حذف «${U.escapeHtml(param.label)}» از این کلید` : 'کلید بدون پارامتر معنا و کاربرد ندارد — حداقل یک پارامتر باید بماند'}"
-            aria-label="حذف پارامتر ${U.escapeHtml(param.label)}">✕</button>
-        </span>
-      </li>`;
-  }
-
   /**
-   * HTML بلوک ستون نمایندهٔ «عرض» (نسخهٔ ۳٫۲۷) — در کارت هر کلیدِ بخش رول‌ها که
-   * فاکتور عرض (یا عرض برش) در ترکیب فعلی‌اش دارد و widthPolicy دارد:
-   *   · کلیدهای پالت‌ها و کلیدهای بدون فاکتور عرض → بدون بلوک
+   * HTML محتوای زیرمنوی ستون‌های نمایندهٔ «عرض» (نسخهٔ ۳٫۲۸) — درون ردیف خودِ
+   * پارامتر عرض در کارت هر کلیدِ بخش رول‌ها که widthPolicy دارد (به‌جای بلوک
+   * جداگانهٔ زیر لیست پارامترها در ۳٫۲۷):
+   *   · کلیدهای دوفایلی (خام/متالایز: رول‌های موجود + آرشیو) → دو پراپرتی
+   *     «عرض در فایل رول‌های موجود» و «عرض در فایل آرشیو» — هر کدام بین دو
+   *     ستون «عرض» و «عرض اولیه» نگاشت همان فایل (قاعدهٔ سند ۳٫۲۸)
+   *   · کلیدهای تک‌فایلی (برش‌خورده: فقط رول‌های موجود) → فقط پراپرتی همان فایل
    *   · setupOnly (کلید یکتایی ستاپ) → یادداشت: عرض فقط از فیلد عرض ستاپ
-   *   · دیگر کلیدها → دراپ‌داون جداگانه برای هر منبع (رول‌های موجود/آرشیو)
+   *   · کلیدهای پالت‌ها و کلیدهای بدون فاکتور عرض → بدون زیرمنو
+   * subState: وضعیت لحظه‌ای زیرمنو هنگام بازسازی ردیف‌ها ({ open, vals } —
+   * مقادیر ذخیره‌نشدهٔ سلکت‌ها حفظ می‌شوند)؛ null = رندر اولیه (open = ویرایش‌شده).
    * ctx.archInitialWidthMapped: آیا ستون «عرض رول اولیه» آرشیو در Dataset فعلی
    * نگاشت شده؟ (null = Dataset آرشیو موجود نیست — بدون هشدار)
    */
-  function mkWidthSourcesHtml(def, params, ctx) {
+  function mkWidthSubmenuHtml(def, ctx, subState, open) {
     const policy = def.widthPolicy;
-    if (!policy) return '';                          // کلید پالتی یا بدون فاکتور عرض
-    const param = policy.param || 'width';
-    if (!params.includes(param)) return '';          // فاکتور عرض در ترکیب فعلی نیست
+    if (!policy) return '';
     const P = RM.config.MATCH_KEY_PARAMS;
+    const param = policy.param || 'width';
     const paramLabel = (P[param] || { label: 'عرض' }).label;
 
     /* یادداشت کلیدهای دوسمتتی ستاپ (بدون ستون رولی) */
     if (policy.setupOnly) {
       return `
-        <div class="mk-wsrc mk-wsrc-note">
-          <span class="mk-wsrc-title">ستون نمایندهٔ «${U.escapeHtml(paramLabel)}»:</span>
+        <div class="mk-wsub mk-wsub-note" data-mk-wsub${open ? '' : ' hidden'}>
           <p>در این کلید، «${U.escapeHtml(paramLabel)}» فقط از <b>فیلد عرض خودِ ستاپ</b> خوانده می‌شود — هر دو سمتِ مقایسه رکورد ستاپ‌اند و ستونی از فایل‌های رول در آن مشارکت ندارد.</p>
         </div>`;
     }
     if (!policy.sources) return '';
 
-    const SIDE_LABELS = { raw: 'در رول‌های موجود', archived: 'در آرشیو (سابقهٔ رول‌ها)' };
+    /* ۳٫۲۸ — نام پراپرتی هر سمت دقیقاً طبق سند: «عرض در فایل رول‌های موجود» / «عرض در فایل آرشیو» */
+    const FILE_LABELS = { raw: 'فایل رول‌های موجود', archived: 'فایل آرشیو' };
     const rows = Object.keys(policy.sources).map((src) => {
-      const current = RM.keys.widthSourceOf(def.id, src) || policy.sources[src];
+      const current = (subState && subState.vals && Object.prototype.hasOwnProperty.call(subState.vals, src))
+        ? subState.vals[src]
+        : (RM.keys.widthSourceOf(def.id, src) || policy.sources[src]);
       const fields = RM.config.WIDTH_SOURCE_FIELDS[src] || {};
       const options = Object.entries(fields).map(([f, meta]) => {
         /* هشدار گزینهٔ «عرض اولیه» آرشیو وقتی در فایل فعلی نگاشت نشده */
@@ -1119,28 +1109,70 @@
         return `<option value="${f}" ${f === current ? 'selected' : ''}>${U.escapeHtml(meta.label)} (ستون «${U.escapeHtml(meta.column)}»${U.escapeHtml(hint)})</option>`;
       }).join('');
       const warn = (src === 'archived' && current === 'initialWidth' && ctx && ctx.archInitialWidthMapped === false)
-        ? `<p class="mk-wsrc-warn">توجه: ستون «عرض رول اولیه» آرشیو در Dataset فعلی نگاشت نشده است — تا زمان نگاشت («تنظیمات ← نگاشت ستون‌های اکسل»)، عرض رول‌های آرشیو خالی خوانده می‌شود و تطبیق متالایز عملی نخواهد بود.</p>`
+        ? `<p class="mk-wsub-warn">توجه: ستون «عرض رول اولیه» آرشیو در Dataset فعلی نگاشت نشده است — تا زمان نگاشت («تنظیمات ← نگاشت ستون‌های اکسل»)، عرض رول‌های آرشیو خالی خوانده می‌شود و تطبیق متالایز عملی نخواهد بود.</p>`
         : '';
+      const sideName = `${paramLabel} در ${FILE_LABELS[src] || src}`;
       return `
-          <label class="mk-wsrc-row">
-            <span class="mk-wsrc-side">${SIDE_LABELS[src] || src}</span>
-            <select data-mk-width="${src}" aria-label="ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» ${SIDE_LABELS[src] || src} در ${U.escapeHtml(def.label)}">${options}</select>
+          <label class="mk-wsub-row" title="ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» در نگاشت فایل «${FILE_LABELS[src] || src}»">
+            <span class="mk-wsub-side">${U.escapeHtml(sideName)}</span>
+            <select data-mk-width="${src}" aria-label="«${U.escapeHtml(sideName)}» در ${U.escapeHtml(def.label)}">${options}</select>
           </label>${warn}`;
     }).join('');
 
     return `
-        <div class="mk-wsrc">
-          <span class="mk-wsrc-title">ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» در این کلید:</span>
+        <div class="mk-wsub" data-mk-wsub${open ? '' : ' hidden'}>
           ${rows}
-          <p class="mk-wsrc-hint">هر سمت مستقل از سمت‌های دیگر تنظیم می‌شود — می‌توانید عرض رول‌های موجود را یک ستون و عرض آرشیو را ستونی دیگر معرفی کنید؛ سمت ستاپ همیشه فیلد عرض خودِ ستاپ است.</p>
         </div>`;
   }
 
-  /** HTML کارت یک کلید (لیست پارامترها + افزودن + ستون نمایندهٔ عرض ۳٫۲۷ + ذخیره/بازگردانی) */
+  /** HTML ردیف یک پارامتر در کارت کلید — ۳٫۲۸: ردیفِ فاکتور عرض (عرض/عرض برش)
+      کلیدهای دارای widthPolicy، دکمهٔ زیرمنو (▸/▾) و زیرمنوی ستون‌های نمایندهٔ
+      عرض را درون خود ردیف می‌گیرد تا معلوم باشد این تنظیم فقط به همین پارامتر مربوط است */
+  function mkParamRowHtml(paramId, idx, total, param, def, ctx, subState) {
+    const canDelete = total > 1;   // حداقل ۱ پارامتر — × آخری غیرفعال
+    const actionsHtml = `
+          <button type="button" class="mk-mini" data-mk-up ${idx === 0 ? 'disabled' : ''} title="جابه‌جایی به بالا" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به بالا">▲</button>
+          <button type="button" class="mk-mini" data-mk-down ${idx === total - 1 ? 'disabled' : ''} title="جابه‌جایی به پایین" aria-label="جابه‌جایی پارامتر ${U.escapeHtml(param.label)} به پایین">▼</button>
+          <button type="button" class="mk-mini mk-del" data-mk-del ${canDelete ? '' : 'disabled'}
+            title="${canDelete ? `حذف «${U.escapeHtml(param.label)}» از این کلید` : 'کلید بدون پارامتر معنا و کاربرد ندارد — حداقل یک پارامتر باید بماند'}"
+            aria-label="حذف پارامتر ${U.escapeHtml(param.label)}">✕</button>`;
+
+    /* ۳٫۲۸ — زیرمنو فقط برای فاکتور هدفِ widthPolicy همان کلید (width یا cutWidth) */
+    let wToggle = '';
+    let submenu = '';
+    if (def && def.widthPolicy && (def.widthPolicy.param || 'width') === paramId) {
+      const open = subState ? !!subState.open : RM.keys.widthSourceModified(def.id);
+      const custom = RM.keys.widthSourceModified(def.id);
+      submenu = mkWidthSubmenuHtml(def, ctx, subState, open);
+      wToggle = `<button type="button" class="mk-mini mk-wtoggle${custom ? ' mk-wtoggle-custom' : ''}" data-mk-wtoggle aria-expanded="${open ? 'true' : 'false'}"
+            title="ستون‌های نمایندهٔ «${U.escapeHtml(param.label)}» در این کلید — به تفکیک هر فایل (سمت ستاپ همیشه فیلد عرض خودِ ستاپ است)${custom ? ' — شامل تنظیم سفارشی' : ''}"
+            aria-label="تنظیم ستون‌های نمایندهٔ «${U.escapeHtml(param.label)}» در ${U.escapeHtml(def.label)}">${open ? '▾' : '▸'}</button>`;
+    }
+
+    const rowCore = `
+        <span class="mk-param-idx">${U.faNum(idx + 1)}</span>
+        <span class="mk-param-label" title="${U.escapeHtml(param.desc)}">${U.escapeHtml(param.label)}</span>
+        ${wToggle}
+        <span class="mk-param-actions">${actionsHtml}</span>`;
+
+    if (!submenu) {
+      return `
+      <li class="mk-param" data-mk-param="${paramId}">${rowCore}
+      </li>`;
+    }
+    return `
+      <li class="mk-param mk-param-w" data-mk-param="${paramId}">
+        <div class="mk-param-main">${rowCore}</div>
+        ${submenu}
+      </li>`;
+  }
+
+  /** HTML کارت یک کلید (لیست پارامترها + افزودن + ذخیره/بازگردانی — ۳٫۲۸: زیرمنوی
+      ستون‌های نمایندهٔ عرض درون ردیف خودِ پارامتر عرض، نه بلوک جداگانه) */
   function mkKeyCardHtml(def, params, isModified, ctx) {
     const P = RM.config.MATCH_KEY_PARAMS;
     const paramsHtml = params
-      .map((p, i) => mkParamRowHtml(p, i, params.length, P[p] || { label: p, desc: '' }))
+      .map((p, i) => mkParamRowHtml(p, i, params.length, P[p] || { label: p, desc: '' }, def, ctx, null))
       .join('');
 
     /* گزینه‌های افزودن: فقط پارامترهای مجاز pool که هنوز در کلید نیستند */
@@ -1160,7 +1192,6 @@
         </div>
         <p class="mk-key-desc">${U.escapeHtml(def.desc)}</p>
         <ul class="mk-params" data-mk-list>${paramsHtml}</ul>
-        ${mkWidthSourcesHtml(def, params, ctx)}
         <div class="mk-add-row">
           <select data-mk-select aria-label="افزودن پارامتر به ${U.escapeHtml(def.label)}">${addOptions}</select>
           <button type="button" class="btn btn-ghost btn-sm" data-mk-add ${remaining.length ? '' : 'disabled'}>افزودن پارامتر</button>
@@ -1197,7 +1228,7 @@
 
     /* ۳٫۲۷ — آیا ستون «عرض اولیه» آرشیو در Dataset فعلی نگاشت شده؟
        (null = Dataset آرشیو هنوز وارد نشده — بدون هشدار). مبنای هشدار گزینهٔ
-       «عرض اولیه» منبع عرض آرشیو در کارت کلید متالایز. */
+       «عرض اولیه» پراپرتی «عرض در فایل آرشیو» در زیرمنوی کارت‌های دوفایلی (۳٫۲۸). */
     let archInitialWidthMapped = null;
     try {
       const headers = await RM.normalize.getDatasetHeaders('archived');
@@ -1238,9 +1269,19 @@
 
       const rerenderRows = () => {
         const def = RM.keys.defOf(card.dataset.mkId);
+        /* ۳٫۲۸ — وضعیت زیرمنوهای عرض (باز/بسته + مقادیر ذخیره‌نشدهٔ سلکت‌ها)
+           پیش از بازسازی ردیف‌ها جمع می‌شود تا چیزی از دست نرود */
+        const subStates = {};
+        list.querySelectorAll('li[data-mk-param]').forEach((li) => {
+          const sub = li.querySelector('[data-mk-wsub]');
+          if (!sub) return;
+          const vals = {};
+          sub.querySelectorAll('[data-mk-width]').forEach((sel) => { vals[sel.dataset.mkWidth] = sel.value; });
+          subStates[li.dataset.mkParam] = { open: !sub.hidden, vals };
+        });
         const params = [...list.querySelectorAll('[data-mk-param]')].map((li) => li.dataset.mkParam);
         list.innerHTML = params
-          .map((p, i) => mkParamRowHtml(p, i, params.length, RM.config.MATCH_KEY_PARAMS[p] || { label: p, desc: '' }))
+          .map((p, i) => mkParamRowHtml(p, i, params.length, RM.config.MATCH_KEY_PARAMS[p] || { label: p, desc: '' }, def, ctx, subStates[p] || null))
           .join('');
         /* بازگرداندن رویدادها به دکمه‌های تازه */
         bindRowButtons();
@@ -1277,6 +1318,18 @@
             li.remove();
             rerenderRows();
           });
+          /* ۳٫۲۸ — باز/بسته‌کردن زیرمنوی ستون‌های نمایندهٔ عرض همین پارامتر */
+          const wToggle = li.querySelector('[data-mk-wtoggle]');
+          if (wToggle) {
+            wToggle.addEventListener('click', () => {
+              const sub = li.querySelector('[data-mk-wsub]');
+              if (!sub) return;
+              const willOpen = sub.hidden;
+              sub.hidden = !willOpen;
+              wToggle.setAttribute('aria-expanded', String(willOpen));
+              wToggle.textContent = willOpen ? '▾' : '▸';
+            });
+          }
         });
       };
       bindRowButtons();
@@ -1318,7 +1371,8 @@
       return;
     }
 
-    /* ۳٫۲۷ — ستون‌های نمایندهٔ عرض همین کلید (فقط کارت‌های دارای بلوک عرض) */
+    /* ۳٫۲۸ — ستون‌های نمایندهٔ عرض همین کلید — سلکت‌ها اکنون درون زیرمنوی
+       ردیف پارامتر عرض‌اند (فقط کارت‌های دارای زیرمنوی دارای سلکت) */
     const widthSelects = card.querySelectorAll('[data-mk-width]');
     const widthSources = {};
     widthSelects.forEach((sel) => { widthSources[sel.dataset.mkWidth] = sel.value; });

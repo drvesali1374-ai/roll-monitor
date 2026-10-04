@@ -120,6 +120,10 @@
 
 html { scroll-behavior: smooth; }
 
+/* ۳٫۲۸ — سند کاربر: همهٔ سلکت‌های برنامه (از جمله فیلدهای «افزودن پارامتر» و
+   پراپرتی‌های ستون عرض در کلیدهای تطبیق) با فونت اصلی پروژه (وزیرمتن) */
+select { font-family: var(--font); }
+
 body {
   margin: 0;
   font-family: var(--font);
@@ -1632,6 +1636,7 @@ button.status-row, .status-row-link {
 
 .mk-add-row select {
   flex: 1 1 auto;
+  font-family: var(--font);   /* ۳٫۲۸ — سند کاربر: فیلد «افزودن پارامتر» با فونت وزیر */
   font-size: 0.76rem;
   padding: 7px 10px;
 }
@@ -1648,64 +1653,100 @@ button.status-row, .status-row-link {
   line-height: 1.8;
 }
 
-/* ---------- ۳٫۲۷) بلوک ستون نمایندهٔ «عرض» در کارت کلید ---------- */
-.mk-wsrc {
+/* ---------- ۳٫۲۸) زیرمنوی ستون‌های نمایندهٔ «عرض» — درون ردیف خودِ پارامتر عرض ----------
+   به‌جای بلوک جداگانهٔ زیر لیست پارامترها (۳٫۲۷)، تنظیم ستون نمایندهٔ عرض به‌صورت
+   زیرمنوی جمع‌وجور در ردیف همان پارامتر است تا معلوم باشد فقط به عرض مربوط است. */
+
+/* ردیف پارامترِ دارای زیرمنو (عرض/عرض برش) — ستونی می‌شود تا زیرمنو زیر ردیف بنشیند */
+.mk-param-w {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.mk-param-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* دکمهٔ باز/بسته‌کردن زیرمنو (▸/▾) — تمایز از دکمه‌های جابه‌جایی با ته‌رنگ فیروزه‌ای */
+.mk-wtoggle {
+  color: var(--setup);
+  border-color: var(--setup-soft);
+  background: var(--setup-soft);
+  font-size: 0.62rem;
+}
+.mk-wtoggle:hover:not(:disabled) {
+  background: var(--setup);
+  color: var(--accent-contrast);
+  border-color: var(--setup);
+}
+/* نشان تنظیم سفارشی — ته‌رنگ کهربایی (منبع عرض ویرایش‌شده) */
+.mk-wtoggle-custom {
+  color: var(--metal);
+  border-color: var(--metal-soft);
+  background: var(--metal-soft);
+}
+.mk-wtoggle-custom:hover:not(:disabled) {
+  background: var(--metal);
+  color: var(--accent-contrast);
+  border-color: var(--metal);
+}
+
+/* خودِ زیرمنو — تورفته با خط اتصال در سمت راست (تعلیق بصری به پارامتر عرض) */
+.mk-wsub {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px;
-  margin: 2px 0;
+  margin: 0;
+  margin-inline-start: 14px;
+  padding: 7px 9px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-inline-start: 3px solid var(--setup-soft);
+  border-radius: 8px;
   background: var(--surface-1);
 }
 
-.mk-wsrc-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.mk-wsrc-row {
+.mk-wsub-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.mk-wsrc-side {
+/* نام پراپرتی: «عرض در فایل رول‌های موجود» / «عرض در فایل آرشیو» (سند ۳٫۲۸) */
+.mk-wsub-side {
   flex: 0 0 auto;
-  min-width: 150px;
-  font-size: 0.7rem;
+  min-width: 148px;
+  font-size: 0.68rem;
+  font-weight: 600;
   color: var(--text-muted);
+  cursor: help;
 }
 
-.mk-wsrc-row select {
-  flex: 1 1 180px;
+/* ۳٫۲۸ — سند کاربر: فیلدهای تنظیم پراپرتی ستون عرض با فونت اصلی پروژه (وزیر) */
+.mk-wsub-row select {
+  flex: 1 1 120px;
   min-width: 0;   /* گزینه‌های بلند نباید عرض کارت را در موبایل بشکنند */
-  font-size: 0.74rem;
-  padding: 7px 10px;
-}
-
-.mk-wsrc-hint {
-  margin: 2px 0 0;
-  font-size: 0.64rem;
-  color: var(--text-faint);
-  line-height: 1.8;
+  font-family: var(--font);
+  font-size: 0.72rem;
+  padding: 6px 9px;
 }
 
 /* یادداشت کلیدهای دوسمتتی ستاپ (setupUnique) — بدون دراپ‌داون */
-.mk-wsrc-note p {
+.mk-wsub-note p {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--text-muted);
   line-height: 1.9;
 }
 
 /* هشدار گزینهٔ نگاشت‌نشده (عرض اولیهٔ آرشیو) */
-.mk-wsrc-warn {
+.mk-wsub-warn {
   margin: 0;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   color: var(--uncut);
   background: var(--uncut-soft);
   border: 1px solid rgba(190, 18, 60, 0.3);
@@ -1718,10 +1759,10 @@ button.status-row, .status-row-link {
   .mk-section .mk-keys-grid { grid-template-columns: 1fr; }
   .mk-add-row { flex-direction: column; align-items: stretch; }
   .mk-add-row .btn { width: 100%; }
-  /* ۳٫۲۷ — در حالت ستونی، wrap خطِ جدا به پهنای ذاتیِ select می‌سازد؛
-     nowrap + stretch دراپ‌داون را هم‌عرض ردیف می‌کند */
-  .mk-wsrc-row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
-  .mk-wsrc-side { min-width: 0; }
+  /* ۳٫۲۸ — زیرمنوی عرض: در حالت ستونی، wrap خطِ جدا به پهنای ذاتیِ select می‌سازد؛
+     nowrap + stretch دراپ‌داون را هم‌عرض ردیف می‌کند (الگوی فیکس ۳٫۲۷) */
+  .mk-wsub-row { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+  .mk-wsub-side { min-width: 0; }
 }
 
 /* ---------- ۲۶) Toast ---------- */
