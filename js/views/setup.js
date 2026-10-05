@@ -2120,46 +2120,21 @@
   };
 
   /* ================================================================
-     ۷) جزئیات Audit تخصیص (§45) — بازطراحی ۳٫۸:
-     فقط دو خط توضیح (کلید تطبیق خام + کلید تطبیق متالایز همان رکورد)
-     + دو لیست مجزا: رول‌های خام تخصیص‌یافته و رول‌های متالایز تخصیص‌یافته.
+     ۷) جزئیات Audit تخصیص (§45) — بازطراحی ۳٫۲۹:
+     یک خط توضیح (فقط کلید تطبیق خام — خط «کلید تطبیق متالایز» حذف شد)
+     + دو لیست مجزا: رول‌های خام تخصیص‌یافته و رول‌های متالایز تخصیص‌یافته —
+     هر کدام با پنل مشترک «ستون‌های جزئیات (انتخاب و ترتیب — ذخیره می‌شود)»
+     (مانند سایر جدول‌های مشابه) و مودال عریض (modal-wide).
      ================================================================ */
-
-  /** ساخت HTML جدول فشردهٔ رول‌های تخصیص‌یافته (شماره رول · عرض · متراژ · ضخامت · تاریخ تولید) */
-  SetupView._allocTableHtml = function (records) {
-    if (!records.length) {
-      return '<p class="audit-list-empty">رولی تخصیص نیافته است.</p>';
-    }
-    const rows = records.map((r) => `
-      <tr>
-        <td class="ltr">${U.escapeHtml(r.rollNumber || '—')}</td>
-        <td>${r.width === null || r.width === undefined ? '<span class="muted">—</span>' : U.faWidth(r.width)}</td>
-        <td>${r.actualLength === null || r.actualLength === undefined ? '<span class="muted">—</span>' : U.faNum(r.actualLength)}</td>
-        <td>${r.thickness === null || r.thickness === undefined ? '<span class="muted">—</span>' : U.faNum(r.thickness)}</td>
-        <td>${U.escapeHtml(U.faDateTime(r.productionDate))}</td>
-      </tr>`).join('');
-    return `
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>شماره رول</th><th>عرض</th><th>متراژ</th><th>ضخامت</th><th>تاریخ تولید</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  };
 
   SetupView.showAudit = async function (id, state) {
     const r = state.setupReport.find((x) => x.id === id);
     if (!r) return;
 
-    /* --- دو خط کلید تطبیق (تنها توضیح‌های مودال) --- */
+    /* --- کلید تطبیق خام (تنها خط توضیح ابتدای مودال — ۳٫۲۹) --- */
     const rawKeyHtml = r.audit.rawGroup
       ? `<code>${U.escapeHtml(r.audit.rawGroup.key)}</code>`
       : '<span class="muted">— بدون گروه منطبق (تخصیص خام ندارد)</span>';
-    const metKeyHtml = r.audit.metGroup
-      ? `<code>${U.escapeHtml(r.audit.metGroup.key)}</code>`
-      : '<span class="muted">— بدون گروه منطبق (تخصیص متالایز ندارد)</span>';
 
     /* --- دو لیست رول‌های تخصیص‌یافته (شناسه‌ها از موتور محاسبه — ۳٫۸) --- */
     const rawIds = (r.audit.rawRollIds || []);
@@ -2171,23 +2146,67 @@
     const rawRecords = await RM.edits.applyToRecords('rolls', rawGot.filter(Boolean));
     const metRecords = await RM.edits.applyToRecords('archived', metGot.filter(Boolean));
 
+    /* ۳٫۲۹: مودال عریض — جدول‌های دارای پنل «ستون‌های جزئیات» فضای
+       بیشتری برای نمایش ستون‌های بیشتر دارند (همان سازوکار ۳٫۹ تغییر ۶). */
     UI.infoModal(
       `جزئیات تخصیص — ستاپ ${U.faNum(r.setupNumber)} / دستگاه ${U.faNum(r.machineNumber)}`,
       `
       <div class="audit-keys">
         <div>کلید تطبیق خام: ${rawKeyHtml}</div>
-        <div>کلید تطبیق متالایز: ${metKeyHtml}</div>
       </div>
       <div class="audit-list">
         <h4>رول‌های خام تخصیص‌یافته <span class="muted">(${U.faNum(rawRecords.length)} رول)</span></h4>
-        ${SetupView._allocTableHtml(rawRecords)}
+        <div id="audit-raw-picker"></div>
+        <div id="audit-raw-table"></div>
       </div>
       <div class="audit-list">
         <h4>رول‌های متالایز تخصیص‌یافته <span class="muted">(${U.faNum(metRecords.length)} رول)</span></h4>
-        ${SetupView._allocTableHtml(metRecords)}
+        <div id="audit-met-picker"></div>
+        <div id="audit-met-table"></div>
       </div>
-      `
+      `,
+      { wide: true }
     );
+
+    /* --- رندر هر جدول با ستون‌های جزئیات مشترک (Mapping‌شده + صفحه‌بندی) ---
+       ستون‌ها/ترتیب/عرض از تنظیم ماندگار مشترک خوانده می‌شود و با پنل
+       شخصی‌سازی بالای همان جدول قابل تغییر است (چیپ‌ها per-Dataset). */
+    const renderList = async (sourceKey, wrapId) => {
+      const records = sourceKey === 'rolls' ? rawRecords : metRecords;
+      const columns = await UI.rollDetailColumns(sourceKey);
+      const wrap = document.getElementById(wrapId);
+      if (!wrap) return;
+      if (!records.length) {
+        wrap.innerHTML = '<p class="audit-list-empty">رولی تخصیص نیافته است.</p>';
+        return;
+      }
+      const renderPage = (page) => {
+        UI.renderTable(wrap, columns, records, {
+          page,
+          pageSize: RM.config.PAGE_SIZE,
+          emptyText: 'رکوردی برای نمایش یافت نشد.',
+          onPageChange: (nextPage) => renderPage(nextPage),
+        });
+      };
+      renderPage(1);
+    };
+
+    /* --- پنل شخصی‌سازی ستون‌های جزئیات هر لیست (مشترک با سایر مودال‌ها) ---
+       پس از هر تغییر، چیپ‌های همان پنل و هر دو جدول بازسازی می‌شوند. */
+    const mountPicker = async (sourceKey, pickerId) => {
+      const mountEl = document.getElementById(pickerId);
+      if (!mountEl) return;
+      await UI.mountDetailColsPicker(mountEl, sourceKey, async () => {
+        await mountPicker(sourceKey, pickerId);
+        await renderList('rolls', 'audit-raw-table');
+        await renderList('archived', 'audit-met-table');
+      });
+    };
+
+    await mountPicker('rolls', 'audit-raw-picker');
+    await mountPicker('archived', 'audit-met-picker');
+    await renderList('rolls', 'audit-raw-table');
+    await renderList('archived', 'audit-met-table');
   };
 
   RM.views = RM.views || {};

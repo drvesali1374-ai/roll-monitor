@@ -1743,6 +1743,34 @@ button.status-row, .status-row-link {
   line-height: 1.9;
 }
 
+/* ---------- اصلاح ۳٫۲۹ — سمت قفل‌شدهٔ «عرض در فایل آرشیو» ---------- */
+/* نشان قفل کنار نام پراپرتی */
+.mk-wsub-lock {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0 7px;
+  background: var(--bg-soft);
+  white-space: nowrap;
+}
+
+/* ردیف قفل‌شده: سلکت غیرفعال و کم‌رنگ‌تر */
+.mk-wsub-row-fixed select {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+/* توضیح علت قفل زیر ردیف قفل‌شده */
+.mk-wsub-note-inline {
+  margin: 0;
+  font-size: 0.64rem;
+  color: var(--text-muted);
+  line-height: 1.9;
+}
+
 /* هشدار گزینهٔ نگاشت‌نشده (عرض اولیهٔ آرشیو) */
 .mk-wsub-warn {
   margin: 0;

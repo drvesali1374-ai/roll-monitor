@@ -157,8 +157,9 @@
       const standardLength = R.resolveStandardLength(rules, roll.thickness, roll.actualLength);
       /* ۳٫۲۶ — کلیدهای قابل تنظیم: مقادیر همهٔ فاکتورهای مجاز (metMatch
          با width آرشیو؛ metFive همان pool بدون عرض — ترکیب از تنظیمات).
-         ۳٫۲۷ — ستون نمایندهٔ عرض آرشیو مستقل از رول‌های موجود: پیش‌فرض ستون
-         «عرض» (فیلد width)؛ گزینهٔ «عرض اولیه» فیلد initialWidth (نگاشت اختیاری آرشیو). */
+         ۳٫۲۷ — ستون نمایندهٔ عرض آرشیو مستقل از رول‌های موجود.
+         اصلاح ۳٫۲۹ — عرض آرشیو همیشه ستون «عرض» (فیلد width) است و قفل
+         است: فایل آرشیو ستون «عرض اولیه» ندارد و تنظیمی ندارد. */
       const archWidth = RM.keys.widthValue('metMatch', 'archived', roll);
       const metValues = {
         width: archWidth,

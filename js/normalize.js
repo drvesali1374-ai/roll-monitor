@@ -10,8 +10,6 @@
        width        عرض اولیه (نمایشی — از ستون «عرض رول اولیه»؛ مبنای محاسبات نیست)
        cutWidth     عرض فعلی/برش‌خورده (از ستون «عرض» — مبنای کلیدهای انطباق/تخصیص
                     رول‌های خام و محاسبات رول‌های فرزند — ۳٫۹ تغییر ۱)
-       initialWidth عرض اولیهٔ آرشیو (۳٫۲۷ — فقط فایل آرشیو، ستون «عرض رول اولیه»
-                    اختیاری؛ فیلد نمایندهٔ دوم «منبع عرض آرشیو» در کلید متالایز)
        actualLength متراژ واقعی
        thickness    ضخامت (میکرون)
        filmType     نوع فیلم
@@ -118,7 +116,9 @@
       rollNumber: String(rollNumberRaw ?? '').trim(),   // شماره رول همیشه String (§97)
       width: U.parseNumber(get('width')),
       cutWidth: U.parseNumber(get('cutWidth')),
-      initialWidth: U.parseNumber(get('initialWidth')),   // ۳٫۲۷ — منبع دوم عرض آرشیو
+      /* ۳٫۲۷ فیلد initialWidth (عرض اولیهٔ آرشیو) داشت؛ ۳٫۲۹ حذف شد (اصلاحیهٔ
+         کاربر): فایل آرشیو ستونی با نام «عرض اولیه» ندارد — عرض آرشیو فقط
+         از ستون «عرض» (فیلد width) خوانده می‌شود و تنظیم ندارد. */
       actualLength: U.parseNumber(get('actualLength')),
       thickness: U.parseNumber(get('thickness')),
       filmType: String(get('filmType') ?? '').trim(),

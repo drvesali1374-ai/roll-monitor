@@ -415,6 +415,8 @@
         .sort((a, b) => (a.setupNumber || 0) - (b.setupNumber || 0) || (a.width || 0) - (b.width || 0));
       const totalUncut = rows.reduce((s, r) => s + r.uncut, 0);
 
+      /* ۳٫۲۹: مودال عریض — مانند مودال‌های دارای پنل «ستون‌های جزئیات»
+         (همند «رول‌های خام با گرید T») تا ستون‌های جدول به‌خوبی جا شوند. */
       UI.infoModal('ستاپ‌های برش‌نشده', `
         <div class="drill-subtitle">
           رکوردهای «گزارش تولید ستاپ‌ها» با رول برش‌نشده — فرمول: تعداد − (خام موجود + متالایز):
@@ -422,7 +424,7 @@
         </div>
         <div id="uncut-cols-picker"></div>
         <div id="uncut-table-wrap"></div>
-      `);
+      `, { wide: true });
 
       const renderTable = async () => {
         const selected = await RM.db.getSetting('uncutDrillColumns', Dashboard.UNCUT_DRILL_DEFAULT)

@@ -1,5 +1,5 @@
 /* =========================================================================
-   keys.js — موتور کلیدهای تطبیق (نسخهٔ ۳٫۲۸) ⭐
+   keys.js — موتور کلیدهای تطبیق (نسخهٔ ۳٫۲۹) ⭐
    -------------------------------------------------------------------------
    تنها منبع ساخت کلیدهای تطبیق/هویت/گروه‌بندی کل سیستم (Single Source of
    Truth). رجیستری تعاریف در config.js است (MATCH_KEYS + MATCH_KEY_PARAMS +
@@ -17,18 +17,28 @@
      · Overrideها فقط اختلاف با پیش‌فرض را نگه می‌دارند و چون در appSettings
        ذخیره می‌شوند، خودکار در فایل پشتیبان ذخیره/بازیابی می‌شوند (۳٫۲۳).
 
-   منابع ستون «عرض» (سند کاربر ۳٫۲۷ + اصلاح ۳٫۲۸):
+   منابع ستون «عرض» (سند کاربر ۳٫۲۷ + ۳٫۲۸ + اصلاح ۳٫۲۹):
      · پارامتر «عرض» در هر کلید، به‌ازای هر فایل رول‌ای که در همان کلید مشارکت
        دارد، یک پراپرتی جداگانه دارد: «عرض در فایل رول‌های موجود» و «عرض در
-       فایل آرشیو» — هر کدام بین دو ستون «عرض» و «عرض اولیه» نگاشت همان
-       فایل قابل تنظیم است (زیرمنوی خودِ پارامتر عرض در کارت هر کلید).
-     · ۳٫۲۸ — کلیدهای دوفایلی (خام rawMatch و متالایز metMatch: رول‌های
-       موجود + آرشیو) هر دو پراپرتی را دارند؛ کلیدهای تک‌فایلی (برش‌خورده
-       cutMatch: فقط رول‌های موجود) فقط پراپرتی همان فایل را دارند؛ ذخیره‌سازی
-       per-کلید است (matchKeyWidthSources — فقط اختلاف‌ها؛ نبودِ Override =
-       پیش‌فرض widthPolicy همان کلید).
-     · پیش‌فرض‌ها: سمت رول‌های موجود = ستون «عرض اولیه» (۳٫۲۷) و سمت آرشیو =
-       ستون «عرض» — در هر دو کلید خام و متالایز؛ برش‌خورده: ستون «عرض».
+       فایل آرشیو» — قابل تنظیم بین ستون‌های عرض‌مانند نگاشت همان فایل.
+     · اصلاح ۳٫۲۹: فقط در کلیدهایی که پارامتر «عرض» دارند و دیتای فایل
+       «رول‌های موجود» در کلید مشارکت می‌کند، پارامتر عرض دو پراپرتی دارد
+       (خام rawMatch: «عرض در فایل رول‌های موجود» قابل تنظیم + «عرض در فایل
+       آرشیو» قفل) — لزوم مشارکت دیتای آرشیو حذف شد. چون فایل «سابقه رول‌ها
+       (آرشیو)» ستونی با نام «عرض اولیه» ندارد، سمت آرشیو فقط پراپرتی «عرض»
+       را دارد که نیاز به تنظیم توسط کاربر ندارد (fixed در رجیستری —
+       Override از سوی موتور و UI پذیرفته نمی‌شود).
+     · کلید متالایز (metMatch): دیتای فایل «رول‌های موجود» در آن مشارکت
+       ندارد → فقط پراپرتی «عرض در فایل آرشیو» (قفل‌شده) را دارد (۳٫۲۸ سمت
+       raw هم داشت که حذف شد).
+     · برش‌خورده (cutMatch: تک‌فایلی رول‌های موجود) فقط پراپرتی «عرض برش در
+       فایل رول‌های موجود» (قابل تنظیم) را دارد.
+     · پیش‌فرض سمت رول‌های موجود = ستون «عرض اولیه» (۳٫۲۷) در خام؛ برش‌خورده
+       ستون «عرض»؛ سمت آرشیو همیشه ستون «عرض» (قفل).
+     · ذخیره‌سازی per-کلید (matchKeyWidthSources — فقط اختلاف‌ها؛ نبودِ
+       Override = پیش‌فرض widthPolicy همان کلید). Overrideهای قدیمیِ سمت‌های
+       حذف‌شده/فیلدهای حذف‌شده (مثل archived:initialWidth یا metMatch.raw)
+       خودکار پاک می‌شوند (خودشوافی ارتقا از ۳٫۲۷/۳٫۲۸).
      · کلیدهای پالت‌ها/بسته‌بندی عمداً منبع عرض قابل تنظیم ندارند (خارج از
        دامنهٔ سند) و کلید یکتایی ستاپ (setupUnique) عرض را فقط از فیلد
        عرض خودِ ستاپ می‌خواند (هر دو سمتش رکورد ستاپ‌اند — یادداشت زیرمنو).
@@ -87,12 +97,15 @@
   }
 
   /**
-   * پاک‌سازی Overrideهای منبع عرض (۳٫۲۷ · ۳٫۲۸):
+   * پاک‌سازی Overrideهای منبع عرض (۳٫۲۷ · ۳٫۲۸ · اصلاح ۳٫۲۹):
    *   · فقط کلیدهای دارای widthPolicy.sources
-   *   · فقط سمت‌های مشارکت‌کننده در همان کلید (raw/archived — ۳٫۲۸: کلیدهای
-   *     خام/متالایز هر دو سمت را دارند؛ برش‌خورده فقط raw)
+   *   · فقط سمت‌های مشارکت‌کننده در همان کلید (اصلاح ۳٫۲۹: خام raw+archived ·
+   *     متالایز فقط archived · برش‌خورده فقط raw)
    *   · فقط فیلدهای مجاز WIDTH_SOURCE_FIELDS همان سمت
+   *   · سمت‌های fixed (آرشیو — اصلاح ۳٫۲۹) هرگز Override نمی‌گیرند
    *   · برابرِ پیش‌فرض → حذف (ذخیرهٔ صرفاً اختلاف‌ها)
+   *   · خودشوافی ارتقا: Overrideهای قدیمیِ سمت/فیلد حذف‌شده (metMatch.raw یا
+   *     archived:initialWidth از ۳٫۲۷/۳٫۲۸) خودکار دور ریخته می‌شوند.
    */
   function cleanWidthOverrides(stored) {
     const clean = {};
@@ -104,9 +117,11 @@
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
       const srcClean = {};
       for (const [src, dflt] of Object.entries(policy.sources)) {
-        const v = raw[src];
         const fields = RM.config.WIDTH_SOURCE_FIELDS[src];
-        if (typeof v === 'string' && fields &&
+        /* ۳٫۲۹ — سمت قفل (مثل آرشیو) و فیلد حذف‌شده: Override رد می‌شود */
+        if (!fields || (fields[dflt] && fields[dflt].fixed)) continue;
+        const v = raw[src];
+        if (typeof v === 'string' &&
             Object.prototype.hasOwnProperty.call(fields, v) && v !== dflt) {
           srcClean[src] = v;
         }
@@ -120,6 +135,9 @@
    * بارگذاری Overrideها از appSettings (matchingKeys + matchKeyWidthSources)
    * + پاک‌سازی. در شروع برنامه، پس از ذخیرهٔ پنل، و در ابتدای هر محاسبهٔ
    * مرکزی فراخوانی می‌شود (ارزان — دو خواندن همگام Dexie).
+   * ۳٫۲۹ — خودشوافی ماندگار: اگر پاک‌سازی، مقدار ذخیره‌شده را تغییر داد
+   * (Overrideهای قدیمی/نامعتبر مثل سمت‌های حذف‌شده یا archived:initialWidth)،
+   * نسخهٔ پاک حاصل جایگزین appSettings می‌شود تا فایل پشتیبان هم تمیز بماند.
    */
   Keys.load = async function () {
     let stored = {};
@@ -135,9 +153,23 @@
       storedWidth = {};
     }
 
-    Keys._overrides = cleanParamsOverrides(stored || {});
-    Keys._widthOverrides = cleanWidthOverrides(storedWidth);
+    const clean = cleanParamsOverrides(stored || {});
+    const cleanWidth = cleanWidthOverrides(storedWidth);
+    Keys._overrides = clean;
+    Keys._widthOverrides = cleanWidth;
     Keys._loaded = true;
+
+    /* ۳٫۲۹ — بازنویسی فقط در صورت تفاوت (بیدفاع: اجرای همزمان مقدار یکسان می‌نویسد) */
+    try {
+      if (JSON.stringify(clean) !== JSON.stringify(stored || {})) {
+        await RM.db.setSetting('matchingKeys', clean);
+      }
+      if (JSON.stringify(cleanWidth) !== JSON.stringify(storedWidth || {})) {
+        await RM.db.setSetting('matchKeyWidthSources', cleanWidth);
+      }
+    } catch (err) {
+      console.warn('[MatchKeys:self-heal]', err);   // نوشتن نشد — مقادیر حافظه‌ای معتبرند
+    }
     return Keys._overrides;
   };
 
@@ -182,16 +214,31 @@
   };
 
   /** فیلد نمایندهٔ فعلی عرض یک سمت در یک کلید — Override یا پیش‌فرض رجیستری
-      (۳٫۲۸ — سمت‌های مجاز هر کلید از widthPolicy همان کلید: خام/متالایز raw +
-      archived · برش‌خورده فقط raw) */
+      (اصلاح ۳٫۲۹ — سمت‌های مجاز هر کلید از widthPolicy همان کلید: خام raw+
+      archived · متالایز فقط archived · برش‌خورده فقط raw؛ سمت قفل‌شده (آرشیو)
+      همیشه پیش‌فرض رجیستری است و Override نمی‌پذیرد) */
   Keys.widthSourceOf = function (keyId, source) {
     const def = Keys.defOf(keyId);
     if (!def || !def.widthPolicy || !def.widthPolicy.sources) return null;
     const dflt = def.widthPolicy.sources[source];
     if (dflt === undefined) return null;   // این سمت در این کلید مشارکت ندارد
+    /* ۳٫۲۹ — سمت قفل (fixed): همیشه پیش‌فرض، فارغ از Override کهنه */
+    const fields = RM.config.WIDTH_SOURCE_FIELDS[source];
+    if (fields && fields[dflt] && fields[dflt].fixed) return dflt;
     const ov = Keys._widthOverrides[keyId];
     if (ov && typeof ov === 'object' && typeof ov[source] === 'string') return ov[source];
     return dflt;
+  };
+
+  /** آیا این سمتِ منبع عرض در این کلید قفل‌شده است؟ (۳٫۲۹ — آرشیو: فقط «عرض»
+      و قابل تنظیم نیست؛ UI با همین پرچم سلکت را غیرفعال/قفل نشان می‌دهد) */
+  Keys.isFixedWidthSource = function (keyId, source) {
+    const def = Keys.defOf(keyId);
+    if (!def || !def.widthPolicy || !def.widthPolicy.sources) return false;
+    const dflt = def.widthPolicy.sources[source];
+    if (dflt === undefined) return false;
+    const fields = RM.config.WIDTH_SOURCE_FIELDS[source];
+    return !!(fields && fields[dflt] && fields[dflt].fixed);
   };
 
   /** مقدار عرض یک رکورد رول بر اساس فیلد نمایندهٔ کلید/سمت فعلی (۳٫۲۷) */
@@ -231,10 +278,11 @@
   /* ---------------- ذخیره / بازگردانی (پنل تنظیمات) ---------------- */
 
   /**
-   * اعتبارسنجی منابع عرض یک کلید (گارد موتور — سند ۳٫۲۷).
+   * اعتبارسنجی منابع عرض یک کلید (گارد موتور — سند ۳٫۲۷ · اصلاح ۳٫۲۹).
    * @param {string} keyId
    * @param {object|undefined} widthSources  { [source]: fieldId } — فقط سمت‌های
-   *   مشارکت‌کنندهٔ widthPolicy همان کلید پذیرفته می‌شوند.
+   *   مشارکت‌کنندهٔ widthPolicy همان کلید پذیرفته می‌شوند؛ سمت‌های قفل‌شده
+   *   (آرشیو — ۳٫۲۹) Override نمی‌پذیرند.
    * @returns {{ ok: boolean, error?: string, value?: object }} value = نگاشت
    *   پاک‌شده (فقط اختلاف با پیش‌فرض — برابر پیش‌فرض حذف می‌شود).
    */
@@ -259,7 +307,12 @@
           !Object.prototype.hasOwnProperty.call(fields, field)) {
         return { ok: false, error: `ستون «${String(field)}» برای منبع عرض این کلید مجاز نیست.` };
       }
-      if (field !== policy.sources[src]) clean[src] = field;   // برابر پیش‌فرض → بدون Override
+      /* ۳٫۲۹ — سمت قفل‌شده (آرشیو): فقط مقدار پیش‌فرض پذیرفته می‌شود */
+      const dflt = policy.sources[src];
+      if (fields[dflt] && fields[dflt].fixed && field !== dflt) {
+        return { ok: false, error: 'پراپرتی «عرض در فایل آرشیو» قابل تنظیم نیست — فایل آرشیو ستون «عرض اولیه» ندارد و همیشه از ستون «عرض» خوانده می‌شود.' };
+      }
+      if (field !== dflt) clean[src] = field;   // برابر پیش‌فرض → بدون Override
     }
     return { ok: true, value: clean };
   }

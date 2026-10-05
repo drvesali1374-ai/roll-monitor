@@ -1063,19 +1063,19 @@
      ================================================================ */
 
   /**
-   * HTML محتوای زیرمنوی ستون‌های نمایندهٔ «عرض» (نسخهٔ ۳٫۲۸) — درون ردیف خودِ
-   * پارامتر عرض در کارت هر کلیدِ بخش رول‌ها که widthPolicy دارد (به‌جای بلوک
-   * جداگانهٔ زیر لیست پارامترها در ۳٫۲۷):
-   *   · کلیدهای دوفایلی (خام/متالایز: رول‌های موجود + آرشیو) → دو پراپرتی
-   *     «عرض در فایل رول‌های موجود» و «عرض در فایل آرشیو» — هر کدام بین دو
-   *     ستون «عرض» و «عرض اولیه» نگاشت همان فایل (قاعدهٔ سند ۳٫۲۸)
-   *   · کلیدهای تک‌فایلی (برش‌خورده: فقط رول‌های موجود) → فقط پراپرتی همان فایل
+   * HTML محتوای زیرمنوی ستون‌های نمایندهٔ «عرض» (۳٫۲۸ · اصلاح ۳٫۲۹) — درون ردیف
+   * خودِ پارامتر عرض در کارت هر کلیدِ بخش رول‌ها که widthPolicy دارد:
+   *   · اصلاح ۳٫۲۹: فقط در کلیدهایی که پارامتر «عرض» دارند و دیتای فایل
+   *     «رول‌های موجود» در کلید مشارکت می‌کند (خام rawMatch)، پارامتر عرض دو
+   *     پراپرتی دارد: «عرض در فایل رول‌های موجود» (قابل تنظیم بین «عرض» و
+   *     «عرض اولیه») و «عرض در فایل آرشیو» (قفل روی «عرض» — فایل آرشیو ستون
+   *     «عرض اولیه» ندارد و نیازی به تنظیم ندارد).
+   *   · کلید متالایز (metMatch): فقط پراپرتی «عرض در فایل آرشیو» (قفل‌شده).
+   *   · کلیدهای تک‌فایلی رول‌های موجود (برش‌خورده) → فقط پراپرتی همان فایل.
    *   · setupOnly (کلید یکتایی ستاپ) → یادداشت: عرض فقط از فیلد عرض ستاپ
    *   · کلیدهای پالت‌ها و کلیدهای بدون فاکتور عرض → بدون زیرمنو
    * subState: وضعیت لحظه‌ای زیرمنو هنگام بازسازی ردیف‌ها ({ open, vals } —
    * مقادیر ذخیره‌نشدهٔ سلکت‌ها حفظ می‌شوند)؛ null = رندر اولیه (open = ویرایش‌شده).
-   * ctx.archInitialWidthMapped: آیا ستون «عرض رول اولیه» آرشیو در Dataset فعلی
-   * نگاشت شده؟ (null = Dataset آرشیو موجود نیست — بدون هشدار)
    */
   function mkWidthSubmenuHtml(def, ctx, subState, open) {
     const policy = def.widthPolicy;
@@ -1100,23 +1100,20 @@
         ? subState.vals[src]
         : (RM.keys.widthSourceOf(def.id, src) || policy.sources[src]);
       const fields = RM.config.WIDTH_SOURCE_FIELDS[src] || {};
-      const options = Object.entries(fields).map(([f, meta]) => {
-        /* هشدار گزینهٔ «عرض اولیه» آرشیو وقتی در فایل فعلی نگاشت نشده */
-        let hint = '';
-        if (src === 'archived' && f === 'initialWidth' && ctx && ctx.archInitialWidthMapped === false) {
-          hint = ' — در Dataset فعلی نگاشت نشده';
-        }
-        return `<option value="${f}" ${f === current ? 'selected' : ''}>${U.escapeHtml(meta.label)} (ستون «${U.escapeHtml(meta.column)}»${U.escapeHtml(hint)})</option>`;
-      }).join('');
-      const warn = (src === 'archived' && current === 'initialWidth' && ctx && ctx.archInitialWidthMapped === false)
-        ? `<p class="mk-wsub-warn">توجه: ستون «عرض رول اولیه» آرشیو در Dataset فعلی نگاشت نشده است — تا زمان نگاشت («تنظیمات ← نگاشت ستون‌های اکسل»)، عرض رول‌های آرشیو خالی خوانده می‌شود و تطبیق متالایز عملی نخواهد بود.</p>`
-        : '';
+      /* ۳٫۲۹ — سمت قفل‌شده (آرشیو): سلکت غیرفعال با تنها گزینهٔ «عرض» + توضیح */
+      const isFixed = RM.keys.isFixedWidthSource(def.id, src);
+      const options = Object.entries(fields).map(([f, meta]) =>
+        `<option value="${f}" ${f === current ? 'selected' : ''}>${U.escapeHtml(meta.label)} (ستون «${U.escapeHtml(meta.column)}»)</option>`
+      ).join('');
       const sideName = `${paramLabel} در ${FILE_LABELS[src] || src}`;
+      const lockNote = isFixed
+        ? `<p class="mk-wsub-note-inline">🔒 قفل روی «${U.escapeHtml((fields[current] || {}).label || 'عرض')}» — فایل «سابقه رول‌ها (آرشیو)» ستونی با نام «عرض اولیه» ندارد؛ ${U.escapeHtml(paramLabel)} این فایل همیشه از ستون «${U.escapeHtml((fields[policy.sources[src]] || {}).column || 'عرض')}» خوانده می‌شود و نیازی به تنظیم ندارد.</p>`
+        : '';
       return `
-          <label class="mk-wsub-row" title="ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» در نگاشت فایل «${FILE_LABELS[src] || src}»">
-            <span class="mk-wsub-side">${U.escapeHtml(sideName)}</span>
-            <select data-mk-width="${src}" aria-label="«${U.escapeHtml(sideName)}» در ${U.escapeHtml(def.label)}">${options}</select>
-          </label>${warn}`;
+          <label class="mk-wsub-row${isFixed ? ' mk-wsub-row-fixed' : ''}" title="ستون نمایندهٔ «${U.escapeHtml(paramLabel)}» در نگاشت فایل «${FILE_LABELS[src] || src}»${isFixed ? ' — قفل‌شده' : ''}">
+            <span class="mk-wsub-side">${U.escapeHtml(sideName)}${isFixed ? ' <span class="mk-wsub-lock">🔒 قفل</span>' : ''}</span>
+            <select data-mk-width="${src}"${isFixed ? ' disabled' : ''} aria-label="«${U.escapeHtml(sideName)}» در ${U.escapeHtml(def.label)}"${isFixed ? ' — قفل‌شده' : ''}>${options}</select>
+          </label>${lockNote}`;
     }).join('');
 
     return `
@@ -1205,7 +1202,7 @@
       </div>`;
   }
 
-  /** خلاصهٔ ستون‌های نمایندهٔ عرض فعلی یک کلید (۳٫۲۷) — پیوست ردیف «ترکیب فعلی» */
+  /** خلاصهٔ ستون‌های نمایندهٔ عرض فعلی یک کلید (۳٫۲۷ · اصلاح ۳٫۲۹) — پیوست ردیف «ترکیب فعلی» */
   function mkWidthSummary(def, params) {
     const policy = def.widthPolicy;
     if (!policy || !policy.sources) return '';
@@ -1215,7 +1212,9 @@
     const parts = Object.keys(policy.sources).map((src) => {
       const fld = RM.keys.widthSourceOf(def.id, src) || policy.sources[src];
       const meta = (RM.config.WIDTH_SOURCE_FIELDS[src] || {})[fld];
-      return `${SIDE[src] || src} ← «${meta ? meta.label : fld}»`;
+      /* ۳٫۲۹ — سمت قفل‌شده (آرشیو) با نشان «ثابت» */
+      const fixedTag = RM.keys.isFixedWidthSource(def.id, src) ? ' (ثابت)' : '';
+      return `${SIDE[src] || src} ← «${meta ? meta.label : fld}»${fixedTag}`;
     });
     return ` · منبع «${U.escapeHtml((RM.config.MATCH_KEY_PARAMS[param] || { label: 'عرض' }).label)}»: ${parts.map(U.escapeHtml).join(' · ')}`;
   }
@@ -1226,19 +1225,9 @@
     if (!wrap) return;
     await RM.keys.ensure();   // مصرف همگام مطمئن
 
-    /* ۳٫۲۷ — آیا ستون «عرض اولیه» آرشیو در Dataset فعلی نگاشت شده؟
-       (null = Dataset آرشیو هنوز وارد نشده — بدون هشدار). مبنای هشدار گزینهٔ
-       «عرض اولیه» پراپرتی «عرض در فایل آرشیو» در زیرمنوی کارت‌های دوفایلی (۳٫۲۸). */
-    let archInitialWidthMapped = null;
-    try {
-      const headers = await RM.normalize.getDatasetHeaders('archived');
-      if (headers.length) {
-        const overrides = (await RM.normalize.getUserMapping()).archived || {};
-        const mapping = RM.normalize.buildFieldMapping('archived', headers, overrides);
-        archInitialWidthMapped = !!mapping.initialWidth;
-      }
-    } catch { /* دیتابیس در دسترس نیست — بدون هشدار */ }
-    const ctx = { archInitialWidthMapped };
+    /* ۳٫۲۹ — ctx ساده شد: هشدار نگاشت «عرض رول اولیه» آرشیو حذف شد (فیلد
+       initialWidth از نگاشت آرشیو حذف شد — فایل آرشیو چنین ستونی ندارد). */
+    const ctx = {};
 
     /* گروه‌بندی کلیدها بر اساس دستهٔ رجیستری (ترتیب اعلان حفظ می‌شود) */
     const categories = [];
@@ -1371,9 +1360,10 @@
       return;
     }
 
-    /* ۳٫۲۸ — ستون‌های نمایندهٔ عرض همین کلید — سلکت‌ها اکنون درون زیرمنوی
-       ردیف پارامتر عرض‌اند (فقط کارت‌های دارای زیرمنوی دارای سلکت) */
-    const widthSelects = card.querySelectorAll('[data-mk-width]');
+    /* ۳٫۲۸ · ۳٫۲۹ — ستون‌های نمایندهٔ عرض همین کلید — سلکت‌های فعال خوانده
+       می‌شوند؛ سمت‌های قفل‌شده (آرشیو — disabled) در جمع‌آوری نمی‌آیند چون
+       مقدارشان همیشه پیش‌فرض رجیستری است و Override نمی‌پذیرند. */
+    const widthSelects = [...card.querySelectorAll('[data-mk-width]')].filter((sel) => !sel.disabled);
     const widthSources = {};
     widthSelects.forEach((sel) => { widthSources[sel.dataset.mkWidth] = sel.value; });
     const hasWidthBlock = widthSelects.length > 0;
