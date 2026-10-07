@@ -2183,7 +2183,7 @@ button.status-row, .status-row-link {
 .cut-table thead tr.cut-filter-row th {
   top: var(--ft-head-h, 38px);   /* زیر ردیف سرستون — JS ارتفاع واقعی را ثبت می‌کند (نسخهٔ ۲٫۵) */
   background: var(--surface-2);
-  padding: 4px 6px 8px;
+  padding: 4px 6px 6px;          /* ۳٫۳۰ — تاگل «≠» داخل باکس (زیر فیلد) است؛ کف کمتر */
   border-bottom: 2px solid var(--border);
   z-index: 2;
 }
@@ -2393,13 +2393,17 @@ button.status-row, .status-row-link {
    پنل ترتیب ستون‌ها + ستون‌های تأکیدی + داشبورد ECharts
    ========================================================================= */
 
-/* ---------- ۱) باکس فیلتر + دکمهٔ کوچک «≠» (برعکس‌کردن منطق) ----------
-   نسخهٔ ۲٫۵: آیکون «≠» کوچک‌تر و ریزتر در سمت راست باکس قرار می‌گیرد؛
-   باکس فیلتر در ادامه (سمت چپ آیکون) عرضش را با عرض ستون تنظیم می‌کند
-   (min-width: 0) — هرگز ناقص/بریده دیده نمی‌شود. */
+/* ---------- ۱) باکس فیلتر تمام‌عرض + دکمهٔ کوچک «≠» زیر باکس ----------
+   نسخهٔ ۲٫۵: آیکون «≠» در سمت راستِ «کنارِ» باکس فیلتر بود و از عرض ستون
+   می‌گرفت (باکس در ستون‌های باریک کوچک می‌شد).
+   ۳٫۳۰ — بازطراحی: باکس فیلتر «تمام‌عرض ستون» را می‌گیرد و «≠» به‌صورت یک
+   تاگل ریز «زیر باکس و سمت راست» نشسته است — غیرفعال: فقط آیکون کم‌رنگ؛
+   فعال: چیپ کهربایی جمع‌وجور با برچسب «شامل نشود» تا وضعیت فیلتر همیشه
+   بدیهی باشد (بدون هیچ جاگیری از عرض باکس). */
 .ft-filter-box {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 3px;
   direction: rtl;
   max-width: 100%;
@@ -2407,30 +2411,44 @@ button.status-row, .status-row-link {
 .ft-filter-box .cut-filter-input {
   flex: 1 1 auto;
   min-width: 0;        /* با عرض ستون کوچک/بزرگ می‌شود — هرگز سرریز نمی‌کند */
-  width: auto;
-  max-width: none;
+  width: 100%;
+  max-width: none;     /* ۳٫۳۰ — تمام‌عرض ستون (قبلاً کنار «≠» فشرده می‌شد) */
 }
 .ft-invert {
-  /* ۳٫۱۱ — بدون کادر: آیکون خالص (کادر دور آن جا می‌گرفت)؛ کوچک‌تر از قبل */
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  display: grid;
-  place-items: center;
-  padding: 0;
+  /* ۳٫۳۰ — زیر باکس فیلتر (سمت راست)، ریز و بدون کادر؛ پدینگ ثابت تا با
+     فعال‌شدن چیپ، هیچ پرش چیدمانی رخ ندهد */
+  align-self: flex-start;      /* در RTL = سمت راست باکس */
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 15px;
+  padding: 2px 6px;
   border: none;
-  border-radius: 4px;          /* فقط برای هالهٔ focus-visible */
+  border-radius: 999px;        /* برای حالت چیپ فعال و هالهٔ focus-visible */
   background: transparent;
   color: var(--text-faint);
   cursor: pointer;
-  transition: color 0.15s ease, transform 0.12s ease;
+  font-family: var(--font);
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+  max-width: 100%;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
-.ft-invert svg { width: 9px; height: 9px; }   /* ۳٫۱۱ — ریزتر (قبلاً ۱۱px) */
+.ft-invert svg { width: 9px; height: 9px; flex: 0 0 auto; }   /* ۳٫۱۱ — ریزتر (قبلاً ۱۱px) */
+.ft-invert-label {
+  display: none;               /* فقط در حالت فعال برچسب ظاهر می‌شود */
+  white-space: nowrap;
+}
 .ft-invert:hover { color: var(--metal); }
 .ft-invert:active { transform: scale(0.88); }
-/* فعال (۳٫۱۱): فقط تغییر رنگ آیکون — کهربایی؛ بدون هیچ کادر/پس‌زمینه.
-   غیرفعال: بازگشت به رنگ کم‌رنگ اولیه (color پایه بالا). */
-.ft-invert.on { color: var(--metal); }
+/* فعال (۳٫۳۰): چیپ کهربایی جمع‌وجور با برچسب «شامل نشود» — وضعیت فیلتر
+   بدیهی است. غیرفعال: فقط آیکون کم‌رنگ بدون برچسب (رنگ پایه بالا). */
+.ft-invert.on {
+  color: var(--metal);
+  background: var(--metal-soft);
+}
+.ft-invert.on .ft-invert-label { display: inline; }
 .ft-invert:focus-visible {
   outline: none;
   color: var(--setup);

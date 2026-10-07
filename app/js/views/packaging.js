@@ -1,5 +1,5 @@
 /* =========================================================================
-   views/packaging.js — نما/تب «بسته‌بندی» (نسخهٔ ۳٫۲۹)
+   views/packaging.js — نما/تب «بسته‌بندی» (نسخهٔ ۳٫۳۰)
    -------------------------------------------------------------------------
    رابط کاربری صفحهٔ بسته‌بندی — تمام محاسبات از موتور مرکزی
    (js/packaging.js — RM.packaging.buildPlan) مصرف می‌شود؛ این فایل
@@ -12,15 +12,17 @@
      ۴) چهار زیرتب:
         · برنامهٔ بسته‌بندی — فقط بسته‌های «قابل اقدام» با شماره‌گذاری
           پیوسته (۳٫۱۴ بند ۱) + ستون‌های LTR پالت/رول (بند ۱۳) + آپشن
-          تفکیک صادراتی‌ها (بند ۵) + خروجی اکسل استایل‌دار (بند ۳)
+          تفکیک صادراتی‌ها (بند ۵) — خروجی اکسل در ۳٫۳۰ به پنل
+          «لیست بسته های قابل نمایش» منتقل شد (بند ۳ + ۳٫۳۰ بند ۱)
         · پالت‌ها
         · رول‌ها و ردیابی
         · نمایش گرافیکی — دو پنل تفکیک‌شده (۳٫۱۵ بند ۴): جدول «لیست
           بسته های قابل نمایش» با تمام امکانات سایر جدول‌ها + درگ ردیف
-          + مودال ویرایش کامل هر بسته (بند ۳) و پنل «نمایش گرافیکی
-          بسته‌بندی» با کارت‌های آزاد ۳٫۱۳ (۳٫۱۶: هم‌اندازهٔ محتوا،
-          عرض کامل پنل، «ظرفیت n از m» در سربرگ، بدون نوار رزرو) +
-          تنظیمات برگهٔ خروجی: جهت صفحه و تعداد ستون (۳٫۱۸ بند ۳)
+          + مودال ویرایش کامل هر بسته (بند ۳) + دکمهٔ «خروجی اکسل» در
+          هدر همین پنل (۳٫۳۰ — فقط ردیف‌های قابل نمایش پس از فیلترها)
+          و پنل «نمایش گرافیکی بسته‌بندی» با کارت‌های آزاد ۳٫۱۳ (۳٫۱۶:
+          هم‌اندازهٔ محتوا، عرض کامل پنل، «ظرفیت n از m» در سربرگ، بدون
+          نوار رزرو) + تنظیمات برگهٔ خروجی: جهت صفحه و تعداد ستون (۳٫۱۸ بند ۳)
 
    هر چهار جدول بلند: پنل‌های «ترتیب ستون‌ها» و «مرتب‌سازی» +
    فیلتر زیر سرستون همهٔ ستون‌ها + ماندگاری «ردیف‌های قابل نمایش».
@@ -662,9 +664,11 @@
       });
     }
 
-    /* --- دکمهٔ «خروجی اکسل» بالای جدول برنامه (بند ۱۱) --- */
+    /* --- دکمهٔ «خروجی اکسل» — ۳٫۳۰ بند ۱: از هدر جدول «برنامهٔ بسته‌بندی»
+       به هدر پنل «لیست بسته های قابل نمایش» منتقل شد؛ خروجی = ردیف‌های
+       قابل نمایش همان جدول (پس از فیلترهای فعال) --- */
     const excelBtn = document.getElementById('pack-excel-btn');
-    if (excelBtn) excelBtn.addEventListener('click', () => PackagingView.exportPlanExcel());
+    if (excelBtn) excelBtn.addEventListener('click', () => PackagingView.exportListExcel());
 
     /* --- دکمه‌های نمایش گرافیکی (۳٫۱۴ — حذف همه از روی ترتیب) --- */
     const graphClear = document.getElementById('pack-graph-clear');
@@ -1785,12 +1789,17 @@
   };
 
   /* ================================================================
-     ۸) خروجی اکسل برنامهٔ بسته‌بندی (بند ۱۱ + ۳٫۱۴ بند ۳ — استایل‌دار)
+     ۸) خروجی اکسل «لیست بسته های قابل نمایش» (بند ۱۱ + ۳٫۱۴ بند ۳ — استایل‌دار)
      ================================================================
+     ۳٫۳۰ بند ۱ — منبع خروجی از جدول «برنامهٔ بسته‌بندی» به جدول «لیست بسته
+     های قابل نمایش» (زیرتب نمایش گرافیکی) منتقل شد: فقط ردیف‌های قابل نمایشِ
+     همان جدول (مرتب‌سازی کاربر + فیلترهای فعال — رکوردهای مخفی‌شده با فیلتر
+     صادر نمی‌شوند) و با همان داده‌های نمایشی آن (مشخصات و پالت/رول‌های نمایش
+     با ویرایش‌های دستی مودال ویرایش).
      ستون‌ها (به‌ترتیب): «لیست پالت و رول ها» (شمارهٔ هر پالت و زیر آن
      شمارهٔ رول‌های همان پالت — هرکدام در یک سلول) · «رول های رزرو» (زیر
-     هم، هر رول یک سلول) · فیلم · عرض · ضخامت · گرید · قطر · ظرفیت نهایی.
-     فقط بسته‌های قابل نمایش جدول (پس از فیلترهای فعال) صادر می‌شوند.
+     هم، هر رول یک سلول) · فیلم · عرض · ضخامت · گرید · قطر · ظرفیت نهایی
+     (شمار رولِ نمایش از ظرفیت استاندارد — مثل ستون «ظرفیت نمایش» جدول لیست).
 
      ۳٫۱۴ بند ۳ — استایل (ExcelJS):
        · دور ردیف‌های هر بسته Thick Outside Border
@@ -1816,11 +1825,16 @@
          کامل محدودهٔ هر بسته Thick Border می‌کشد — روی همهٔ سلول‌های لبه
          (بالا/پایین/چپ/راست، شامل سلول‌های ادغام‌شده) تا هیچ مرحله‌ای
          (ادغام/رنگ‌آمیزی گرید و…) نتواند آن را بازنشسته یا پاک کند */
-  PackagingView.exportPlanExcel = async function () {
+  PackagingView.exportListExcel = async function () {
     const plan = PackagingView._plan;
     const btn = document.getElementById('pack-excel-btn');
     if (!plan || !plan.packages.length) {
       UI.toast('برنامه‌ای برای خروجی گرفتن نیست — ابتدا فایل مدیریت پالت‌ها را وارد کنید.', 'warning');
+      return;
+    }
+    /* ۳٫۳۰ بند ۱ — منبع خروجی = جدول «لیست بسته های قابل نمایش» */
+    if (!PackagingView.state.graphOrder.length) {
+      UI.toast('هیچ بسته‌ای در «لیست بسته های قابل نمایش» نیست — ابتدا از جدول «برنامهٔ بسته‌بندی» با دکمهٔ «+ نمایش» بسته اضافه کنید.', 'warning');
       return;
     }
     if (typeof ExcelJS === 'undefined' || !ExcelJS.Workbook) {
@@ -1828,15 +1842,32 @@
       return;
     }
 
-    /* همان ردیف‌های قابل نمایش جدول: مرتب‌سازی کاربر + فیلترهای فعال */
-    const ctl = PackagingView.ctls.plan;
-    const registry = PackagingView.planColumns();
+    /* همان ردیف‌های قابل نمایش جدول «لیست بسته های قابل نمایش»: مرتب‌سازی
+       کاربر + فیلترهای فعال همان جدول (۳٫۳۰ — قبلاً جدول برنامه بود)؛
+       داده‌ها هم همان نمایش جدول‌اند (spec/parts با ویرایش‌های دستی مودال) */
+    const ctl = PackagingView.ctls.graph;
+    if (!ctl || !ctl.cfg) {
+      UI.toast('جدول «لیست بسته های قابل نمایش» هنوز آماده نشده است — ابتدا تب «بسته‌بندی» را باز کنید.', 'warning');
+      return;
+    }
+    const registry = PackagingView.graphListColumns();
     const columns = ctl.visibleColumns(registry);
-    const sorted = ctl.applySort(plan.packages.filter((p) => p.type !== 'as-is'));
-    const visible = PackagingView.filterRows(sorted, columns, PackagingView.state.tables.plan);
+    const pkgMap = new Map(plan.packages.map((x) => [x.no, x]));
+    const rows = PackagingView.state.graphOrder
+      .map((no) => pkgMap.get(no))
+      .filter(Boolean)
+      .map((pkg, i) => ({
+        displayIdx: i + 1,
+        total: PackagingView.state.graphOrder.length,
+        pkg,
+        spec: PackagingView.graphSpecOf(pkg),
+        parts: PackagingView.graphPartsOf(pkg),
+      }));
+    const sorted = ctl.applySort(rows);
+    const visible = PackagingView.filterRows(sorted, columns, PackagingView.state.tables.graph);
 
     if (!visible.length) {
-      UI.toast('با فیلترهای فعلی هیچ بسته‌ای قابل نمایش نیست — خروجی اکسل خالی می‌شد.', 'warning');
+      UI.toast('با فیلترهای فعلی هیچ بسته‌ای در «لیست بسته های قابل نمایش» قابل نمایش نیست — خروجی اکسل خالی می‌شد.', 'warning');
       return;
     }
 
@@ -1862,7 +1893,7 @@
       wb.creator = 'سامانه مانیتورینگ متالایز';
       /* شیت راست‌به‌چپ + فریز عنوان و هدر (۳٫۱۹ بند ۳: عنوان ردیف ۱ +
          هدر ردیف ۲ — ySplit:2) */
-      const ws = wb.addWorksheet('برنامه بسته‌بندی', {
+      const ws = wb.addWorksheet('لیست بسته‌های نمایش', {
         views: [{ rightToLeft: true, state: 'frozen', ySplit: 2 }],
       });
       /* ۳٫۱۹ بند ۳ — ردیف عنوان سند با تاریخ شمسی (ادغام روی همهٔ ستون‌ها) */
@@ -1870,7 +1901,7 @@
       const HEAD_ROW = 2;
       const FIRST_DATA_ROW = 3;
       const titleCell = ws.getCell(TITLE_ROW, 1);
-      titleCell.value = `برنامه بسته‌بندی — سامانه مانیتورینگ متالایز · تاریخ: ${U.faDate(Date.now())} (هجری شمسی)`;
+      titleCell.value = `لیست بسته های قابل نمایش — سامانه مانیتورینگ متالایز · تاریخ: ${U.faDate(Date.now())} (هجری شمسی)`;
       titleCell.font = { bold: true, size: 12, color: { argb: 'FF134E4A' } };
       titleCell.alignment = ALIGN;
       ws.getRow(TITLE_ROW).height = 22;
@@ -1902,16 +1933,25 @@
          تا هیچ مرحلهٔ بعدی نتواند آن‌ها را بازنشسته کند. */
       const blockRanges = [];   // محدودهٔ هر بسته برای پاس بوردر نهایی
       let r = FIRST_DATA_ROW;
-      visible.forEach((pkg, bi) => {
+      visible.forEach((rec, bi) => {
+        /* ۳٫۳۰ — داده‌های نمایشی جدول لیست: pkg = بستهٔ اصلی برنامه
+           (رزرو/قطر/ظرفیت استاندارد) · spec = مشخصات نمایشی (override مودال
+           ویرایش) · parts = پالت/رول‌های نمایشی (حذف/افزودن دستی لحاظ می‌شود) */
+        const pkg = rec.pkg;
+        const spec = rec.spec;
+        const parts = rec.parts;
+        const dispCount = parts.reduce((s, pt) => s + pt.rolls.length, 0);
         const startR = r;
         const mixed = !!pkg.mixedGrid;   // ۳٫۱۷ بند ۶ — بستهٔ ترکیبی U+X
         /* ستون A: شمارهٔ پالت (خط لاتین) + رول‌هایش زیر آن؛ هر خط با نوع و
-           گریدِ خودش تا ستون گرید ترکیبی هم‌تراز همین خط‌ها درج شود */
+           گریدِ خودش تا ستون گرید ترکیبی هم‌تراز همین خط‌ها درج شود — از
+           «پالت/رول‌های نمایش» (parts) ساخته می‌شود تا ویرایش‌های دستی مودال
+           ویرایش در خروجی لحاظ شوند (۳٫۳۰) */
         const listCol = [];
-        for (const pt of pkg.palletParts) {
-          listCol.push({ v: pt.palletNo, kind: 'pallet', grade: pt.pallet ? pt.pallet.grade : null });
+        for (const pt of parts) {
+          listCol.push({ v: pt.palletNo, kind: 'pallet', grade: pt.grade ?? null });
           for (const robj of pt.rolls) {
-            listCol.push({ v: robj.roll, kind: 'roll', grade: robj.pallet ? robj.pallet.grade : null });
+            listCol.push({ v: robj.roll, kind: 'roll', grade: robj.grade ?? null });
           }
         }
         const reserveCol = pkg.reserveRolls.map((x) => x.roll);
@@ -1927,16 +1967,20 @@
             : { size: 11 };
           row.getCell(2).value = reserveCol[i] ?? '';
           if (i === 0) {
-            row.getCell(3).value = pkg.filmType || '';
-            row.getCell(4).value = pkg.width === null ? '—' : pkg.width;
-            row.getCell(5).value = pkg.thickness === null ? '—' : pkg.thickness;
+            /* ۳٫۳۰ — مقادیر مشخصات از «مشخصات نمایشی» (spec) خوانده می‌شود تا
+               override های مودال ویرایش در خروجی لحاظ شوند */
+            row.getCell(3).value = spec.filmType || '';
+            row.getCell(4).value = (spec.width === null || spec.width === undefined) ? '—' : spec.width;
+            row.getCell(5).value = (spec.thickness === null || spec.thickness === undefined) ? '—' : spec.thickness;
             /* ۳٫۱۷ بند ۶ — بستهٔ ترکیبی: ستون گرید خط‌به‌خط (هم‌تراز ستون A)
                درج می‌شود؛ خط صفر = گرید پالت اصلی (نخستین خط ستون A) */
             row.getCell(6).value = mixed
               ? (gradeKeyOf(listCol[0] && listCol[0].grade) || gradeKeyOf(pkg.grade))
-              : pkg.grade || '';
+              : (spec.grade || '');
             row.getCell(7).value = pkg.diameter;
-            row.getCell(8).value = `${pkg.finalCount} از ${pkg.stdCapacity}`;
+            /* ۳٫۳۰ — ظرفیت نهایی = شمار رولِ نمایش از ظرفیت استاندارد (مثل
+               ستون «ظرفیت نمایش» جدول لیست؛ با ویرایش‌های پالت/رول به‌روز) */
+            row.getCell(8).value = `${dispCount} از ${pkg.stdCapacity}`;
             /* ۳٫۱۷ بند ۵ — مقادیر شش ستون مشخصات بولد و درشت‌تر */
             for (let cc = 3; cc <= 8; cc++) row.getCell(cc).font = { bold: true, size: 12 };
           }
@@ -1962,7 +2006,7 @@
             /* ۳٫۱۷ بند ۵ — سلول گرید بسته‌های عادی با رنگ کد گرید رنگ می‌شود
                (ادغام‌شده — فقط سلول رأس کافی است) */
             if (cc === 6 && !mixed && rr === startR) {
-              const gs = gradeStyleOf(pkg.grade);
+              const gs = gradeStyleOf(spec.grade);
               if (gs) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: gs.fill } };
                 cell.font = gs.font;
@@ -2045,15 +2089,15 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `برنامه-بسته-بندی_${stamp}.xlsx`;
+      a.download = `لیست-بسته-های-قابل-نمایش_${stamp}.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
 
       UI.toast(
-        `خروجی اکسل استایل‌دار ساخته شد — ${U.faNum(visible.length)} بسته (${U.faNum(r - FIRST_DATA_ROW)} ردیف) با بوردر ضخیم دور محدودهٔ هر بسته (پاس نهایی پس از ادغام‌ها)، عنوان و تاریخ شمسی، رنگ یک‌درمیان آبی/سبز (ترکیبی‌ها نارنجی ${U.faNum(visible.filter((p) => p.mixedGrid).length)} بسته)، پالت‌ها و مقادیر مشخصات بولد/درشت، رنگ‌بندی گرید X/U/Q، وسط‌چین RTL و هدر فریزشده.`,
-        'success', 5200
+        `خروجی اکسل «لیست بسته های قابل نمایش» ساخته شد — ${U.faNum(visible.length)} بسته (${U.faNum(r - FIRST_DATA_ROW)} ردیف؛ فقط ردیف‌های قابل نمایش پس از فیلترها) با بوردر ضخیم دور محدودهٔ هر بسته (پاس نهایی پس از ادغام‌ها)، عنوان و تاریخ شمسی، رنگ یک‌درمیان آبی/سبز (ترکیبی‌ها نارنجی ${U.faNum(visible.filter((p) => p.pkg.mixedGrid).length)} بسته)، پالت‌ها و مقادیر مشخصات بولد/درشت، رنگ‌بندی گرید X/U/Q، وسط‌چین RTL و هدر فریزشده.`,
+        'success', 5600
       );
     } catch (err) {
       console.error('[PackExcel]', err);

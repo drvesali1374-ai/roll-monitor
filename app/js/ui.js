@@ -703,6 +703,12 @@
    *   - چیدمان باکس فیلتر: آیکون «≠» کوچک در سمت راست + باکس فیلتر در ادامه
    *     که عرضش با عرض ستون تنظیم می‌شود (min-width: 0 → هرگز ناقص نمی‌شود)
    *
+   * منطق نسخهٔ ۳٫۳۰:
+   *   - چیدمان جدید باکس فیلتر: باکس فیلتر «تمام‌عرض ستون» شد و دکمهٔ «≠»
+   *     دیگر کنار باکس (جاگیر در عرض ستون) نیست — به‌صورت یک تاگل ریز «زیر
+   *     باکس و سمت راست» نشسته است؛ غیرفعال = فقط آیکون کم‌رنگ، فعال = چیپ
+   *     کهربایی جمع‌وجور با برچسب «شامل نشود» (وضعیت فیلتر همیشه بدیهی).
+   *
    * منطق نسخهٔ ۲٫۶:
    *   - باکس‌های جمع (opts.sums): زیر ستون‌های عددی/زمانی، ردیف پایانی چسبان
    *     (tfoot) با جمع همان ستون — جمع همیشه با دیتای «فیلترشدهٔ» فعلی
@@ -757,16 +763,16 @@
       return `
       <th class="cut-filter-cell" aria-label="فیلتر ${U.escapeHtml(String(c.label))}">
         <div class="ft-filter-box">
-          <button type="button" class="ft-invert${f.invert ? ' on' : ''}" data-ft-invert="${U.escapeHtml(c.key)}"
-                  aria-pressed="${String(!!f.invert)}"
-                  title="${f.invert ? 'منطق فعلی: شامل نشود — برای بازگشت به «شامل بودن» کلیک کنید' : 'برعکس‌کردن منطق: شامل نشود'}"
-                  aria-label="برعکس‌کردن منطق فیلتر ستون ${U.escapeHtml(String(c.label))}">
-            ${UI.icons.notContains}
-          </button>
           <input type="text" class="cut-filter-input" data-ft-filter="${U.escapeHtml(c.key)}"
                  value="${U.escapeHtml(f.value ?? '')}"
                  autocomplete="off" placeholder="فیلتر…" inputmode="text"
                  aria-label="فیلتر ستون ${U.escapeHtml(String(c.label))}">
+          <button type="button" class="ft-invert${f.invert ? ' on' : ''}" data-ft-invert="${U.escapeHtml(c.key)}"
+                  aria-pressed="${String(!!f.invert)}"
+                  title="${f.invert ? 'منطق فعلی: شامل نشود — برای بازگشت به «شامل بودن» کلیک کنید' : 'برعکس‌کردن منطق: شامل نشود'}"
+                  aria-label="برعکس‌کردن منطق فیلتر ستون ${U.escapeHtml(String(c.label))}">
+            ${UI.icons.notContains}<span class="ft-invert-label">شامل نشود</span>
+          </button>
         </div>
       </th>`;
     }).join('');

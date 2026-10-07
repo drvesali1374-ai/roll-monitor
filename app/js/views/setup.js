@@ -102,6 +102,20 @@
       SetupView.submit();
     });
 
+    /* --- ۳٫۳۰ — ترتیب تب چرخه‌ای ورود داده: Tab از دکمهٔ «ذخیره رکورد»
+       مستقیماً به فیلد «شماره ستاپ» می‌رود (پرکردن فرم → ذخیره → Tab →
+       ستاپ بعدی — بدون گذر از دکمه‌های بعدی و پنل‌های پایین صفحه) --- */
+    const saveBtn = document.getElementById('btn-save-roll');
+    if (saveBtn) {
+      saveBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault();
+          const setupInput = document.getElementById('f-setup');
+          if (setupInput) setupInput.focus();
+        }
+      });
+    }
+
     /* --- پاک‌کردن فرم / انصراف از ویرایش --- */
     document.getElementById('btn-reset-form').addEventListener('click', () => SetupView.resetForm());
     document.getElementById('btn-cancel-edit').addEventListener('click', () => SetupView.resetForm());
@@ -617,6 +631,14 @@
     SetupView.resetForm();
     await RM.refreshAll();
     await SetupView.render();
+
+    /* ۳٫۳۰ — فوکوس خودکار روی فیلد «شماره ستاپ» پس از ثبت/ویرایش موفق:
+       چرخهٔ سریع ورود داده — کاربر بلافاصله رکورد بعدی را تایپ می‌کند */
+    const setupInput = document.getElementById('f-setup');
+    if (setupInput) {
+      setupInput.focus();
+      try { setupInput.select(); } catch (err) { /* noop */ }
+    }
   };
 
   /** نمایش خطاهای Field-Level (§69): حاشیهٔ قرمز + پیام + فوکوس */
