@@ -1,10 +1,11 @@
 /* =========================================================================
-   setups.js — موتور مدیریت ستاپ‌ها (§20-§30، §89-§91)
+   setups.js — موتور مدیریت ستاپ‌ها (§20-§30، §89-§91) (نسخهٔ ۳٫۳۱)
    -------------------------------------------------------------------------
    مدل ستاپ (نسخهٔ ۲٫۹):
      { id, setupNumber, machineNumber(1|2|3), width, thickness,
        standardLength, rollCount, cuttingPattern,
        productionLine('BOPP'|'CPP'), hallNumber(1|2|3|4), setupDate(YYYY/MM/DD شمسی)،
+       expired?(boolean — ۳٫۳۱: منقضی‌شده با عملیات گروهی؛ از محاسبات زمان خارج)،
        createdAt, updatedAt }
 
    قوانین حاکم:
@@ -21,6 +22,9 @@
      - الگوی برش: مجموع ≤ عرض مادر (§27-§28)
      - Bulk (نسخهٔ ۲٫۹): کلید هویت «شماره ستاپ + عدد سال + خط تولید + شماره سالن»
        نباید با رکوردهای ثبت‌شده تکراری باشد
+     - ۳٫۳۱ — عملیات گروهی: bulkRemove (حذف انتخاب‌شده‌ها) و setExpired
+       (انقضای انتخاب‌شده‌ها — وضعیت «منقضی شده» جای «باقی مانده»/«تمام شده»)؛
+       ویرایش رکورد منقضی، وضعیت انقضایش را حفظ می‌کند.
    ========================================================================= */
 
 'use strict';
@@ -462,6 +466,11 @@
 
     const newRecord = { ...check.record, createdAt: existing.createdAt, updatedAt: Date.now() };
 
+    /* ۳٫۳۱ — حفظ وضعیت «منقضی شده»: فیلد expired با ویرایش رکورد از بین
+       نمی‌رود؛ رکورد منقضی فقط با حذف و ثبت مجدد (یا عملیات گروهی) تغییر
+       وضعیت می‌دهد. */
+    if (existing.expired === true) newRecord.expired = true;
+
     // حذف پرچم قدیمی پس از تکمیل ویرایش
     if ('legacy' in newRecord) delete newRecord.legacy;
 
@@ -530,6 +539,57 @@
     await db.transaction('rw', db.setupRolls, async () => {
       await db.setupRolls.delete(id);
     });
+  };
+
+  /* ---------------- عملیات گروهی (۳٫۳۱ — تغییر ۲ کاربر) ---------------- */
+
+  /**
+   * حذف گروهی رکوردهای انتخاب‌شدهٔ جدول «گزارش تولید ستاپ‌ها» — یک تراکنش
+   * واحد؛ اگر خطایی رخ دهد هیچ رکوردی حذف نمی‌شود.
+   * @param {Array<number>} ids  شناسهٔ رکوردها
+   * @returns {Promise<number>} تعداد رکوردهای حذف‌شده
+   */
+  Setups.bulkRemove = async function (ids) {
+    const list = (Array.isArray(ids) ? ids : [])
+      .map((x) => Number(x))
+      .filter((x) => Number.isInteger(x) && x > 0);
+    if (!list.length) return 0;
+    let removed = 0;
+    await db.transaction('rw', db.setupRolls, async () => {
+      for (const id of list) {
+        await db.setupRolls.delete(id);
+        removed++;
+      }
+    });
+    return removed;
+  };
+
+  /**
+   * انقضای گروهی رکوردهای انتخاب‌شده — ستون «وضعیت» همان رکوردها به
+   * «منقضی شده» تغییر می‌کند (فیلد expired = true روی رکورد ستاپ).
+   * رکوردهای منقضی در هیچ‌یک از محاسبات زمان (مانده زمان ستاپ/موجودی)
+   * در سراسر پروژه شرکت نمی‌کنند (calc.js ۳٫۳۱).
+   * فقط رکوردهایِ هنوز منقضی‌نشده تغییر می‌کنند (idempotent).
+   * @param {Array<number>} ids  شناسهٔ رکوردها
+   * @returns {Promise<{expired: number, skipped: number}>}
+   */
+  Setups.setExpired = async function (ids) {
+    const list = (Array.isArray(ids) ? ids : [])
+      .map((x) => Number(x))
+      .filter((x) => Number.isInteger(x) && x > 0);
+    if (!list.length) return { expired: 0, skipped: 0 };
+    let expired = 0;
+    let skipped = 0;
+    await db.transaction('rw', db.setupRolls, async () => {
+      for (const id of list) {
+        const rec = await db.setupRolls.get(id);
+        if (!rec) continue;
+        if (rec.expired === true) { skipped++; continue; }   // از قبل منقضی
+        await db.setupRolls.update(id, { expired: true, updatedAt: Date.now() });
+        expired++;
+      }
+    });
+    return { expired, skipped };
   };
 
   /** مجموع تعداد رول‌های همهٔ ستاپ‌ها (§57) */

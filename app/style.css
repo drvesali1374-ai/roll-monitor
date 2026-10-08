@@ -5392,3 +5392,239 @@ tr.pk-mixed-row td {
 }
 .edited-after { color: var(--raw); }
 [data-theme="dark"] .edited-after { color: var(--raw); }
+
+/* =========================================================================
+   نسخهٔ ۳٫۳۱ — ستون عملیات بازطراحی‌شدهٔ جدول ستاپ‌ها + عملیات گروهی
+   -------------------------------------------------------------------------
+   ۱) نوار سمت چپِ بالای جدول‌های فیلتردار (ft-topbar-side): دکمه‌های عملیات
+      گروهی نما (فقط جدول ستاپ‌ها فعال است) کنار آمار رکوردها.
+   ۲) چک‌باکس انتخاب ردیف (row-select) + دکمهٔ «عملیات» (⋮) با منوی
+      بازشوندهٔ سه‌گزینه‌ای (row-menu / row-menu-pop) — منو absolute است و
+      عرض ستون عملیات را اشغال نمی‌کند؛ در ردیف‌های نزدیک پایینِ ناحیهٔ
+      اسکرول، به بالا باز می‌شود (کلاس up).
+   ۳) چیپ «منقضی شده» (pill-expired) — وضعیت رکوردهای منقضی‌شده با عملیات
+      گروهی؛ زمان‌هایشان از محاسبات خارج است.
+   ========================================================================= */
+
+/* ---------- ۱) نوار سمت چپ بالای جدول (کنار آمار رکوردها) ---------- */
+.ft-topbar-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ft-bulk-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ft-bulk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.ft-bulk-btn svg { width: 0.95rem; height: 0.95rem; flex: none; }
+.ft-bulk-btn:disabled { opacity: 0.5; cursor: default; }
+.ft-bulk-btn:not(:disabled):hover { background: var(--surface-2); }
+
+/* رنگ‌های اختصاصی هر عملیات گروهی (فعال) */
+.ft-bulk-del:not(:disabled) { color: var(--danger-text); }
+.ft-bulk-del:not(:disabled):hover {
+  background: rgba(220, 38, 38, 0.07);
+  border-color: rgba(220, 38, 38, 0.35);
+}
+.ft-bulk-expire:not(:disabled) { color: var(--metal); }
+.ft-bulk-expire:not(:disabled):hover {
+  background: var(--metal-soft);
+  border-color: rgba(180, 83, 9, 0.35);
+}
+.ft-bulk-clear:not(:disabled) { color: var(--setup); }
+.ft-bulk-clear:not(:disabled):hover {
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+/* شمارندهٔ داخل دکمه‌های عملیات گروهی */
+.bulk-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.ft-bulk-del .bulk-count {
+  background: rgba(220, 38, 38, 0.09);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: var(--danger-text);
+}
+.ft-bulk-expire .bulk-count {
+  background: var(--metal-soft);
+  border-color: rgba(180, 83, 9, 0.3);
+  color: var(--metal);
+}
+
+/* ---------- ۲) ستون عملیات: چک‌باکس انتخاب + دکمهٔ منو ---------- */
+.row-actions-331 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: nowrap;
+}
+.data-table.fixed-cols .row-actions-331 { flex-wrap: nowrap; }
+
+/* چک‌باکس انتخاب ردیف — هم‌رنگ تم (فیروزه‌ای) */
+.row-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  border: 1.6px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--surface);
+  cursor: pointer;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.row-select:hover { border-color: var(--setup); }
+.row-select:checked {
+  background: var(--setup);
+  border-color: var(--setup);
+}
+.row-select:checked::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-right: none;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.row-select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.22);
+  border-color: var(--setup);
+}
+
+/* ظرف منوی عملیات */
+.row-menu {
+  position: relative;
+  display: inline-flex;
+}
+.row-menu-btn { flex: none; }
+.row-menu-btn svg { width: 1rem; height: 1rem; }
+.row-menu.open .row-menu-btn {
+  color: var(--setup);
+  border-color: rgba(15, 118, 110, 0.35);
+  background: var(--setup-soft);
+}
+
+/* منوی بازشونده — absolute، بدون اشغال عرض ستون */
+.row-menu-pop {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  min-width: 152px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(33, 38, 43, 0.16), 0 2px 6px rgba(33, 38, 43, 0.08);
+  z-index: 45;
+  animation: rowMenuPop 0.13s ease;
+}
+@keyframes rowMenuPop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* در ردیف‌های نزدیک پایین ناحیهٔ اسکرول → منو به بالا باز می‌شود */
+.row-menu.up .row-menu-pop {
+  top: auto;
+  bottom: calc(100% + 5px);
+  animation-name: rowMenuPopUp;
+}
+@keyframes rowMenuPopUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* آیتم‌های منو: آیکون + متن — تمام‌عرض و راست‌چین */
+.row-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: right;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+.row-menu-item svg { width: 0.95rem; height: 0.95rem; flex: none; color: var(--text-muted); }
+.row-menu-item:hover { background: var(--bg-soft); color: var(--text); }
+.row-menu-item:hover svg { color: var(--setup); }
+.row-menu-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.22);
+}
+/* آیتم حذف — قرمز */
+.row-menu-danger { color: var(--danger-text); }
+.row-menu-danger svg { color: var(--danger-text); }
+.row-menu-danger:hover { background: rgba(220, 38, 38, 0.07); color: var(--danger-text); }
+.row-menu-danger:hover svg { color: var(--danger-text); }
+
+/* ---------- ۳) چیپ وضعیت «منقضی شده» ---------- */
+.pill-expired {
+  background: var(--surface-2);
+  color: var(--text-faint);
+  border: 1px dashed var(--border-strong);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--text-faint);
+  cursor: help;
+}
+
+/* موبایل: نوار عملیات گروهی زیر دکمه‌های ابزار جمع می‌شود (wrap طبیعی) */
+@media (max-width: 640px) {
+  .ft-bulk-btn span { display: none; }   /* فقط آیکون + شمارنده — صرفه‌جویی عرض */
+  .ft-bulk-btn::after { content: ''; }
+  .ft-bulk-btn { padding: 4px 8px; }
+  .ft-bulk-del:not(:disabled)::before {
+    content: 'حذف';
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .ft-bulk-expire:not(:disabled)::before {
+    content: 'انقضاء';
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .ft-bulk-clear:not(:disabled)::before {
+    content: 'لغو';
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+}

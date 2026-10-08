@@ -32,6 +32,14 @@
     /* نمایش/مخفی‌کردن ستون در پنل ترتیب ستون‌ها (تغییر ۳) */
     eye:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+    /* ۳٫۳۱ — دکمهٔ «عملیات» ردیف‌های جدول ستاپ (منوی بازشونده) */
+    dots:    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>',
+    /* ۳٫۳۱ — «انقضاء انتخاب شده‌ها» (ساعت منقضی) */
+    expire:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="m2 2 20 20"/></svg>',
+    /* ۳٫۳۱ — «لغو انتخاب‌ها» (چک‌باکس با ضربدر) */
+    unselect:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></svg>',
+    /* ۳٫۳۱ — «حذف انتخاب شده‌ها» (سطل با علامت تأیید) */
+    trashSel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="m9.5 13.5 2 2 3.5-3.5"/></svg>',
   };
 
   /* ---------------- Toast ---------------- */
@@ -734,7 +742,10 @@
    *                                onRendered(visibleRows),
    *                                tools? (آرایهٔ [{id,label,title,pressed}] — دکمه‌های ابزار
    *                                        «ترتیب ستون‌ها»/«مرتب‌سازی» در نوار بالای جدول — ۳٫۹ تغییر ۵)،
-   *                                onToolToggle?(id, pressed, btnEl) — کلیک دکمهٔ ابزار }
+   *                                onToolToggle?(id, pressed, btnEl) — کلیک دکمهٔ ابزار,
+   *                                leftBarHtml? (۳٫۳۱ — HTML نوار سمت چپِ بالای جدول، کنار آمار
+   *                                        رکوردها؛ برای دکمه‌های عملیات گروهی نما مثل انتخاب‌ها),
+   *                                onLeftBarMount?(wrap) (۳٫۳۱ — بایند رویدادهای همان نوار پس از ساخت) }
    */
   UI.filterTable = function (wrap, columns, rows, opts = {}) {
     if (!wrap) return;
@@ -958,8 +969,14 @@
           ${toolsHtml}
         </div>
         <!-- ۳٫۹ — تغییر ۷: آمار رکوردهای فیلترشده از پایین جدول به بالای آن
-             (سمت چپ) منتقل شد تا همیشه در دید کاربر باشد -->
-        <span class="ft-status" aria-live="polite"></span>
+             (سمت چپ) منتقل شد تا همیشه در دید کاربر باشد.
+             ۳٫۳۱ — نوار سمت چپ: دکمه‌های عملیات گروهی نما (مثل «حذف/انقضاء/
+             لغو انتخاب شده‌ها»ی جدول ستاپ‌ها) کنار همین آمار قرار می‌گیرند —
+             html از opts.leftBarHtml و بایند رویدادها با opts.onLeftBarMount. -->
+        <div class="ft-topbar-side">
+          ${opts.leftBarHtml ? `<div class="ft-bulk-bar">${opts.leftBarHtml}</div>` : ''}
+          <span class="ft-status" aria-live="polite"></span>
+        </div>
       </div>
       <div class="cut-table-scroll" style="${heightStyle}">
         <table class="data-table ${tableClass}${hasWidths ? ' fixed-cols' : ''}">
@@ -1081,6 +1098,12 @@
           if (typeof opts.onRowsChange === 'function') opts.onRowsChange(n);
         }, 260);
       });
+    }
+
+    // ۳٫۳۱ — نوار سمت چپ (عملیات گروهی نما): پس از ساخت اسکلت، رویدادهای
+    // دکمه‌های leftBarHtml به نما واگذار می‌شود (mount یک‌بار در هر رندر کامل).
+    if (opts.leftBarHtml && typeof opts.onLeftBarMount === 'function') {
+      opts.onLeftBarMount(wrap);
     }
 
     renderBody();

@@ -1,5 +1,5 @@
 /* =========================================================================
-   calc.js — موتور محاسبهٔ مرکزی (Calculation Engine) ⭐
+   calc.js — موتور محاسبهٔ مرکزی (Calculation Engine) ⭐ (نسخهٔ ۳٫۳۱)
    -------------------------------------------------------------------------
    این تنها منبع محاسباتی کل سیستم است (Single Source of Truth — §53، §79،
    §105). هیچ نما (Dashboard، Setup، Raw Rolls) منطق محاسبهٔ خودش را ندارد.
@@ -14,6 +14,16 @@
      تطبیق با ستاپ‌ها + تخصیص ظرفیت‌محور (§42-§44)
         ↓
      گزارش ستاپ + هشدارها + خلاصهٔ داشبورد
+
+   نسخهٔ ۳٫۳۱ (تغییرهای کاربر):
+     ۱) هشدار «رول متالایز شده بدون ستاپ» — رول متالایزِ آرشیو که کلید
+        ۴فاکتوری‌اش (شماره ستاپ + خط تولید + شماره سالن + رقم سال) با رکوردی
+        از ستاپ‌ها مطابق است ولی یا اصلاً متراژ استاندارد ندارد (با هیچ قانونی
+        تطبیق نکرد) یا متراژ استانداردش با ستاپ‌های همان کلید مغایر است.
+     ۲) رکوردهای «منقضی شده» (فیلد expired رکورد ستاپ — عملیات گروهی جدول
+        گزارش) در هیچ‌یک از محاسبات زمان (مانده زمان ستاپ/موجودی) شرکت
+        نمی‌کنند — مقادیر null و از همهٔ جمع‌ها/چارت‌ها/هشدار قانون زمان
+        مستثنی‌اند (§ وضعیت ستاپ).
    -------------------------------------------------------------------------
    خروجی calculateProductionState():
      {
@@ -722,20 +732,30 @@
          شمارهٔ دستگاه + متراژ استاندارد همان رکورد خوانده می‌شود.
          پایهٔ منفی (متالایز بیش از تعداد) به صفر محدود می‌شود.
          بدون قانون مطابق → هر دو مقدار null (نمایش «—») */
-      const timeRule = R.findTimeRule(timeRules, setup.machineNumber, setup.standardLength);
+      /* --- ۳٫۳۱ (تغییر ۲ کاربر): رکورد «منقضی شده» (expired) ---
+         رکوردهایی که با عملیات گروهی «انقضاء انتخاب شده‌ها» در جدول گزارش
+         ستاپ‌ها منقضی شده‌اند، در هیچ‌یک از محاسبات زمان کل پروژه شرکت
+         نمی‌کنند: هر دو «مانده زمان ستاپ» و «مانده زمان موجودی» null می‌شوند،
+         timeStatus = 'expired' می‌گیرد و از جمع‌های داشبورد، چارت به تفکیک
+         دستگاه و هشدار «قانون زمان ندارد» مستثنی می‌مانند. */
+      const isExpired = setup.expired === true;
+      const timeRule = isExpired ? null : R.findTimeRule(timeRules, setup.machineNumber, setup.standardLength);
       const durationMin = timeRule ? timeRule.durationMin : null;
       // نسخهٔ ۲٫۷: (تعداد − متالایز) × مدت — پایهٔ مانده زمان ستاپ
       const remainingSetupCount = Math.max(0, setup.rollCount - metallizedAllocated);
-      const remainingSetupTime = durationMin !== null ? durationMin * remainingSetupCount : null;
+      const remainingSetupTime = (isExpired || durationMin === null) ? null : durationMin * remainingSetupCount;
       // نسخهٔ ۲٫۷: خام موجود × مدت — پایهٔ مانده زمان موجودی
-      const remainingProducedTime = durationMin !== null ? durationMin * rawExisting : null;
+      const remainingProducedTime = (isExpired || durationMin === null) ? null : durationMin * rawExisting;
       /* وضعیت ستاپ (نسخهٔ ۳٫۰ — تغییر ۲ کاربر):
          · «تمام شده» فقط وقتی «مانده زمان ستاپ» = ۰ «و» «مانده زمان موجودی» = ۰
          · «باقی مانده» وقتی هر کدام از این دو مثبت (غیرصفر) باشد
-         · بدون قانون زمان → null (نامشخص) */
-      const timeStatus = (remainingSetupTime === null || remainingProducedTime === null)
-        ? null
-        : (remainingSetupTime === 0 && remainingProducedTime === 0 ? 'done' : 'remaining');
+         · بدون قانون زمان → null (نامشخص)
+         · ۳٫۳۱ — منقضی شده → 'expired' (مقدار زمان‌ها null و در محاسبات نیست) */
+      const timeStatus = isExpired
+        ? 'expired'
+        : (remainingSetupTime === null || remainingProducedTime === null)
+          ? null
+          : (remainingSetupTime === 0 && remainingProducedTime === 0 ? 'done' : 'remaining');
 
       /* --- تعداد ست (تغییر ۱) — متراژ استاندارد ÷ کوچکترین استاندارد ضخامت
          مبنای تعداد رول‌های الگوی برش (فرزند) در سراسر سیستم. */
@@ -780,9 +800,11 @@
        نمایش داده شوند (Summary → مشکل → رکوردهای عامل). */
     const warnings = [];
 
-    /* --- ۹-ب) رکوردهای ستاپ بدون قانون زمان (تغییرات جدید) --- */
+    /* --- ۹-ب) رکوردهای ستاپ بدون قانون زمان (تغییرات جدید) ---
+       ۳٫۳۱: رکوردهای «منقضی شده» مستثنی‌اند — زمان‌هایشان عمداً null است
+       و نباید در شمارش «بدون قانون» بیایند. */
     if (setupRolls.length && timeRules.length) {
-      const noTimeRule = setupReport.filter((r) => r.remainingSetupTime === null);
+      const noTimeRule = setupReport.filter((r) => r.remainingSetupTime === null && r.expired !== true);
       if (noTimeRule.length) {
         warnings.push({
           type: 'no-time-rule',
@@ -886,6 +908,91 @@
         detail: `کلید «متراژ استاندارد + شماره ستاپ + خط تولید + شماره سالن + عدد سال» این رول‌ها با رکوردهای ستاپ مطابقت دارد${setupsTxt ? ` (ستاپ‌های درگیر: ${setupsTxt})` : ''} ولی کلید کاملِ شامل «عرض» با هیچ رکوردی از ستاپ‌ها مطابقت ندارد — احتمالاً این رول‌ها به ستاپ‌های تعریف‌شده تعلق دارند ولی عرض آنها در آن ستاپ‌ها تعریف نشده است. با «مشاهدهٔ رکوردها» ستون عرض این رول‌ها را بررسی کنید.`,
         action: 'setup',
         drill: { source: 'archived', filter: 'metallized-width-mismatch', ids: metWidthMismatch.map((r) => r.id) },
+      });
+    }
+
+    // د-ج) رول متالایز شده بدون ستاپ (۳٫۳۱ — تغییر ۱ کاربر)
+    //    رول متالایزِ «سابقه رول‌ها (آرشیو)» که کلید ۴فاکتوری‌اش (شماره ستاپ +
+    //    نوع خط + شماره سالن + شماره سال — همان کلید هویت کیفیت) با رکوردی از
+    //    جدول ستاپ مطابق است ولی:
+    //      حالت A: اصلاً متراژ استاندارد ندارد — متراژ واقعی/ضخامتش با هیچ
+    //              قانونی از «تعریف قانون متراژ استاندارد جدید» تطبیق نمی‌کند.
+    //      حالت B: متراژ استاندارد دارد ولی با متراژ استاندارد هیچ‌کدام از
+    //              رکوردهای ستاپِ همان کلید ۴فاکتوری برابر نیست (عدم مطابقت
+    //              متراژ استاندارد میان دو کلید).
+    //    → هشدار «رول متالایز شده بدون ستاپ» + Drill-down رکوردهای عامل
+    //    (با ستون «علت» تفکیک‌شده بین دو حالت).
+    //    ۳٫۳۱: کلید ۴فاکتوری با RM.keys ('qualityIdentity' — قابل تنظیم از
+    //    «تنظیمات ← کلیدهای تطبیق») ساخته می‌شود — هم‌قالب با کنترل‌های کیفیت.
+    const setupFourKeyIndex = new Map();   // کلید ۴فاکتوری → Set(متراژ استاندارد ستاپ‌های همان کلید)
+    for (const setup of setupRolls) {
+      // فقط ستاپ‌های کامل در تطبیق‌ها شرکت می‌کنند (§25 + هویت ۲٫۹)
+      const isComplete = setup.thickness !== null && setup.standardLength !== null &&
+        N.setupIdentityComplete(setup);
+      if (!isComplete) continue;
+      const sid = N.setupIdentity(setup);
+      const key4 = RM.keys.build('qualityIdentity', {
+        setupNumber: setup.setupNumber,
+        line: sid.line,
+        hall: sid.hall,
+        yearDigit: sid.yearDigit,
+      });
+      if (!setupFourKeyIndex.has(key4)) setupFourKeyIndex.set(key4, new Set());
+      setupFourKeyIndex.get(key4).add(setup.standardLength);
+    }
+
+    const metNoSetup = [];   // رکوردهای عامل + علت هر رول (برای Drill-down)
+    for (const rec of metallized.uniqueRecords) {
+      const idn = N.parseRollIdentity(rec.rollNumber);
+      const key4 = RM.keys.build('qualityIdentity', {
+        setupNumber: rec.setupNumber,
+        line: idn.line,
+        hall: idn.hall,
+        yearDigit: idn.yearDigit,
+      });
+      const stdSet = setupFourKeyIndex.get(key4);
+      if (!stdSet || !stdSet.size) continue;   // کلید ۴فاکتوری با هیچ ستاپی مطابق نیست → خارج از دامنهٔ این هشدار
+
+      // متراژ استاندارد رول طبق قوانین «تعریف قانون متراژ استاندارد جدید»
+      const std = R.resolveStandardLength(rules, rec.thickness, rec.actualLength);
+      if (std === null) {
+        // حالت A — رول اصلاً متراژ استاندارد ندارد
+        metNoSetup.push({ rec, std: null, setupStds: [...stdSet], reason: 'no-std', idn });
+      } else if (!stdSet.has(std)) {
+        // حالت B — متراژ استاندارد رول با ستاپ‌های همان کلید مغایر است
+        metNoSetup.push({ rec, std, setupStds: [...stdSet], reason: 'std-mismatch', idn });
+      }
+    }
+
+    if (metNoSetup.length) {
+      const noStdCount = metNoSetup.filter((x) => x.reason === 'no-std').length;
+      const mismatchCount = metNoSetup.length - noStdCount;
+      const setupsInvolved = [...new Set(
+        metNoSetup.map((x) => x.rec.setupNumber).filter((s) => s !== null && s !== undefined)
+      )];
+      const setupsTxt = setupsInvolved.slice(0, 8).map((s) => U.faNum(s)).join('، ') +
+        (setupsInvolved.length > 8 ? ' و…' : '');
+      warnings.push({
+        type: 'metallized-no-setup',
+        severity: 'error',
+        title: `${U.faNum(metNoSetup.length)} رول متالایز شده بدون ستاپ`,
+        detail: `کلید «شماره ستاپ + نوع خط + شماره سالن + شماره سال» این رول‌های متالایزِ «سابقه رول‌ها (آرشیو)» با رکوردهای جدول ستاپ مطابق است${setupsTxt ? ` (ستاپ‌های درگیر: ${setupsTxt})` : ''} ولی رول در ستاپ‌های همان کلید جایی ندارد: ${noStdCount ? `${U.faNum(noStdCount)} رول اصلاً متراژ استاندارد ندارد (متراژ واقعی/ضخامتش با هیچ قانونی از «تعریف قانون متراژ استاندارد جدید» تطبیق نشد)` : ''}${noStdCount && mismatchCount ? ' و ' : ''}${mismatchCount ? `${U.faNum(mismatchCount)} رول متراژ استاندارد دارد ولی با متراژ استاندارد هیچ‌کدام از رکوردهای ستاپِ همان کلید برابر نیست (عدم مطابقت متراژ استاندارد میان دو کلید)` : ''}. با «مشاهدهٔ رکوردها» علت تک‌تک رول‌ها را ببینید.`,
+        drill: {
+          source: 'archived',
+          filter: 'metallized-no-setup',
+          ids: metNoSetup.map((x) => x.rec.id),
+          rows: metNoSetup.map((x) => ({
+            id: x.rec.id,
+            rollNumber: x.rec.rollNumber,
+            setupNumber: x.rec.setupNumber,
+            line: x.idn.line, hall: x.idn.hall, yearDigit: x.idn.yearDigit,
+            thickness: x.rec.thickness,
+            actualLength: x.rec.actualLength,
+            std: x.std,
+            setupStds: x.setupStds,
+            reason: x.reason,
+          })),
+        },
       });
     }
 
@@ -1079,7 +1186,9 @@
     const totalUncut = setupReport.reduce((s, r) => s + r.uncut, 0);
     const totalConflict = setupReport.reduce((s, r) => s + r.conflict, 0);
 
-    /* --- مانده زمان‌ها: کل + به تفکیک دستگاه (فقط رکوردهای دارای قانون) --- */
+    /* --- مانده زمان‌ها: کل + به تفکیک دستگاه (فقط رکوردهای دارای قانون) ---
+       ۳٫۳۱: رکوردهای منقضی نه در covered و نه در uncovered می‌آیند (زمان‌هایشان
+       null و عمداً از محاسبات خارج‌اند). */
     const totalRemainingSetupTime = setupReport.reduce(
       (s, r) => s + (r.remainingSetupTime || 0), 0
     );
@@ -1090,6 +1199,7 @@
     let timeCovered = 0;
     let timeUncovered = 0;
     for (const r of setupReport) {
+      if (r.expired === true) continue;   // ۳٫۳۱ — منقضی: هیچ‌کدام از دو شمارنده
       if (r.remainingSetupTime === null) {
         if (r.thickness !== null && r.standardLength !== null) timeUncovered++;
         continue;

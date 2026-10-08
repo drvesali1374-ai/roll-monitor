@@ -1761,10 +1761,12 @@
       /* --- هشدارهای مربوط به ستاپ‌ها --- */
       if (d.source === 'setups') {
         const state = Dashboard._state;
+        /* ۳٫۳۱ — رکوردهای «منقضی شده» زمان‌هایشان عمداً null است و نباید در
+           Drill «بدون قانون زمان» بیایند (مثل خود هشدار در calc.js). */
         const rows = (d.filter === 'capacity-conflict')
           ? state.setupReport.filter((r) => r.conflict > 0)
           : (d.filter === 'no-time-rule')
-            ? state.setupReport.filter((r) => r.remainingSetupTime === null)
+            ? state.setupReport.filter((r) => r.remainingSetupTime === null && r.expired !== true)
             : state.setupReport.filter((r) => r.thickness === null || r.standardLength === null);
 
         const timeCols = (d.filter === 'no-time-rule')
@@ -1861,6 +1863,56 @@
         const keyMap = state.metallizedKeyByRollNumber || {};
         records = state.metallizedUniqueRecords.filter((r) =>
           keySet.has(keyMap[String(r.rollNumber ?? '')]));
+      } else if (d.filter === 'metallized-no-setup') {
+        /* --- ۳٫۳۱ — هشدار «رول متالایز شده بدون ستاپ» (تغییر ۱ کاربر) ---
+           رول‌های متالایزِ «سابقه رول‌ها (آرشیو)» که کلید ۴فاکتوری‌شان
+           (شماره ستاپ + نوع خط + شماره سالن + شماره سال) با رکوردی از جدول
+           ستاپ مطابق است ولی یا اصلاً متراژ استاندارد ندارند (حالت A) یا
+           متراژ استانداردشان با ستاپ‌های همان کلید مغایر است (حالت B).
+           جدول اختصاصی با ستون «علت» — داده‌ها از محاسبهٔ موتور (d.rows). */
+        const rows = Array.isArray(d.rows) ? d.rows : [];
+        const reasonHtml = (x) => x.reason === 'no-std'
+          ? '<span class="pill-bad status-pill" title="متراژ واقعی/ضخامت این رول با هیچ قانونی از «تعریف قانون متراژ استاندارد جدید» تطبیق نشد">نداشتن متراژ استاندارد</span>'
+          : '<span class="pill-warn status-pill" title="رول متراژ استاندارد دارد ولی با متراژ استاندارد هیچ‌کدام از رکوردهای ستاپِ همان کلید برابر نیست">عدم مطابقت متراژ استاندارد</span>';
+        const noStdCount = rows.filter((x) => x.reason === 'no-std').length;
+        const mismatchCount = rows.length - noStdCount;
+
+        UI.infoModal(warning.title, `
+          <div class="drill-subtitle">
+            <b>${U.faNum(rows.length)}</b> رول متالایزِ آرشیو —
+            ${noStdCount ? `<b>${U.faNum(noStdCount)}</b> بدون متراژ استاندارد` : ''}${noStdCount && mismatchCount ? ' · ' : ''}${mismatchCount ? `<b>${U.faNum(mismatchCount)}</b> با متراژ استاندارد مغایر` : ''}
+          </div>
+          <p style="font-size:.76rem;color:var(--text-muted);margin:0 0 10px">
+            کلید «شماره ستاپ + نوع خط + شماره سالن + شماره سال» این رول‌ها با رکوردهای جدول ستاپ مطابق است ولی رول در ستاپ‌های همان کلید جایی ندارد؛
+            ستون «متراژ استاندارد ستاپ‌های همان کلید» مقادیر ستاپ‌های منطبق را نشان می‌دهد.
+          </p>
+          <div class="table-wrap table-scroll" style="max-height:420px">
+            <table class="data-table">
+              <thead><tr>
+                <th>شماره رول</th><th>ستاپ</th><th>خط</th><th>سالن</th><th>سال</th>
+                <th>ضخامت</th><th>متراژ واقعی</th><th>متراژ استاندارد رول</th>
+                <th>متراژ استاندارد ستاپ‌های همان کلید</th><th>علت</th>
+              </tr></thead>
+              <tbody>${rows.map((x) => `
+                <tr>
+                  <td class="ltr-cell" style="direction:ltr;text-align:right;font-family:var(--font-mono,inherit)">${U.escapeHtml(String(x.rollNumber ?? '—'))}</td>
+                  <td>${x.setupNumber === null || x.setupNumber === undefined ? '—' : U.faNum(x.setupNumber)}</td>
+                  <td>${x.line ? U.escapeHtml(String(x.line)) : '—'}</td>
+                  <td>${x.hall === null || x.hall === undefined ? '—' : U.faNum(x.hall)}</td>
+                  <td>${x.yearDigit === null || x.yearDigit === undefined ? '—' : U.faNumPlain(x.yearDigit)}</td>
+                  <td>${x.thickness === null || x.thickness === undefined ? '—' : U.faNum(x.thickness)}</td>
+                  <td>${x.actualLength === null || x.actualLength === undefined ? '—' : U.faNum(x.actualLength)}</td>
+                  <td>${x.std === null || x.std === undefined
+                    ? '<span class="muted" title="با هیچ قانونی از «تعریف قانون متراژ استاندارد جدید» تطبیق نشد">ندارد</span>'
+                    : U.faNum(x.std)}</td>
+                  <td>${(Array.isArray(x.setupStds) ? x.setupStds : []).map((s) => U.faNum(s)).join('، ') || '—'}</td>
+                  <td>${reasonHtml(x)}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        `, { wide: true });
+        return;   // مودال اختصاصی نمایش داده شد — از مودال مشترک رد نشو
       } else if (d.filter === 'metallized-width-mismatch') {
         // رول‌های متالایز با عرض تعریف‌نشده در ستاپ — نمایش گروه‌بندی‌شده (۳٫۸):
         // رکوردها با کلید «عرض + متراژ استاندارد + شماره ستاپ + خط تولید + شماره
