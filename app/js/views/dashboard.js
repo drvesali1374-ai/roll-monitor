@@ -934,7 +934,10 @@
      خوانا بمانند (فونت/عرض لیبل‌ها دست‌نخورده ماند). */
 
   Dashboard.renderSetupInventoryColumnChart = function (state) {
-    const report = state.setupReport;
+    /* ۳٫۳۲ — رکوردهای «منقضی شده» وجود ندارند: از نمودار ستون مانده زمان
+       به‌کلی خارج‌اند (نه در گروه‌ها می‌آیند و نه شمارندهٔ «بدون قانون» را
+       بالا می‌برند). */
+    const report = (state.setupReport || []).filter((r) => r.expired !== true);
     const el = document.getElementById('setup-inventory-chart');
     if (!el) return;
 
@@ -1256,7 +1259,9 @@
    *  موجود؛ «تعداد» → مجموع «برش‌نشده» + «خام موجود» (فقط مقادیر >0) —
    *  هم‌ارزش طول میله و جمع ردیف‌های تولتیپ. */
   Dashboard.renderWidthInventoryChart = function (state) {
-    let report = state.setupReport;
+    /* ۳٫۳۲ — رکوردهای «منقضی شده» وجود ندارند: از مبنای عرض‌ها (خام موجود/
+       برش‌نشده/تعداد) به‌کلی خارج‌اند. */
+    let report = (state.setupReport || []).filter((r) => r.expired !== true);
     const el = document.getElementById('width-inventory-chart');
     if (!el) return;
 
@@ -1762,12 +1767,13 @@
       if (d.source === 'setups') {
         const state = Dashboard._state;
         /* ۳٫۳۱ — رکوردهای «منقضی شده» زمان‌هایشان عمداً null است و نباید در
-           Drill «بدون قانون زمان» بیایند (مثل خود هشدار در calc.js). */
+           Drill «بدون قانون زمان» بیایند (مثل خود هشدار در calc.js).
+           ۳٫۳۲ — در Drill «رکورد ناقص» هم منقضی‌ها مستثنی‌اند (وجود ندارند). */
         const rows = (d.filter === 'capacity-conflict')
-          ? state.setupReport.filter((r) => r.conflict > 0)
+          ? state.setupReport.filter((r) => r.conflict > 0 && r.expired !== true)
           : (d.filter === 'no-time-rule')
             ? state.setupReport.filter((r) => r.remainingSetupTime === null && r.expired !== true)
-            : state.setupReport.filter((r) => r.thickness === null || r.standardLength === null);
+            : state.setupReport.filter((r) => (r.thickness === null || r.standardLength === null) && r.expired !== true);
 
         const timeCols = (d.filter === 'no-time-rule')
           ? '<th>مانده زمان</th>'

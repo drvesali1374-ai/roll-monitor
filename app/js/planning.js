@@ -275,8 +275,12 @@
    * }
    */
   Planning.buildSchedule = function (machine, state, machineNumber) {
-    const setupReport = (state && Array.isArray(state.setupReport)) ? state.setupReport : [];
-    const setupById = new Map(setupReport.map((r) => [r.id, r]));
+    const allReport = (state && Array.isArray(state.setupReport)) ? state.setupReport : [];
+    /* ۳٫۳۲ — رکوردهای «منقضی شده» در زمان‌بندی شرکت نمی‌کنند (کلاً مثل اینکه
+       در جدول ستاپ‌ها وجود ندارند)؛ فقط برای پیام خطای اختصاصی نگه داشته
+       می‌شوند تا قلم‌های ارجاع‌دار به آنها «منقضی شده» اعلام شوند. */
+    const setupById = new Map(allReport.filter((r) => r.expired !== true).map((r) => [r.id, r]));
+    const expiredById = new Map(allReport.filter((r) => r.expired === true).map((r) => [r.id, r]));
 
     const startBase = Planning.effectiveStart(machine);
     const dateInfo = Planning.effectiveDate(machine);
@@ -314,7 +318,10 @@
         const quantity = linkedRaw ? U.parseInt(setup.rawExisting) : manualQty;
 
         if (!setup) {
-          row.invalidReason = 'رکورد ستاپ حذف شده است';
+          // ۳٫۳۲ — پیام اختصاصی برای رکورد منقضی‌شده (بازگشت‌پذیر با «خروج از انقضا»)
+          row.invalidReason = expiredById.has(item.setupId)
+            ? 'رکورد ستاپ منقضی شده است'
+            : 'رکورد ستاپ حذف شده است';
         } else if (quantity === null || quantity < 1) {
           row.invalidReason = 'تعداد باید حداقل ۱ باشد';
         } else if (setup.durationMin === null || setup.durationMin === undefined) {

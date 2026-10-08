@@ -565,31 +565,34 @@
   };
 
   /**
-   * انقضای گروهی رکوردهای انتخاب‌شده — ستون «وضعیت» همان رکوردها به
-   * «منقضی شده» تغییر می‌کند (فیلد expired = true روی رکورد ستاپ).
-   * رکوردهای منقضی در هیچ‌یک از محاسبات زمان (مانده زمان ستاپ/موجودی)
-   * در سراسر پروژه شرکت نمی‌کنند (calc.js ۳٫۳۱).
-   * فقط رکوردهایِ هنوز منقضی‌نشده تغییر می‌کنند (idempotent).
-   * @param {Array<number>} ids  شناسهٔ رکوردها
-   * @returns {Promise<{expired: number, skipped: number}>}
+   * تغییر وضعیت انقضای رکوردهای ستاپ (تراکنشی — ۳٫۳۱).
+   * ۳٫۳۲ — دوطرفه شد: expire=true → «منقضی شده» (کلاً از همهٔ محاسبات پروژه
+   * خارج می‌شود — calc.js خط لولهٔ تخصیص هم او را نمی‌بیند و رول‌های
+   * تخصیص‌یافته‌اش آزاد می‌شوند)؛ expire=false → «خروج از انقضا» (رکورد
+   * دوباره فعال و به همهٔ محاسبات برمی‌گردد — Undo).
+   * idempotent: رکوردی که از قبل در وضعیت خواسته‌شده است شمرده نمی‌شود.
+   * @param {number[]} ids شناسهٔ رکوردهای ستاپ
+   * @param {boolean} [expire=true] جهت عملیات: true=انقضاء · false=خروج از انقضا
+   * @returns {Promise<{changed: number, skipped: number}>}
    */
-  Setups.setExpired = async function (ids) {
+  Setups.setExpired = async function (ids, expire = true) {
     const list = (Array.isArray(ids) ? ids : [])
       .map((x) => Number(x))
       .filter((x) => Number.isInteger(x) && x > 0);
-    if (!list.length) return { expired: 0, skipped: 0 };
-    let expired = 0;
+    if (!list.length) return { changed: 0, skipped: 0 };
+    let changed = 0;
     let skipped = 0;
     await db.transaction('rw', db.setupRolls, async () => {
       for (const id of list) {
         const rec = await db.setupRolls.get(id);
         if (!rec) continue;
-        if (rec.expired === true) { skipped++; continue; }   // از قبل منقضی
-        await db.setupRolls.update(id, { expired: true, updatedAt: Date.now() });
-        expired++;
+        const already = expire ? rec.expired === true : rec.expired !== true;
+        if (already) { skipped++; continue; }   // از قبل در وضعیت خواسته‌شده
+        await db.setupRolls.update(id, { expired: !!expire, updatedAt: Date.now() });
+        changed++;
       }
     });
-    return { expired, skipped };
+    return { changed, skipped };
   };
 
   /** مجموع تعداد رول‌های همهٔ ستاپ‌ها (§57) */

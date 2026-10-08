@@ -40,6 +40,8 @@
     unselect:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></svg>',
     /* ۳٫۳۱ — «حذف انتخاب شده‌ها» (سطل با علامت تأیید) */
     trashSel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="m9.5 13.5 2 2 3.5-3.5"/></svg>',
+    /* ۳٫۳۲ — «خروج از انقضا» (بازیابی/برگرداندن — پیکان چرخشی) */
+    unexpire:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="m9 12 2 2 4-4"/></svg>',
   };
 
   /* ---------------- Toast ---------------- */
@@ -738,6 +740,9 @@
    *                                fixedCols? (bool — table-layout:fixed برای عرض‌های ستون),
    *                                sums? ({ colKey: {type:'number'|'time'|'pair',
    *                                        weightOf?(row,key)→number } }) — نسخهٔ ۲٫۶,
+   *                                sumsSkip? (row→boolean — ۳٫۳۲: ردیف‌های منطبق از همهٔ
+   *                                        جمع‌ها و شمارندهٔ «بدون قانون» حذف می‌شوند؛
+   *                                        مثل رکوردهای «منقضی شده»ٔ گزارش ستاپ‌ها),
    *                                maxDomRows? (number — سقف رندر DOM، فیلتر روی کل)،
    *                                onRendered(visibleRows),
    *                                tools? (آرایهٔ [{id,label,title,pressed}] — دکمه‌های ابزار
@@ -791,9 +796,13 @@
     /* ---------- باکس‌های جمع زیر ستون‌ها (نسخهٔ ۲٫۶) ----------
        opts.sums = { colKey: { type: 'number' | 'time' | 'pair',
                                weightOf?: (row, key) => number|null } }
-       جمع همیشه از دیتای فیلترشدهٔ فعلی (visible) محاسبه می‌شود. */
+       جمع همیشه از دیتای فیلترشدهٔ فعلی (visible) محاسبه می‌شود.
+       ۳٫۳۲ — opts.sumsSkip?: (row) => boolean: ردیف‌های منطبق از «همهٔ»
+       جمع‌ها (و از شمارندهٔ «بدون قانون» ستون‌های زمانی) حذف می‌شوند —
+       مثلاً رکوردهای «منقضی شده»ٔ گزارش ستاپ‌ها که کلاً وجود ندارند. */
     const sumSpecs = opts.sums || null;
     const hasSums = !!(sumSpecs && Object.keys(sumSpecs).length);
+    const sumSkipOf = typeof opts.sumsSkip === 'function' ? opts.sumsSkip : null;
 
     /** ساخت HTML یک باکس جمع بر اساس نوع ستون
         (نسخهٔ ۳٫۱ — تغییر ۴: علامت Σ حذف شد — جاگیر بود و نمای خوبی نداشت) */
@@ -812,6 +821,8 @@
     /** به‌روزرسانی همهٔ باکس‌های جمع از ردیف‌های فیلترشده */
     const updateSums = (visible) => {
       if (!hasSums) return;
+      /* ۳٫۳۲ — ردیف‌های «رد‌شده» (مثل منقضی‌شده‌ها) در هیچ جمعی نیستند */
+      const sumRows = sumSkipOf ? visible.filter((row) => !sumSkipOf(row)) : visible;
       for (const c of columns) {
         const spec = sumSpecs[c.key];
         if (!spec) continue;
@@ -820,7 +831,7 @@
 
         if (spec.type === 'pair') {
           let cnt = 0, wt = 0;
-          for (const row of visible) {
+          for (const row of sumRows) {
             const v = Number(row[c.key]);
             if (Number.isFinite(v)) cnt += v;
             const w = spec.weightOf ? Number(spec.weightOf(row, c.key)) : NaN;
@@ -833,13 +844,13 @@
         }
 
         let total = 0, counted = 0;
-        for (const row of visible) {
+        for (const row of sumRows) {
           const v = row[c.key];
           if (v === null || v === undefined || v === '') continue;   // «بدون قانون» و تهی‌ها
           const n = Number(v);
           if (Number.isFinite(n)) { total += n; counted++; }
         }
-        const skipped = spec.type === 'time' ? (visible.length - counted) : 0;
+        const skipped = spec.type === 'time' ? (sumRows.length - counted) : 0;
         box.innerHTML = sumBoxHtml(spec, total, 0, skipped);
         box.parentElement.title = `جمع ستون «${String(c.label)}» — با دیتای فیلترشدهٔ فعلی`
           + (spec.type === 'time' ? ` (${U.faNum(counted)} رکورد دارای قانون)` : '');

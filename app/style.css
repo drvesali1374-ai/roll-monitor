@@ -5399,11 +5399,17 @@ tr.pk-mixed-row td {
    ۱) نوار سمت چپِ بالای جدول‌های فیلتردار (ft-topbar-side): دکمه‌های عملیات
       گروهی نما (فقط جدول ستاپ‌ها فعال است) کنار آمار رکوردها.
    ۲) چک‌باکس انتخاب ردیف (row-select) + دکمهٔ «عملیات» (⋮) با منوی
-      بازشوندهٔ سه‌گزینه‌ای (row-menu / row-menu-pop) — منو absolute است و
-      عرض ستون عملیات را اشغال نمی‌کند؛ در ردیف‌های نزدیک پایینِ ناحیهٔ
-      اسکرول، به بالا باز می‌شود (کلاس up).
-   ۳) چیپ «منقضی شده» (pill-expired) — وضعیت رکوردهای منقضی‌شده با عملیات
-      گروهی؛ زمان‌هایشان از محاسبات خارج است.
+      بازشونده (row-menu / row-menu-pop) — عرض ستون عملیات را اشغال نمی‌کند.
+   ۳) چیپ «منقضی شده» (pill-expired).
+
+   نسخهٔ ۳٫۳۲:
+   ۴) دکمهٔ گروهی چهارم «خروج از انقضای انتخاب شده‌ها» (ft-bulk-unexpire —
+      سبز) + آیتم منوی ردیف «خروج از انقضا» (row-menu-unexpire).
+   ۵) منوی عملیات position:fixed شد (۳٫۳۱ مشکل «زیر ردیف‌ها گم‌شدن» داشت):
+      مختصات پویا از JS (زیر/بالای دکمه بسته به فضا + چرخش افقی نزدیک
+      لبه‌ها) + جابه‌جایی زنده با اسکرول/تغییر اندازه — همیشه کاملاً مرئی.
+   ۶) ردیف‌های «منقضی شده» (row-expired): کم‌رنگ با نوار کناری — کلاً مثل
+      اینکه در جدول وجود ندارند (مقادیر مشتق «—» و از همهٔ محاسبات خارج).
    ========================================================================= */
 
 /* ---------- ۱) نوار سمت چپ بالای جدول (کنار آمار رکوردها) ---------- */
@@ -5448,6 +5454,12 @@ tr.pk-mixed-row td {
   background: var(--setup-soft);
   border-color: rgba(15, 118, 110, 0.35);
 }
+/* ۳٫۳۲ — «خروج از انقضای انتخاب شده‌ها» (سبز — عملیات بازگرداندن/Undo) */
+.ft-bulk-unexpire:not(:disabled) { color: var(--raw); }
+.ft-bulk-unexpire:not(:disabled):hover {
+  background: var(--raw-soft);
+  border-color: rgba(5, 150, 105, 0.35);
+}
 
 /* شمارندهٔ داخل دکمه‌های عملیات گروهی */
 .bulk-count {
@@ -5472,6 +5484,12 @@ tr.pk-mixed-row td {
   background: var(--metal-soft);
   border-color: rgba(180, 83, 9, 0.3);
   color: var(--metal);
+}
+/* ۳٫۳۲ — شمارندهٔ سبز «خروج از انقضا» (تعداد منقضی‌های انتخاب‌شده) */
+.ft-bulk-unexpire .bulk-count {
+  background: var(--raw-soft);
+  border-color: rgba(5, 150, 105, 0.3);
+  color: var(--raw);
 }
 
 /* ---------- ۲) ستون عملیات: چک‌باکس انتخاب + دکمهٔ منو ---------- */
@@ -5533,12 +5551,17 @@ tr.pk-mixed-row td {
   background: var(--setup-soft);
 }
 
-/* منوی بازشونده — absolute، بدون اشغال عرض ستون */
+/* منوی بازشونده — ۳٫۳۲: position:fixed با مختصات پویا از JS
+   (SetupView._placeRowMenuPop): زیر/بالای دکمه بسته به فضای دید +
+   چرخش افقی نزدیک لبه‌ها + جابه‌جایی زنده با اسکرول/تغییر اندازه.
+   fixed تضمین می‌کند منو هرگز زیر ردیف‌ها/هدر جدول/نواحی اسکرول گم نشود. */
 .row-menu-pop {
-  position: absolute;
-  top: calc(100% + 5px);
-  right: 0;
+  position: fixed;
+  top: 0;          /* مقدار نهایی هر بار از JS ست می‌شود */
+  left: 0;
+  right: auto;
   min-width: 152px;
+  max-width: min(240px, calc(100vw - 16px));
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -5547,21 +5570,11 @@ tr.pk-mixed-row td {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   box-shadow: 0 10px 28px rgba(33, 38, 43, 0.16), 0 2px 6px rgba(33, 38, 43, 0.08);
-  z-index: 45;
+  z-index: 90;     /* بالای همهٔ اجزای صفحه (هدر چسبان ۵۰) — زیر مودال‌ها (۱۰۰/۲۰۰) */
   animation: rowMenuPop 0.13s ease;
 }
 @keyframes rowMenuPop {
   from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-/* در ردیف‌های نزدیک پایین ناحیهٔ اسکرول → منو به بالا باز می‌شود */
-.row-menu.up .row-menu-pop {
-  top: auto;
-  bottom: calc(100% + 5px);
-  animation-name: rowMenuPopUp;
-}
-@keyframes rowMenuPopUp {
-  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -5595,6 +5608,23 @@ tr.pk-mixed-row td {
 .row-menu-danger svg { color: var(--danger-text); }
 .row-menu-danger:hover { background: rgba(220, 38, 38, 0.07); color: var(--danger-text); }
 .row-menu-danger:hover svg { color: var(--danger-text); }
+/* ۳٫۳۲ — آیتم «خروج از انقضا» (سبز — فقط ردیف‌های منقضی‌شده) */
+.row-menu-unexpire { color: var(--raw); }
+.row-menu-unexpire svg { color: var(--raw); }
+.row-menu-unexpire:hover { background: var(--raw-soft); color: var(--raw); }
+.row-menu-unexpire:hover svg { color: var(--raw); }
+.row-menu-unexpire:focus-visible {
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.22);
+}
+
+/* ---------- ۶) ردیف‌های «منقضی شده» (۳٫۳۲) — کلاً وجود ندارند ---------- */
+tr.row-expired td {
+  opacity: 0.58;
+  background: var(--bg-soft);
+}
+tr.row-expired td.em-cell,
+tr.row-expired td.count-cell { opacity: 0.58; }
+tr.row-expired .status-pill { text-decoration: none; }
 
 /* ---------- ۳) چیپ وضعیت «منقضی شده» ---------- */
 .pill-expired {
@@ -5624,6 +5654,11 @@ tr.pk-mixed-row td {
   }
   .ft-bulk-clear:not(:disabled)::before {
     content: 'لغو';
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .ft-bulk-unexpire:not(:disabled)::before {
+    content: 'خروج از انقضا';
     font-size: 0.7rem;
     font-weight: 600;
   }

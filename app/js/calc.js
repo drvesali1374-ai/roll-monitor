@@ -24,6 +24,24 @@
         گزارش) در هیچ‌یک از محاسبات زمان (مانده زمان ستاپ/موجودی) شرکت
         نمی‌کنند — مقادیر null و از همهٔ جمع‌ها/چارت‌ها/هشدار قانون زمان
         مستثنی‌اند (§ وضعیت ستاپ).
+
+   نسخهٔ ۳٫۳۲ (تغییرهای کاربر):
+     ۳) حذف «کامل» رکوردهای منقضی‌شده از «همهٔ» محاسبات پروژه — نه فقط
+        ستون‌های زمان: رکورد منقضی از «خط لولهٔ تخصیص» (نمایه‌سازی کلیدها،
+        تخصیص خام/متالایز، برش‌خورده‌های فرزند) به‌کلی خارج می‌شود؛ کلاً
+        باید تصور شود چنین رکوردی در جدول «گزارش تولید ستاپ‌ها» وجود
+        ندارد (توصیهٔ صریح کاربر):
+          · رول‌های تخصیص‌یافتهٔ قبلی‌اش آزاد می‌شوند و مطابق ظرفیت به
+            ستاپ‌های دیگرِ هم‌کلید می‌رسند (یا تطبیق‌داده‌نشده می‌شوند)؛
+          · از همهٔ جمع‌های summary، machineTime، هشدارهای مرکز کیفیت
+            (بدون قانون زمان، رکورد ناقص، مغایرت ظرفیت، متالایز بدون
+            ستاپ، عرض تعریف‌نشده) و رکوردهای برش‌خوردهٔ فرزند مستثنی است؛
+          · در setupReport فقط یک «ردیف نمایشی» با فیلدهای هویتی +
+            مقادیر مشتق صفر/null (خام موجود/متالایز/برش‌نشده/زمان‌ها/
+            تعداد ست) و timeStatus='expired' می‌ماند تا کاربر در جدول
+            ببیند و بتواند از انقضا خارجش کند (Undo انقضاء).
+        نماها (داشبورد/برنامه‌ریزی/جمع جدول) نیز منقضی‌ها را صریحاً فیلتر
+        می‌کنند (defence in depth).
    -------------------------------------------------------------------------
    خروجی calculateProductionState():
      {
@@ -415,10 +433,13 @@
       if (bucket.rollIds.length < 2000) bucket.rollIds.push(roll.id);
     }
 
-    /* --- ۲) رکوردهای جدول از تنوع عرض‌های الگوی برش ستاپ‌ها --- */
+    /* --- ۲) رکوردهای جدول از تنوع عرض‌های الگوی برش ستاپ‌ها ---
+       ۳٫۳۲ — رکوردهای «منقضی شده» هیچ رکورد برش‌خورده‌ای نمی‌سازند
+       (کلاً مثل اینکه در جدول ستاپ‌ها وجود ندارند). */
     const recordsMap = new Map();   // key → record
 
     for (const sr of setupReport) {
+      if (sr.expired === true) continue;   // ۳٫۳۲ — منقضی: وجود ندارد
       if (sr.setupNumber === null) continue;
       // ستاپ بدون هویت کامل رکورد برش‌خورده نمی‌سازد (تطبیق ممکن نیست — نسخهٔ ۲٫۹)
       if (!N.setupIdentityComplete(sr)) continue;
@@ -461,6 +482,7 @@
        تعداد تکرار عرض در الگو × (تعداد | برش‌نشده) — جمع کل. */
     const setupsByNumber = new Map();   // setupNumber → [report rows]
     for (const sr of setupReport) {
+      if (sr.expired === true) continue;   // ۳٫۳۲ — منقضی: در محاسبهٔ در ستاپ/برش‌نخورده نیست
       if (sr.setupNumber === null) continue;
       if (!setupsByNumber.has(sr.setupNumber)) setupsByNumber.set(sr.setupNumber, []);
       setupsByNumber.get(sr.setupNumber).push(sr);
@@ -561,6 +583,17 @@
 
     const { rolls, archivedRolls, setupRolls, rules, importMetadata } = await DB.loadAllSources();
 
+    /* --- ۳٫۳۲ — تفکیک رکوردهای «منقضی شده» از ستاپ‌های فعال ---
+       رکورد منقضی (expired === true — عملیات گروهی «انقضاء انتخاب شده‌ها»)
+       کلاً باید مثل اینکه در جدول «گزارش تولید ستاپ‌ها» وجود ندارد، از «همهٔ»
+       محاسبات خط لوله (نمایه‌سازی کلیدها → تخصیص خام/متالایز → گزارش →
+       هشدارها → جمع‌ها) خارج شود. رول‌های تخصیص‌یافتهٔ قبلی‌اش آزاد می‌شوند
+       و مطابق ظرفیت به ستاپ‌های دیگرِ هم‌کلید می‌رسند. تنها بازمانده: یک
+       «ردیف نمایشی» در setupReport (پایین‌تر ساخته می‌شود) تا کاربر رکورد را
+       در جدول ببیند و بتواند از انقضا خارجش کند (Undo). */
+    const expiredSetups = setupRolls.filter((s) => s.expired === true);
+    const setupRollsActive = setupRolls.filter((s) => s.expired !== true);
+
     /* --- قوانین زمان متالایز (تنظیمات — تغییرات جدید) --- */
     const timeRules = await DB.getSetting('machineTimeRules', []);
 
@@ -595,9 +628,10 @@
     const metIndex = new Map();
     const metFiveKeys = new Set();
 
-    for (const setup of setupRolls) {
+    for (const setup of setupRollsActive) {
       // ستاپ ناقص (قدیمی/ناتمام) در تطبیق شرکت نمی‌کند (§25 کلید نیازمند داده کامل)
       // نسخهٔ ۲٫۹: هویت (خط تولید + سالن + تاریخ ستاپ) هم باید کامل باشد
+      // ۳٫۳۲: فقط ستاپ‌های فعال — منقضی‌ها در هیچ نمایه‌ای نیستند
       const isComplete = setup.thickness !== null && setup.standardLength !== null &&
         N.setupIdentityComplete(setup);
       if (isComplete) {
@@ -712,8 +746,12 @@
       if (!group.hasRule || !group.matched) rawUnmatchedRollIds.push(...group.rollIds);
     }
 
-    /* --- ۸) گزارش هر ستاپ (§46-§50) + ستون‌های مانده زمان (تغییرات جدید) --- */
-    const setupReport = setupRolls.map((setup) => {
+    /* --- ۸) گزارش هر ستاپ (§46-§50) + ستون‌های مانده زمان (تغییرات جدید) ---
+       ۳٫۳۲ — فقط ستاپ‌های «فعال» محاسبه می‌شوند (منقضی‌ها از تخصیص خارجند
+       و Allocation ندارند). رکوردهای منقضی بلافاصله پس از این map به‌صورت
+       «ردیف نمایشی» (مقادیر صفر/null + timeStatus='expired') به گزارش
+       اضافه می‌شوند تا در جدول دیده شوند و بتوان از انقضا خارجشان کرد. */
+    const activeReport = setupRollsActive.map((setup) => {
       const rawAlloc = rawAllocationBySetup.get(setup.id);
       const metAlloc = metAllocationBySetup.get(setup.id);
 
@@ -732,30 +770,20 @@
          شمارهٔ دستگاه + متراژ استاندارد همان رکورد خوانده می‌شود.
          پایهٔ منفی (متالایز بیش از تعداد) به صفر محدود می‌شود.
          بدون قانون مطابق → هر دو مقدار null (نمایش «—») */
-      /* --- ۳٫۳۱ (تغییر ۲ کاربر): رکورد «منقضی شده» (expired) ---
-         رکوردهایی که با عملیات گروهی «انقضاء انتخاب شده‌ها» در جدول گزارش
-         ستاپ‌ها منقضی شده‌اند، در هیچ‌یک از محاسبات زمان کل پروژه شرکت
-         نمی‌کنند: هر دو «مانده زمان ستاپ» و «مانده زمان موجودی» null می‌شوند،
-         timeStatus = 'expired' می‌گیرد و از جمع‌های داشبورد، چارت به تفکیک
-         دستگاه و هشدار «قانون زمان ندارد» مستثنی می‌مانند. */
-      const isExpired = setup.expired === true;
-      const timeRule = isExpired ? null : R.findTimeRule(timeRules, setup.machineNumber, setup.standardLength);
+      const timeRule = R.findTimeRule(timeRules, setup.machineNumber, setup.standardLength);
       const durationMin = timeRule ? timeRule.durationMin : null;
       // نسخهٔ ۲٫۷: (تعداد − متالایز) × مدت — پایهٔ مانده زمان ستاپ
       const remainingSetupCount = Math.max(0, setup.rollCount - metallizedAllocated);
-      const remainingSetupTime = (isExpired || durationMin === null) ? null : durationMin * remainingSetupCount;
+      const remainingSetupTime = durationMin === null ? null : durationMin * remainingSetupCount;
       // نسخهٔ ۲٫۷: خام موجود × مدت — پایهٔ مانده زمان موجودی
-      const remainingProducedTime = (isExpired || durationMin === null) ? null : durationMin * rawExisting;
+      const remainingProducedTime = durationMin === null ? null : durationMin * rawExisting;
       /* وضعیت ستاپ (نسخهٔ ۳٫۰ — تغییر ۲ کاربر):
          · «تمام شده» فقط وقتی «مانده زمان ستاپ» = ۰ «و» «مانده زمان موجودی» = ۰
          · «باقی مانده» وقتی هر کدام از این دو مثبت (غیرصفر) باشد
-         · بدون قانون زمان → null (نامشخص)
-         · ۳٫۳۱ — منقضی شده → 'expired' (مقدار زمان‌ها null و در محاسبات نیست) */
-      const timeStatus = isExpired
-        ? 'expired'
-        : (remainingSetupTime === null || remainingProducedTime === null)
-          ? null
-          : (remainingSetupTime === 0 && remainingProducedTime === 0 ? 'done' : 'remaining');
+         · بدون قانون زمان → null (نامشخص) */
+      const timeStatus = (remainingSetupTime === null || remainingProducedTime === null)
+        ? null
+        : (remainingSetupTime === 0 && remainingProducedTime === 0 ? 'done' : 'remaining');
 
       /* --- تعداد ست (تغییر ۱) — متراژ استاندارد ÷ کوچکترین استاندارد ضخامت
          مبنای تعداد رول‌های الگوی برش (فرزند) در سراسر سیستم. */
@@ -789,6 +817,40 @@
       };
     });
 
+    /* --- ۳٫۳۲ — «ردیف نمایشی» رکوردهای منقضی‌شده ---
+       فقط برای دیده‌شدن در جدول «گزارش تولید ستاپ‌ها» و امکان «خروج از انقضا»:
+       فیلدهای هویتی (شماره ستاپ/خط/سالن/تاریخ/دستگاه/عرض/ضخامت/متراژ استاندارد/
+       تعداد در ستاپ/الگوی برش) حفظ می‌شوند اما همهٔ مقادیر «مشتق/محاسبه‌شده»
+       صفر یا null اند (خام موجود/متالایز/برش‌نشده/مغایرت/زمان‌ها/تعداد ست/
+       Audit) — کلاً مثل اینکه رکورد در هیچ محاسبه‌ای وجود ندارد. نماها هم
+       به‌صورت دفاعی r.expired را فیلتر می‌کنند. */
+    const expiredReport = expiredSetups.map((setup) => ({
+      ...setup,
+      rawExisting: 0,
+      metallized: 0,
+      uncutCalculated: 0,
+      uncut: 0,
+      conflict: 0,
+      timeRuleId: null,
+      durationMin: null,
+      remainingSetupTime: null,
+      remainingProducedTime: null,
+      remainingSetupCount: 0,
+      timeStatus: 'expired',                     // چیپ «منقضی شده» + استثنای همهٔ محاسبات
+      setBase: null,
+      setCount: null,
+      audit: {
+        rawGroup: null,
+        metGroup: null,
+        rawCapacity: 0,
+        metCapacity: 0,
+        rawRollIds: [],
+        metRollIds: [],
+      },
+    }));
+
+    const setupReport = [...activeReport, ...expiredReport];
+
     /* --- ۸-ب) گزارش رول‌های برش‌خورده (فرزند) — تغییرات جدید ---
        ۳٫۲۶: rules پاس می‌شود تا در صورت حضور «متراژ استاندارد» در ترکیب
        کلید cutMatch، سمت رول آن را از قوانین حل کند. */
@@ -802,8 +864,9 @@
 
     /* --- ۹-ب) رکوردهای ستاپ بدون قانون زمان (تغییرات جدید) ---
        ۳٫۳۱: رکوردهای «منقضی شده» مستثنی‌اند — زمان‌هایشان عمداً null است
-       و نباید در شمارش «بدون قانون» بیایند. */
-    if (setupRolls.length && timeRules.length) {
+       و نباید در شمارش «بدون قانون» بیایند.
+       ۳٫۳۲: گیت‌ها هم فقط ستاپ‌های فعال را می‌بینند (منقضی = وجود ندارد). */
+    if (setupRollsActive.length && timeRules.length) {
       const noTimeRule = setupReport.filter((r) => r.remainingSetupTime === null && r.expired !== true);
       if (noTimeRule.length) {
         warnings.push({
@@ -815,7 +878,7 @@
           drill: { source: 'setups', filter: 'no-time-rule' },
         });
       }
-    } else if (setupRolls.length && !timeRules.length) {
+    } else if (setupRollsActive.length && !timeRules.length) {
       warnings.push({
         type: 'no-time-rules-at-all',
         severity: 'warning',
@@ -925,7 +988,7 @@
     //    ۳٫۳۱: کلید ۴فاکتوری با RM.keys ('qualityIdentity' — قابل تنظیم از
     //    «تنظیمات ← کلیدهای تطبیق») ساخته می‌شود — هم‌قالب با کنترل‌های کیفیت.
     const setupFourKeyIndex = new Map();   // کلید ۴فاکتوری → Set(متراژ استاندارد ستاپ‌های همان کلید)
-    for (const setup of setupRolls) {
+    for (const setup of setupRollsActive) {   // ۳٫۳۲ — فقط ستاپ‌های فعال (منقضی = وجود ندارد)
       // فقط ستاپ‌های کامل در تطبیق‌ها شرکت می‌کنند (§25 + هویت ۲٫۹)
       const isComplete = setup.thickness !== null && setup.standardLength !== null &&
         N.setupIdentityComplete(setup);
@@ -1029,7 +1092,8 @@
     }
 
     // ز) ستاپ‌های ناقص قدیمی (پس از مهاجرت) — شامل هویت ناقص (نسخهٔ ۲٫۹)
-    const incomplete = setupRolls.filter(
+    //    ۳٫۳۲ — فقط ستاپ‌های فعال؛ رکورد منقضی (حتی ناقص) وجود ندارد و هشدار نمی‌گیرد
+    const incomplete = setupRollsActive.filter(
       (s) => s.thickness === null || s.standardLength === null || !N.setupIdentityComplete(s)
     );
     if (incomplete.length) {
@@ -1179,8 +1243,9 @@
       }
     }
 
-    /* --- ۱۰) خلاصهٔ داشبورد (§57-§59 + زمان‌های متالایز — تغییرات جدید) --- */
-    const totalSetupRolls = setupRolls.reduce((s, r) => s + (r.rollCount || 0), 0);
+    /* --- ۱۰) خلاصهٔ داشبورد (§57-§59 + زمان‌های متالایز — تغییرات جدید) ---
+       ۳٫۳۲: Σ تعداد ستاپ‌ها فقط از رکوردهای فعال (منقضی = وجود ندارد). */
+    const totalSetupRolls = setupRollsActive.reduce((s, r) => s + (r.rollCount || 0), 0);
     const totalRawAllocated = [...rawAllocationBySetup.values()].reduce((s, a) => s + a.allocated, 0);
     const totalMetAllocated = [...metAllocationBySetup.values()].reduce((s, a) => s + a.allocated, 0);
     const totalUncut = setupReport.reduce((s, r) => s + r.uncut, 0);

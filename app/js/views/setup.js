@@ -1831,17 +1831,23 @@
           else r = da < dbv ? -1 : da > dbv ? 1 : 0;
           return direction === 'desc' ? -r : r;
         }
-        /* نسخهٔ ۲٫۸ — وضعیت: «تمام شده» (۰) قبل از «باقی مانده» (۱)؛ نامشخص آخر.
-           ۳٫۳۱ — «منقضی شده» (expired): رتبهٔ ۲ — بعد از «باقی مانده» و قبل از نامشخص. */
+        /* ۳٫۳۲ — وضعیت: مرتب‌سازی «الفبایی فارسی» بر اساس متن نمایشی ستون:
+           «باقی مانده» (ب) → «تمام شده» (ت) → «منقضی شده» (م)؛ صعودی = ترتیب
+           الفبا و نزولی = دقیقاً برعکس آن. نامشخص (بدون قانون زمان → null)
+           همیشه آخر می‌ماند. (اصلاح ۳٫۳۱: قبلاً رتبهٔ عددی دستی تمام=۰/باقی=۱/
+           منقضی=۲ بود که با حروف الفبای فارسی منطبق نبود.) */
         if (field === 'timeStatus') {
-          const rank = (v) => (v === 'done' ? 0 : v === 'remaining' ? 1 : v === 'expired' ? 2 : null);
-          const ra = rank(a.timeStatus);
-          const rb = rank(b.timeStatus);
-          let r;
-          if (ra === null && rb === null) r = 0;
-          else if (ra === null) r = 1;
-          else if (rb === null) r = -1;
-          else r = ra - rb;
+          const labelOf = (v) => (v === 'remaining' ? 'باقی مانده'
+            : v === 'done' ? 'تمام شده'
+            : v === 'expired' ? 'منقضی شده' : null);
+          const la = labelOf(a.timeStatus);
+          const lb = labelOf(b.timeStatus);
+          /* نامشخص (بدون قانون زمان → null) همیشه آخر می‌ماند — «مستقل از جهت»؛
+             به همین دلیل قبل از برگرداندنِ جهت برگردانده می‌شود نه با -r. */
+          if (la === null && lb === null) return 0;
+          if (la === null) return 1;
+          if (lb === null) return -1;
+          const r = la.localeCompare(lb, 'fa');   // الفبای فارسی: ب < ت < م
           return direction === 'desc' ? -r : r;
         }
         return U.compareNumeric(a[field], b[field], direction);
@@ -2006,20 +2012,29 @@
       },
       rawExisting: {
         key: 'rawExisting', label: 'خام موجود',
-        render: (r) => `<span class="num-raw">${U.faNum(r.rawExisting)}</span>`,
-        tokens: (r) => [U.faNum(r.rawExisting), String(r.rawExisting ?? '')],
+        /* ۳٫۳۲ — رکورد منقضی: مقدار مشتق ندارد (از تخصیص خارج است) → «—» */
+        render: (r) => r.expired === true
+          ? '<span class="muted" title="رکورد منقضی شده — از تخصیص و همهٔ محاسبات خارج است">—</span>'
+          : `<span class="num-raw">${U.faNum(r.rawExisting)}</span>`,
+        tokens: (r) => r.expired === true ? [] : [U.faNum(r.rawExisting), String(r.rawExisting ?? '')],
       },
       metallized: {
         key: 'metallized', label: 'متالایز',
-        render: (r) => `<span class="num-metal">${U.faNum(r.metallized)}</span>`,
-        tokens: (r) => [U.faNum(r.metallized), String(r.metallized ?? '')],
+        /* ۳٫۳۲ — رکورد منقضی: مقدار مشتق ندارد → «—» */
+        render: (r) => r.expired === true
+          ? '<span class="muted" title="رکورد منقضی شده — از تخصیص و همهٔ محاسبات خارج است">—</span>'
+          : `<span class="num-metal">${U.faNum(r.metallized)}</span>`,
+        tokens: (r) => r.expired === true ? [] : [U.faNum(r.metallized), String(r.metallized ?? '')],
       },
       uncut: {
         key: 'uncut', label: 'برش‌نشده',
-        render: (r) => r.conflict > 0
-          ? `<span class="num-uncut">${U.faNum(r.uncut)}</span><span class="conflict-badge" title="مغایرت ظرفیت — خام موجود + متالایز بیش از تعداد ستاپ است">⚠ ${U.faNum(r.conflict)}</span>`
-          : `<span class="num-uncut">${U.faNum(r.uncut)}</span>`,
-        tokens: (r) => [U.faNum(r.uncut), String(r.uncut ?? ''), String(r.conflict ?? '')],
+        /* ۳٫۳۲ — رکورد منقضی: مقدار مشتق ندارد → «—» */
+        render: (r) => r.expired === true
+          ? '<span class="muted" title="رکورد منقضی شده — از تخصیص و همهٔ محاسبات خارج است">—</span>'
+          : r.conflict > 0
+            ? `<span class="num-uncut">${U.faNum(r.uncut)}</span><span class="conflict-badge" title="مغایرت ظرفیت — خام موجود + متالایز بیش از تعداد ستاپ است">⚠ ${U.faNum(r.conflict)}</span>`
+            : `<span class="num-uncut">${U.faNum(r.uncut)}</span>`,
+        tokens: (r) => r.expired === true ? [] : [U.faNum(r.uncut), String(r.uncut ?? ''), String(r.conflict ?? '')],
       },
       setupDate: {
         /* نسخهٔ ۲٫۸ — تاریخ ستاپ شمسی؛ پیش‌فرض مخفی، از پنل ترتیب ستون‌ها (چشم) نمایش داده می‌شود.
@@ -2077,25 +2092,30 @@
       actions: {
         /* ۳٫۳۱ (تغییر ۲ کاربر) — ستون عملیات بازطراحی شد:
            چک‌باکس کوچکِ انتخاب ردیف + یک دکمهٔ «عملیات» (⋮) که با کلیک، منوی
-           بازشوندهٔ سه‌گزینه‌ای «محاسبه جزئیات / ویرایش / حذف» را نشان می‌دهد —
-           منو absolute است و عرض ستون را اشغال نمی‌کند. */
+           بازشوندهٔ «محاسبه جزئیات / ویرایش / حذف» را نشان می‌دهد — منو fixed
+           است (موقعیت پویا) و عرض ستون را اشغال نمی‌کند.
+           ۳٫۳۲ — ردیف‌های منقضی‌شده آیتم چهارم «خروج از انقضا» دارند. */
         key: 'actions', label: 'عملیات', filterable: false,
         render: (r) => {
           const checked = SetupView.selection.has(r.id) ? ' checked' : '';
+          const unexpireItem = r.expired === true
+            ? `<button type="button" role="menuitem" class="row-menu-item row-menu-unexpire" data-unexpire="${r.id}">${UI.icons.unexpire}<span>خروج از انقضا</span></button>`
+            : '';
           return `
           <div class="row-actions row-actions-331">
             <input type="checkbox" class="row-select" data-select="${r.id}"${checked}
                    aria-label="انتخاب ردیف ستاپ ${U.faNum(r.setupNumber)} برای عملیات گروهی"
-                   title="انتخاب این ردیف برای عملیات گروهی (حذف/انقضاء)">
+                   title="انتخاب این ردیف برای عملیات گروهی (حذف/انقضاء/خروج از انقضا)">
             <div class="row-menu" data-row-menu="${r.id}">
               <button type="button" class="btn btn-ghost btn-icon row-menu-btn" data-menu="${r.id}"
-                      title="عملیات این ردیف (محاسبه جزئیات / ویرایش / حذف)"
+                      title="عملیات این ردیف (محاسبه جزئیات / ویرایش / حذف${r.expired === true ? ' / خروج از انقضا' : ''})"
                       aria-label="عملیات ردیف ستاپ ${U.faNum(r.setupNumber)}"
                       aria-haspopup="menu" aria-expanded="false">${UI.icons.dots}</button>
               <div class="row-menu-pop" role="menu" hidden>
                 <button type="button" role="menuitem" class="row-menu-item" data-audit="${r.id}">${UI.icons.audit}<span>محاسبه جزئیات</span></button>
                 <button type="button" role="menuitem" class="row-menu-item" data-edit="${r.id}">${UI.icons.edit}<span>ویرایش</span></button>
                 <button type="button" role="menuitem" class="row-menu-item row-menu-danger" data-del="${r.id}">${UI.icons.trash}<span>حذف</span></button>
+                ${unexpireItem}
               </div>
             </div>
           </div>`;
@@ -2129,6 +2149,10 @@
       }
     }
 
+    /* ۳٫۳۲ — نقشهٔ شناسه → ردیف گزارش (برای شمارش منقضی‌های انتخاب‌شده در
+       عملیات گروهی «خروج از انقضا» — بدون نگاه مجدد به DB) */
+    SetupView._reportById = new Map(report.map((r) => [r.id, r]));
+
     const rows = SetupView.applySetupSort(report);
 
     const wrap = document.getElementById('setup-table-wrap');
@@ -2139,29 +2163,40 @@
       .filter(Boolean)
       .filter((c) => !hiddenSet.has(c.key));   // ستون‌های مخفی از پنل ترتیب (چشم)
 
-    /* ۳٫۳۱ — نوار عملیات گروهی (سمت چپ بالای جدول، کنار آمار رکوردها) */
+    /* ۳٫۳۱/۳٫۳۲ — نوار عملیات گروهی (سمت چپ بالای جدول، کنار آمار رکوردها):
+       حذف / انقضاء (با تأیید) / خروج از انقضا / لغو انتخاب‌ها */
     const bulkBarHtml = `
       <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-del" id="bulk-del-btn"
               title="حذف همهٔ ردیف‌های انتخاب‌شده (با تأیید) — عملیات گروهی" disabled>
         ${UI.icons.trashSel}<span>حذف انتخاب شده‌ها</span><b class="bulk-count" id="bulk-del-count" hidden></b>
       </button>
       <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-expire" id="bulk-expire-btn"
-              title="تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» — زمان‌های آنها از همهٔ محاسبات خارج می‌شود" disabled>
+              title="تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند" disabled>
         ${UI.icons.expire}<span>انقضاء انتخاب شده‌ها</span><b class="bulk-count" id="bulk-expire-count" hidden></b>
+      </button>
+      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-unexpire" id="bulk-unexpire-btn"
+              title="خروج از انقضای ردیف‌های «منقضی شده»ٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)" disabled>
+        ${UI.icons.unexpire}<span>خروج از انقضای انتخاب شده‌ها</span><b class="bulk-count" id="bulk-unexpire-count" hidden></b>
       </button>
       <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-clear" id="bulk-clear-btn"
               title="برداشتن تیک همهٔ ردیف‌های انتخاب‌شده" disabled>
         ${UI.icons.unselect}<span>لغو انتخاب‌ها</span>
       </button>`;
 
-    /** به‌روزرسانی وضعیت دکمه‌های گروهی از روی Selection (فعال/غیرفعال + شمارنده) */
+    /** به‌روزرسانی وضعیت دکمه‌های گروهی از روی Selection (فعال/غیرفعال + شمارنده)
+        ۳٫۳۲ — «خروج از انقضا» فقط وقتی فعال است که دست‌کم یک رکورد «منقضی
+        شده» در انتخاب‌ها باشد (شمارندهٔ آن = تعداد منقضی‌های انتخاب‌شده). */
     const updateBulkButtons = () => {
       const n = SetupView.selection.size;
+      const expiredSel = [...SetupView.selection].filter((id) =>
+        (SetupView._reportById && SetupView._reportById.get(id) || {}).expired === true).length;
       const delBtn = document.getElementById('bulk-del-btn');
       const expBtn = document.getElementById('bulk-expire-btn');
+      const unexpBtn = document.getElementById('bulk-unexpire-btn');
       const clrBtn = document.getElementById('bulk-clear-btn');
       const delCnt = document.getElementById('bulk-del-count');
       const expCnt = document.getElementById('bulk-expire-count');
+      const unexpCnt = document.getElementById('bulk-unexpire-count');
       if (delBtn) {
         delBtn.disabled = n === 0;
         delBtn.title = n === 0
@@ -2171,12 +2206,19 @@
       if (expBtn) {
         expBtn.disabled = n === 0;
         expBtn.title = n === 0
-          ? 'تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» — زمان‌های آنها از همهٔ محاسبات خارج می‌شود'
-          : `تغییر وضعیت ${U.faNum(n)} ردیف انتخاب‌شده به «منقضی شده» — زمان‌های آنها از همهٔ محاسبات خارج می‌شود`;
+          ? 'تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند'
+          : `تغییر وضعیت ${U.faNum(n)} ردیف انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند`;
+      }
+      if (unexpBtn) {
+        unexpBtn.disabled = expiredSel === 0;
+        unexpBtn.title = expiredSel === 0
+          ? 'خروج از انقضای ردیف‌های «منقضی شده»ٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)'
+          : `خروج از انقضای ${U.faNum(expiredSel)} رکورد منقضی‌شدهٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)`;
       }
       if (clrBtn) clrBtn.disabled = n === 0;
       if (delCnt) { delCnt.textContent = U.faNum(n); delCnt.hidden = n === 0; }
       if (expCnt) { expCnt.textContent = U.faNum(n); expCnt.hidden = n === 0; }
+      if (unexpCnt) { unexpCnt.textContent = U.faNum(expiredSel); unexpCnt.hidden = expiredSel === 0; }
     };
 
     UI.filterTable(wrap, columns, rows, {
@@ -2205,12 +2247,16 @@
       onLeftBarMount: () => {
         const delBtn = document.getElementById('bulk-del-btn');
         const expBtn = document.getElementById('bulk-expire-btn');
+        const unexpBtn = document.getElementById('bulk-unexpire-btn');
         const clrBtn = document.getElementById('bulk-clear-btn');
         if (delBtn) delBtn.addEventListener('click', () => SetupView.bulkDeleteSelected());
         if (expBtn) expBtn.addEventListener('click', () => SetupView.bulkExpireSelected());
+        if (unexpBtn) unexpBtn.addEventListener('click', () => SetupView.bulkUnexpireSelected());
         if (clrBtn) clrBtn.addEventListener('click', () => SetupView.clearSelection());
         updateBulkButtons();
       },
+      /* ۳٫۳۲ — ردیف‌های «منقضی شده» کم‌رنگ/خط‌خورده دیده می‌شوند (وجود ندارند) */
+      rowClass: (r) => (r.expired === true ? 'row-expired' : ''),
       tableClass: 'cut-table setup-table',
       emptyText: 'هنوز ستاپی ثبت نشده — از فرم «ثبت رول جدید برای ستاپ» اولین رکورد را وارد کنید.',
       filteredEmptyText: 'هیچ ردیفی با فیلترهای فعلی مطابقت ندارد — فیلترها را پاک کنید.',
@@ -2224,6 +2270,9 @@
         remainingSetupTime:     { type: 'time' },     // مانده زمان ستاپ — [H]:mm
         remainingProducedTime:  { type: 'time' },     // مانده زمان موجودی — [H]:mm
       },
+      /* ۳٫۳۲ — رکوردهای «منقضی شده» از «همهٔ» باکس‌های جمع زیر جدول خارج‌اند
+         (کلاً مثل اینکه در جدول وجود ندارند — حتی از شمارندهٔ «بدون قانون»). */
+      sumsSkip: (r) => r.expired === true,
       // نسخهٔ ۲٫۴: باکس تعداد ردیف + ماندگاری مقدار
       onRowsChange: (n) => RM.db.setSetting('setupVisibleRows', n),
       // رویدادهای ردیف پس از هر رندر بدنه
@@ -2246,7 +2295,8 @@
           });
         });
 
-        /* ۳٫۳۱ — آیتم‌های منو: همان عملیات‌های قبلی (Audit/ویرایش/حذف) */
+        /* ۳٫۳۱ — آیتم‌های منو: همان عملیات‌های قبلی (Audit/ویرایش/حذف)
+           ۳٫۳۲ — آیتم «خروج از انقضا» فقط در منوی ردیف‌های منقضی‌شده هست */
         wrap.querySelectorAll('.row-menu-item[data-edit]').forEach((b) =>
           b.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.startEdit(Number(b.dataset.edit)); })
         );
@@ -2255,6 +2305,12 @@
         );
         wrap.querySelectorAll('.row-menu-item[data-audit]').forEach((b) =>
           b.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.showAudit(Number(b.dataset.audit), state); })
+        );
+        wrap.querySelectorAll('.row-menu-item[data-unexpire]').forEach((b) =>
+          b.addEventListener('click', () => {
+            SetupView.closeAllRowMenus();
+            SetupView.bulkUnexpireSelected([Number(b.dataset.unexpire)]);
+          })
         );
 
         updateBulkButtons();
@@ -2266,8 +2322,14 @@
      ۶-ب) منوی عملیات ردیف + عملیات گروهی (۳٫۳۱ — تغییر ۲ کاربر)
      ================================================================ */
 
-  /** بستن همهٔ منوهای باز جدول گزارش */
+  /** بستن همهٔ منوهای باز جدول گزارش + پاک‌سازی موقعیت‌یاب پویا (۳٫۳۲) */
   SetupView.closeAllRowMenus = function (exceptId = null) {
+    /* جداکردن شنونده‌های جابه‌جایی زندهٔ منوی باز (اسکرول/تغییر اندازه) */
+    const ctl = SetupView._openMenuCtl;
+    if (ctl) {
+      if (typeof ctl.cleanup === 'function') ctl.cleanup();
+      SetupView._openMenuCtl = null;
+    }
     const wrap = document.getElementById('setup-table-wrap');
     if (!wrap) return;
     wrap.querySelectorAll('.row-menu.open').forEach((m) => {
@@ -2275,14 +2337,58 @@
       if (id === exceptId) return;
       m.classList.remove('open');
       const pop = m.querySelector('.row-menu-pop');
-      if (pop) pop.hidden = true;
+      if (pop) {
+        pop.hidden = true;
+        /* پاک‌سازی استایل‌های موقعیت fixed برای بازشدن بعدی */
+        pop.style.top = '';
+        pop.style.left = '';
+        pop.style.right = '';
+        pop.style.visibility = '';
+      }
       const btn = m.querySelector('.row-menu-btn');
       if (btn) btn.setAttribute('aria-expanded', 'false');
     });
   };
 
-  /** باز/بستن منوی یک ردیف — فقط یک منو هم‌زمان باز است؛ اگر فضای پایین
-      جدول کم باشد منو به بالا باز می‌شود (کلاس up). */
+  /** ۳٫۳۲ — موقعیت‌یابی «پویا و ریسپانسیو» منوی عملیات ردیف:
+      منو position:fixed است (هیچ‌گاه زیر ردیف‌ها/نواحی اسکرول گم نمی‌شود) و
+      مختصاتش هر بار از جای دکمه محاسبه می‌شود:
+        · عمودی: پیش‌فرض ۶px زیر دکمه؛ اگر تا لبهٔ پایین دید جا نباشد → بالای
+          دکمه؛ اگر آن هم ممکن نبود → محدودشده داخل ناحیهٔ دید؛
+        · افقی (متناسب با موقعیت ستون عملیات): لبهٔ راست منو هم‌تراز لبهٔ راست
+          دکمه (ادامه به چپ — RTL)؛ اگر از لبهٔ چپ دید بیرون بزند → برعکس
+          (لبهٔ چپ منو روی لبهٔ چپ دکمه)؛ در انتها هر دو سمت در دید محدودند. */
+  SetupView._placeRowMenuPop = function (ctl) {
+    const { btn, pop } = ctl;
+    if (!btn || !pop) return;
+    const r = btn.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const M = 8;                       // حاشیهٔ امن از لبهٔ دید
+    const pw = pop.offsetWidth;        // اندازه‌گیری پس از نمایان‌سازی مخفی
+    const ph = pop.offsetHeight;
+
+    /* --- عمودی: زیر → بالا → محدود در دید (هر دو گزینه باید «کامل داخل دید» باشند) --- */
+    const belowTop = r.bottom + 6;
+    const aboveTop = r.top - 6 - ph;
+    let top;
+    if (belowTop + ph <= vh - M) top = belowTop;                        // زیر دکمه — کامل داخل دید
+    else if (aboveTop >= M && aboveTop + ph <= vh - M) top = aboveTop;  // بالای دکمه — کامل داخل دید
+    else top = Math.max(M, Math.min(vh - M - ph, belowTop));            // گیر — محدود به داخل دید
+
+    /* --- افقی: راست‌چین نسبت به دکمه → چرخش نزدیک لبهٔ چپ → محدود در دید --- */
+    let left = r.right - pw;
+    if (left < M) left = r.left;
+    if (left + pw > vw - M) left = vw - M - pw;
+    if (left < M) left = M;
+
+    pop.style.top = `${Math.round(top)}px`;
+    pop.style.left = `${Math.round(left)}px`;
+    pop.style.right = 'auto';
+  };
+
+  /** باز/بستن منوی یک ردیف — فقط یک منو هم‌زمان باز است؛ موقعیت هر بار
+      پویا محاسبه و با اسکرول/تغییر اندازهٔ پنجره زنده به‌روز می‌شود. */
   SetupView.toggleRowMenu = function (wrap, id) {
     const menu = wrap.querySelector(`.row-menu[data-row-menu="${id}"]`);
     if (!menu) return;
@@ -2293,20 +2399,33 @@
     if (isOpen) return;   // فقط بسته شد
 
     menu.classList.add('open');
-    if (pop) pop.hidden = false;
     if (btn) btn.setAttribute('aria-expanded', 'true');
 
-    /* اگر انتهای منو از انتهای ناحیهٔ اسکرول جدول بیرون بزند → به بالا باز شود */
+    const ctl = { menu, pop, btn, cleanup: null };
+    SetupView._openMenuCtl = ctl;
+
+    /* نمایش بدون سوسو: اول مخفی (visibility) → اندازه‌گیری و جای‌گذاری fixed
+       → سپس مرئی؛ همه همگام و بدون فریم میانی. */
     if (pop) {
-      requestAnimationFrame(() => {
-        const scroll = wrap.querySelector('.cut-table-scroll');
-        if (!scroll) return;
-        const popRect = pop.getBoundingClientRect();
-        const scrollRect = scroll.getBoundingClientRect();
-        if (popRect.bottom > scrollRect.bottom) menu.classList.add('up');
-        else menu.classList.remove('up');
-      });
+      pop.hidden = false;
+      pop.style.visibility = 'hidden';
+      SetupView._placeRowMenuPop(ctl);
+      pop.style.visibility = '';
     }
+
+    /* جابه‌جایی زنده: هر اسکرولی (پنجره یا نواحی اسکرول‌دار داخلی جدول —
+       با capture) و تغییر اندازهٔ پنجره، جای منو دوباره محاسبه می‌شود؛
+       اگر دکمه از DOM رفته باشد (رندر مجدد بدنه) منو بسته می‌شود. */
+    const place = () => {
+      if (!btn.isConnected || !pop.isConnected) { SetupView.closeAllRowMenus(); return; }
+      SetupView._placeRowMenuPop(ctl);
+    };
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    ctl.cleanup = () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
   };
 
   /** «لغو انتخاب‌ها» — برداشتن تیک همهٔ ردیف‌های انتخاب‌شده */
@@ -2316,13 +2435,13 @@
     /* چک‌باکس‌های DOM بدون رندر کامل جدول به‌روز می‌شوند (فوکوس/فیلتر حفظ می‌شود) */
     const wrap = document.getElementById('setup-table-wrap');
     if (wrap) wrap.querySelectorAll('[data-select]').forEach((cb) => { cb.checked = false; });
-    /* دکمه‌های گروهی خاموش */
-    const btns = ['bulk-del-btn', 'bulk-expire-btn', 'bulk-clear-btn'];
+    /* دکمه‌های گروهی خاموش (۳٫۳۲ — چهار دکمه: حذف/انقضاء/خروج از انقضا/لغو) */
+    const btns = ['bulk-del-btn', 'bulk-expire-btn', 'bulk-unexpire-btn', 'bulk-clear-btn'];
     btns.forEach((bid) => {
       const el = document.getElementById(bid);
       if (el) el.disabled = true;
     });
-    ['bulk-del-count', 'bulk-expire-count'].forEach((cid) => {
+    ['bulk-del-count', 'bulk-expire-count', 'bulk-unexpire-count'].forEach((cid) => {
       const el = document.getElementById(cid);
       if (el) { el.hidden = true; el.textContent = ''; }
     });
@@ -2350,20 +2469,62 @@
     await SetupView.render();
   };
 
-  /** «انقضاء انتخاب شده‌ها» — وضعیت رکوردهای انتخاب‌شده «منقضی شده» می‌شود
-      (جای «باقی مانده»/«تمام شده»)؛ زمان‌های آنها از همهٔ محاسبات پروژه
-      خارج می‌شود (calc.js ۳٫۳۱). انتخاب‌ها پس از عملیات حفظ می‌شوند. */
+  /** «انقضاء انتخاب شده‌ها» (۳٫۳۱) — وضعیت رکوردهای انتخاب‌شده «منقضی شده»
+      می‌شود. ۳٫۳۲ — (۱) عملیات «حتماً» با پنجرهٔ تأیید کاربر انجام می‌شود
+      (درخواست صریح کاربر — با شرح کامل عواقب) و (۲) منقضی‌شدن دیگر فقط
+      «زمان‌ها» را خارج نمی‌کند: کلاً باید تصور شود رکورد در جدول ستاپ‌ها
+      وجود ندارد (همهٔ مقادیر از همهٔ محاسبات خارج + رول‌های تخصیص‌یافته آزاد).
+      انتخاب‌ها پس از عملیات حفظ می‌شوند. */
   SetupView.bulkExpireSelected = async function () {
     const ids = [...SetupView.selection];
     if (!ids.length) return;
 
-    const { expired, skipped } = await Setups.setExpired(ids);
-    if (!expired && skipped) {
-      UI.toast(`همهٔ ${U.faNum(skipped)} رکورد انتخاب‌شده از قبل «منقضی شده» بود.`, 'info');
-    } else if (expired && skipped) {
-      UI.toast(`${U.faNum(expired)} رکورد «منقضی شده» شد — ${U.faNum(skipped)} رکورد از قبل منقضی بود. زمان‌های منقضی‌شده‌ها از محاسبات خارج شد.`, 'success', 5200);
-    } else if (expired) {
-      UI.toast(`${U.faNum(expired)} رکورد «منقضی شده» شد — «مانده زمان ستاپ» و «مانده زمان موجودی» آن از همهٔ محاسبات خارج شد.`, 'success', 5200);
+    /* تفکیک: رکوردهای قابل انقضاء در برابر منقضی‌های قبلی (idempotent) */
+    const byId = SetupView._reportById || new Map();
+    const toExpire = ids.filter((id) => ((byId.get(id) || {}).expired) !== true);
+    const alreadyExpired = ids.length - toExpire.length;
+    if (!toExpire.length) {
+      UI.toast(`همهٔ ${U.faNum(alreadyExpired)} رکورد انتخاب‌شده از قبل «منقضی شده» است.`, 'info');
+      return;
+    }
+
+    /* ۳٫۳۲ — تأیید اجباری پیش از انقضاء */
+    const ok = await UI.confirm({
+      title: 'انقضای رکوردهای انتخاب‌شده',
+      html: `<p style="margin:0 0 6px"><b>${U.faNum(toExpire.length)}</b> رکورد ستاپ «منقضی شده» می‌شود${alreadyExpired ? ` — ${U.faNum(alreadyExpired)} رکورد از قبل منقضی است و بی‌اثر می‌ماند` : ''}.</p>`,
+      message: 'با انقضاء، کلاً طوری رفتار می‌شود که این رکوردها در جدول «گزارش تولید ستاپ‌ها» وجود ندارند: هیچ‌یک از مقادیرشان (مانده زمان ستاپ/موجودی، خام موجود، متالایز، برش‌نشده و سایر ستون‌ها) در هیچ‌یک از محاسبات پروژه شرکت نمی‌کند، رول‌های تخصیص‌یافتهٔ آنها آزاد و به ستاپ‌های دیگرِ هم‌کلید می‌رسد و مرکز هشدار کیفیت داده هم آنها را بررسی نمی‌کند. هر زمان با «خروج از انقضا» قابل بازگشت است. ادامه می‌دهید؟',
+      confirmText: 'بله، منقضی کن',
+    });
+    if (!ok) return;
+
+    const { changed, skipped } = await Setups.setExpired(toExpire);
+    if (changed && skipped) {
+      UI.toast(`${U.faNum(changed)} رکورد «منقضی شده» شد — ${U.faNum(skipped)} رکورد از قبل منقضی بود. کلاً از همهٔ محاسبات پروژه خارج شدند.`, 'success', 5600);
+    } else if (changed) {
+      UI.toast(`${U.faNum(changed)} رکورد «منقضی شده» شد — کلاً از همهٔ محاسبات پروژه خارج شد (رول‌های تخصیص‌یافته‌اش آزاد شد).`, 'success', 5600);
+    }
+    await RM.refreshAll();
+    await SetupView.render();
+  };
+
+  /** «خروج از انقضای انتخاب شده‌ها» (۳٫۳۲ — درخواست کاربر) — رکوردهای
+      «منقضی شده»ٔ انتخاب‌شده دوباره فعال می‌شوند و به همهٔ محاسبات پروژه
+      برمی‌گردند (تخصیص رول‌ها، زمان‌ها، جمع‌ها، هشدارها — Undo انقضاء).
+      بدون پنجرهٔ تأیید: عملیات «بازگرداندن» است (برعکسِ انقضاء که تأیید
+      می‌گیرد). idsParam از آیتم منوی ردیفِ منقضی می‌آید (تک‌رکوردی). */
+  SetupView.bulkUnexpireSelected = async function (idsParam = null) {
+    const ids = (Array.isArray(idsParam) && idsParam.length)
+      ? idsParam
+      : [...SetupView.selection];
+    if (!ids.length) return;
+
+    const { changed, skipped } = await Setups.setExpired(ids, false);
+    if (!changed && skipped) {
+      UI.toast(`هیچ‌کدام از ${U.faNum(skipped)} رکورد انتخاب‌شده «منقضی شده» نبود.`, 'info');
+    } else if (changed && skipped) {
+      UI.toast(`${U.faNum(changed)} رکورد از انقضا خارج شد — ${U.faNum(skipped)} رکورد منقضی نبود. مقادیرش دوباره در همهٔ محاسبات شرکت می‌کند.`, 'success', 5600);
+    } else if (changed) {
+      UI.toast(`${U.faNum(changed)} رکورد از انقضا خارج شد — دوباره در همهٔ محاسبات پروژه (تخصیص رول‌ها، زمان‌ها، جمع‌ها، هشدارها) شرکت می‌کند.`, 'success', 5600);
     }
     await RM.refreshAll();
     await SetupView.render();
