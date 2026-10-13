@@ -534,13 +534,14 @@
       const line = idn && idn.line
         ? `<span class="line-badge line-${U.escapeHtml(String(idn.line).toLowerCase())}" title="نوع خط — از حرف اول شماره رول">${U.escapeHtml(idn.line)}</span>`
         : '<span class="mt-roll-muted" title="نوع خط از شماره رول قابل تشخیص نیست">—</span>';
-      /* متراژ واقعی خود رول («متراژ اولیه» فایل آرشیو) — نه متراژ استاندارد */
+      /* متراژ واقعی خود رول («متراژ اولیه» فایل آرشیو) — نه متراژ استاندارد؛
+         واحد «متر» کامل نوشته می‌شود (۳٫۳۵ — پیش‌تر «م» بود) */
       const noLen = r.actualLength === null || r.actualLength === undefined || r.actualLength === '';
-      const lenTxt = noLen ? '—' : `${U.faNum(r.actualLength)} م`;
+      const lenTxt = noLen ? '—' : `${U.faNum(r.actualLength)} متر`;
       const len = noLen
         ? '<span class="mt-roll-muted" title="متراژ واقعی رول ثبت نشده">—</span>'
         : `<span class="mt-roll-len" title="متراژ واقعی رول (نه استاندارد)">${U.escapeHtml(lenTxt)}</span>`;
-      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nنوع خط: ${U.escapeHtml(lineTxt)}\nعرض: ${widthTxt}\nمتراژ واقعی: ${noLen ? '—' : U.faNum(r.actualLength)}\n${setupTxt}\nزمان متالایز: ${dt}`;
+      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nنوع خط: ${U.escapeHtml(lineTxt)}\nعرض: ${widthTxt}\nمتراژ واقعی: ${noLen ? '—' : `${U.faNum(r.actualLength)} متر`}\n${setupTxt}\nزمان متالایز: ${dt}`;
       return `
         <div class="mt-roll" title="${U.escapeHtml(title)}">
           <div class="mt-roll-top">

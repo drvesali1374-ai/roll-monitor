@@ -5859,13 +5859,16 @@ tr.row-expired .status-pill { text-decoration: none; }
   min-width: 0;
 }
 .mt-roll-width {
+  /* ۳٫۳۵ — عرض رول درشت‌تر از بقیهٔ اجزای کارت نوشته می‌شود (پارامتر مهم) */
   flex: none;
-  padding: 1px 7px;
+  padding: 2px 9px;
   border-radius: 6px;
   background: var(--setup-soft);
   color: var(--setup);
-  font-weight: 700;
-  font-size: .7rem;
+  font-weight: 800;
+  font-size: .92rem;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 /* ردیف میانی کارت: نشان نوع خط (BOPP/CPP) + متراژ واقعی + شماره ستاپ */
 .mt-roll-meta {
