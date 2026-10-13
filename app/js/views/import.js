@@ -339,6 +339,15 @@
       { key: 'setupNumber', label: 'ستاپ', render: (r) => r.setupNumber === null ? '<span class="muted">—</span>' : U.faNum(r.setupNumber) },
     ];
 
+    /* ۳٫۳۳ — پیش‌نمایش آرشیو: ستون «تاریخ حذف» (زمان متالایز) هم نمایش
+       داده می‌شود تا درست‌بودن نگاشت این ستون در همان لحظهٔ Import دیده شود. */
+    if (targetKey === 'archived') {
+      columns.push({
+        key: 'deleteDate', label: 'تاریخ حذف',
+        render: (r) => U.escapeHtml(U.faDateTime(r.deleteDate)),
+      });
+    }
+
     UI.renderTable(wrapEl, columns, records, { pageSize: RM.config.PREVIEW_ROWS });
   };
 

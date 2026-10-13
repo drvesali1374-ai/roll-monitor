@@ -93,6 +93,23 @@
       /* --- ۲-ب) ارتقای نرم رکوردهای قدیمی به مدل فعلی (فیلد عرض برش‌خورده) --- */
       await RM.db.ensureModelFields();
 
+      /* --- ۲-ب-۲) مهاجرت یک‌بارهٔ ستون‌های جزئیات رکورد — «تاریخ حذف» آرشیو
+         (زمان متالایز) بعد از «تاریخ تولید» به فهرست ذخیره‌شدهٔ کاربر اضافه
+         می‌شود. با پرچم 'detailColsDeleteDateMigrated' فقط یک‌بار اجرا می‌شود
+         تا انتخاب بعدی کاربر (حذف/افزودن با چیپ‌های پنل جزئیات) همیشه محترم
+         بماند. کاربران بدون فهرست ذخیره‌شده از پیش‌فرض جدید تغذیه می‌شوند. --- */
+      if (!(await RM.db.getSetting('detailColsDeleteDateMigrated', false))) {
+        const cur = await RM.db.getSetting('rollDetailColumns', null);
+        if (Array.isArray(cur) && cur.length && !cur.includes('deleteDate')) {
+          const i = cur.indexOf('productionDate');
+          const next = i === -1
+            ? [...cur, 'deleteDate']
+            : [...cur.slice(0, i + 1), 'deleteDate', ...cur.slice(i + 1)];
+          await RM.db.setSetting('rollDetailColumns', next);
+        }
+        await RM.db.setSetting('detailColsDeleteDateMigrated', true);
+      }
+
       /* --- ۲-پ) ۳٫۲۶ — بارگذاری کلیدهای تطبیق قابل تنظیم (پیش از هر محاسبه/
          نما؛ Overrideهای کاربر از appSettings — پاک‌سازی و اعتبارسنجی داخلی) --- */
       await RM.keys.load();

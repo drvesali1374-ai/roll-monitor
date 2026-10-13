@@ -368,6 +368,7 @@
       rollNumber:     (r) => U.escapeHtml(r.rollNumber || '—'),
       actualLength:   (r) => r.actualLength === null ? '<span class="muted">—</span>' : U.faNum(r.actualLength),
       productionDate: (r) => U.escapeHtml(U.faDateTime(r.productionDate)),
+      deleteDate:     (r) => U.escapeHtml(U.faDateTime(r.deleteDate)),
       netWeight:      (r) => r.netWeight === null ? '<span class="muted">—</span>' : U.faNum(r.netWeight),
       grade:          (r) => U.escapeHtml(r.grade || '—'),
       status:         (r) => U.escapeHtml(r.status || '—'),

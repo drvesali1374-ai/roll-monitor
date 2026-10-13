@@ -25,7 +25,7 @@
 
   /** فیلدهای متنی فرم ویرایش (بقیه از config — عددی/صحیح) */
   const TEXT_FIELDS = [
-    'rollNumber', 'filmType', 'palletNumber', 'productionDate', 'grade', 'status',
+    'rollNumber', 'filmType', 'palletNumber', 'productionDate', 'deleteDate', 'grade', 'status',
   ];
 
   const ListsView = {
@@ -287,6 +287,11 @@
         key: 'productionDate', label: L('productionDate'),
         render: (r) => wrap(r, 'productionDate', U.escapeHtml(U.faDateTime(r.productionDate))),
         tokens: (r) => [U.faDateTime(r.productionDate), String(r.productionDate ?? '')],
+      },
+      deleteDate: {
+        key: 'deleteDate', label: L('deleteDate'),
+        render: (r) => wrap(r, 'deleteDate', U.escapeHtml(U.faDateTime(r.deleteDate))),
+        tokens: (r) => [U.faDateTime(r.deleteDate), String(r.deleteDate ?? '')],
       },
       netWeight: {
         key: 'netWeight', label: L('netWeight'),

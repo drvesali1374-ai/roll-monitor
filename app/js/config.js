@@ -64,6 +64,7 @@ RM.config = {
     palletNumber:   'شماره پالت',
     setupNumber:    'شماره ستاپ',
     productionDate: 'تاریخ تولید',
+    deleteDate:    'تاریخ حذف',
     netWeight:      'وزن خالص',
     grade:          'گرید',
     status:         'وضعیت',
@@ -130,6 +131,10 @@ RM.config = {
       setupNumber:    { primary: 'شماره ستاپ',   fallbacks: ['شمارهستاپ'] },
       /* --- فیلدهای اختیاری --- */
       productionDate: { primary: 'تاریخ تولید', fallbacks: ['تاریخ تولید (شمسی)', 'تاریختولید'], optional: true },
+      /* ۳٫۳۳ — «تاریخ حذف»: تاریخ و ساعت متالایز‌شدن رول آرشیو (مبنای تایم‌لاین
+         رول‌های متالایز اخیر در داشبورد). اختیاری — اگر ستون در فایل نباشد،
+         تایم‌لاین وضعیت خالی/راهنمای نگاشت نشان می‌دهد. */
+      deleteDate:    { primary: 'تاریخ حذف',   fallbacks: ['تاریخحذف'], optional: true },
       netWeight:      { primary: 'وزن خالص',     fallbacks: ['وزنخالص'], optional: true },
       grade:          { primary: 'گرید',         fallbacks: [], optional: true },
       status:         { primary: 'وضعیت',        fallbacks: ['علت'], optional: true },
@@ -187,12 +192,14 @@ RM.config = {
      ترتیب و انتخاب ستون‌ها توسط کاربر (appSettings: rollDetailColumns) تعیین
      می‌شود؛ نام ستون‌ها از Mapping کاربر خوانده می‌شود. */
   DETAIL_FIELDS: [
-    'rollNumber', 'actualLength', 'productionDate', 'netWeight', 'grade',
+    'rollNumber', 'actualLength', 'productionDate', 'deleteDate', 'netWeight', 'grade',
     'status', 'width', 'cutWidth', 'thickness', 'setupNumber', 'filmType', 'palletNumber',
   ],
 
-  /** پیش‌فرض ستون‌های جزئیات (حداقل ۵ فیلد موردنیاز) */
-  DETAIL_DEFAULT_COLUMNS: ['rollNumber', 'actualLength', 'productionDate', 'netWeight', 'grade'],
+  /** پیش‌فرض ستون‌های جزئیات (حداقل ۵ فیلد موردنیاز) — «تاریخ حذف» (زمان
+      متالایز آرشیو — بعد از «تاریخ تولید»)؛ در Datasetهای بدون این فیلد
+      (رول‌های موجود) به‌صورت خودکار فیلتر می‌شود. */
+  DETAIL_DEFAULT_COLUMNS: ['rollNumber', 'actualLength', 'productionDate', 'deleteDate', 'netWeight', 'grade'],
 
   /* ---------------- محدودیت‌های دامنه کسب‌وکار ---------------- */
 
@@ -406,7 +413,7 @@ RM.config = {
     ],
     archived: [
       'rollNumber', 'width', 'actualLength', 'thickness', 'filmType',
-      'palletNumber', 'setupNumber', 'productionDate', 'netWeight', 'grade', 'status',
+      'palletNumber', 'setupNumber', 'productionDate', 'deleteDate', 'netWeight', 'grade', 'status',
       'actions',
     ],
   },
@@ -441,15 +448,17 @@ RM.config = {
   /** نام برنامه برای فایل Backup */
   APP_NAME: 'RollMonitor',
 
-  /** نسخهٔ فعلی برنامه — ۳٫۲۴ بند ۱: در فایل پشتیبان (appVersion) درج و در پنجرهٔ
+  /** نسخهٔ فعلی برنامه — در فایل پشتیبان (appVersion) درج و در پنجرهٔ
       تأیید بازیابی نمایش داده می‌شود تا منشأ فایل پشتیبان معلوم باشد.
-      ۳٫۲۹ — اصلاحیهٔ کاربر در «کلیدهای تطبیق»: دو پراپرتی عرض فقط در کلیدهای
-      دارای پارامتر عرض + مشارکت فایل «رول‌های موجود» (خام)؛ پراپرتی «عرض در
-      فایل آرشیو» قفل روی «عرض» (آرشیو ستون «عرض اولیه» ندارد)؛ کلید متالایز
-      فقط پراپرتی قفل‌شدهٔ آرشیو؛ حذف فیلد «عرض اولیه» از نگاشت آرشیو + مودال
-      جزئیات ستاپ عریض با فقط «کلید تطبیق خام» و پنل ستون‌های جزئیات + مودال
-      عریض «عرض های برش نشده ستاپ» داشبورد. */
-  APP_VERSION: '3.32',
+      ۳٫۳۳ — (۱) مرتب‌سازی ستون «وضعیت» گزارش ستاپ‌ها رتبه‌ای عددی شد
+      (نامشخص ۰ · باقی مانده ۱ · تمام شده ۲ · منقضی ۳)؛ (۲) پاک‌سازی کامل
+      شماره‌های نسخه از همهٔ متن‌های راهنما (بازنویسی طبق رفتار فعلی)؛
+      (۳) فیلد اختیاری «تاریخ حذف» فایل «سابقه رول‌ها (آرشیو)» (زمان
+      متالایز) + ستون آن در «لیست سابقه رول ها»/جدول‌های جزئیات/پیش‌نمایش
+      Import + پنل جدید داشبورد «تایم‌لاین رول‌های متالایز اخیر» (تفکیک
+      دستگاه × شیفت روز ۰۷–۱۹ / شب ۱۹–۰۷، تعداد شیفت قابل انتخاب و
+      ماندگار). */
+  APP_VERSION: '3.33',
 
   /* ---------------- کلیدهای تطبیق (نسخهٔ ۳٫۲۶) ----------------
      رجیستری مرکزی همهٔ کلیدهای تطبیق/هویت/گروه‌بندی پروژه. هر کلید دقیقاً

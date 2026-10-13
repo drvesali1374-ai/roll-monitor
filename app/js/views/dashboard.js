@@ -261,8 +261,338 @@
     /* ---------- مرکز هشدار کیفیت داده (§52 — B) ---------- */
     Dashboard.renderAlerts(state.warnings);
 
+    /* ---------- تایم‌لاین رول‌های متالایز اخیر (تفکیک دستگاه × شیفت) ---------- */
+    Dashboard.initMetTimeline();
+    await Dashboard.renderMetTimeline(state);
+
     /* ---------- اطلاعات فایل‌ها (§12) ---------- */
     await Dashboard.renderImportBadges();
+  };
+
+  /* ================================================================
+     تایم‌لاین رول‌های متالایزشدهٔ اخیر — تفکیک دستگاه (ردیف) × شیفت (ستون)
+     -------------------------------------------------------------------------
+     · منبع: رکوردهای یونیک فایل «سابقه رول‌ها (آرشیو)» با نوع فیلم R
+       (state.metallizedUniqueRecords) — با اعمال ویرایش‌های کاربر.
+     · زمان متالایز هر رول = ستون «تاریخ حذف» (deleteDate).
+     · دستگاه هر رول = ستاپِ تخصیص‌یافتهٔ آن (audit.metRollIds از گزارش
+       ستاپ‌ها)؛ تخصیص‌نیافته‌ها در ردیف «بدون ستاپ» می‌آیند.
+     · شیفت روز = ۰۷:۰۰–۱۹:۰۰ · شیفت شب = ۱۹:۰۰–۰۷:۰۰ روز بعد
+       (ساعت‌های قبل از ۰۷:۰۰ متعلق به شیفت شبِ روز قبل‌اند).
+     · بازهٔ نمایش = «N شیفت اخیرِ دارای رول» — N با انتخابگر کنار عنوان
+       تعیین و در appSettings (metTimelineShifts) ماندگار می‌شود.
+     · ستون‌ها از جدیدترین (سمت راست — شروع خواندن در RTL) به قدیمی‌تر.
+     ================================================================ */
+
+  Dashboard.MET_TIMELINE_SETTING = 'metTimelineShifts';
+  Dashboard.MET_TIMELINE_DEFAULT_SHIFTS = 4;
+  Dashboard.MET_TIMELINE_SHIFT_OPTIONS = [2, 3, 4, 5, 6, 8, 10, 12];
+
+  /** خواندن تعداد شیفت ماندگار (اعتبارسنجی‌شده به گزینه‌های مجاز) */
+  Dashboard.metTimelineShiftCount = async function () {
+    let n = Number(await RM.db.getSetting(
+      Dashboard.MET_TIMELINE_SETTING,
+      Dashboard.MET_TIMELINE_DEFAULT_SHIFTS
+    ));
+    if (!Number.isFinite(n) || !Dashboard.MET_TIMELINE_SHIFT_OPTIONS.includes(n)) {
+      n = Dashboard.MET_TIMELINE_DEFAULT_SHIFTS;
+    }
+    return n;
+  };
+
+  /**
+   * تجزیهٔ مقدار «تاریخ حذف» (تاریخ و ساعت متالایز) به اجزای شمسی.
+   * سه قالب پشتیبانی می‌شود (همان قالب‌های تاریخ تولید):
+   *   ۱) رشتهٔ شمسی «YYYY/MM/DD[ HH:mm[:ss]]» (ارقام فارسی هم پذیرفته)
+   *   ۲) عدد سریال تاریخ اکسل — بدون منطقهٔ زمانی، مبنای UTC
+   *   ۳) رشتهٔ ISO/میلادی قابل‌تجزیه با Date
+   * خروجی: { y, m, d, hh, mm } یا null (نامعتبر/خالی).
+   */
+  Dashboard.parseMetDateTime = function (value) {
+    if (value === null || value === undefined || value === '') return null;
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const d = new Date(Math.round((value - 25569) * 86400000));
+      if (Number.isNaN(d.getTime())) return null;
+      try {
+        const parts = new Intl.DateTimeFormat('en-u-ca-persian', {
+          year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC',
+        }).formatToParts(d);
+        const g = (t) => Number((parts.find((p) => p.type === t) || {}).value);
+        return { y: g('year'), m: g('month'), d: g('day'), hh: d.getUTCHours(), mm: d.getUTCMinutes() };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const s = U.toLatinDigits(String(value)).trim();
+    if (s === '') return null;
+
+    // رشتهٔ شمسی با ساعت اختیاری (مثل «1405/06/18 22:15» یا «۱۴۰۵-۶-۱۸»)
+    const m = /^(1[34]\d{2})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[ T]+(\d{1,2}):(\d{1,2}))?/.exec(s);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]);
+      const d = Number(m[3]);
+      if (mo < 1 || mo > 12) return null;
+      if (d < 1 || d > U.jalaliMonthDays(y, mo)) return null;
+      return { y, m: mo, d, hh: Number(m[4] || 0), mm: Number(m[5] || 0) };
+    }
+
+    // رشتهٔ ISO/میلادی
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return null;
+    try {
+      const parts = new Intl.DateTimeFormat('en-u-ca-persian', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      }).formatToParts(d);
+      const g = (t) => Number((parts.find((p) => p.type === t) || {}).value);
+      return { y: g('year'), m: g('month'), d: g('day'), hh: d.getHours(), mm: d.getMinutes() };
+    } catch (e) {
+      return null;
+    }
+  };
+
+  /**
+   * تعیین شیفت از اجزای تاریخ تجزیه‌شده:
+   *   ۰۷:۰۰ ≤ ساعت < ۱۹:۰۰ → شیفت «روز» همان روز
+   *   ۱۹:۰۰ ≤ ساعت         → شیفت «شب» شروع‌شده همان روز
+   *   ساعت < ۰۷:۰۰         → شیفت «شب» شروع‌شده روز قبل
+   * خروجی: { type: 'day'|'night', baseNorm: 'YYYY/MM/DD' (تاریخ شروع شیفت),
+   *           order: عدد (روزِ شروع × ۲ + نوع) — کلید ترتیب زمانی }
+   */
+  Dashboard.metShiftOf = function (p) {
+    const norm = `${String(p.y).padStart(4, '0')}/${String(p.m).padStart(2, '0')}/${String(p.d).padStart(2, '0')}`;
+    if (p.hh >= 7 && p.hh < 19) {
+      return { type: 'day', baseNorm: norm, order: U.jalaliDaysSinceEpoch(p.y, p.m, p.d) * 2 };
+    }
+    if (p.hh >= 19) {
+      return { type: 'night', baseNorm: norm, order: U.jalaliDaysSinceEpoch(p.y, p.m, p.d) * 2 + 1 };
+    }
+    const prevNorm = U.addJalaliDays(norm, -1);
+    const pp = U.parseJalaliDate(prevNorm);
+    if (!pp) return { type: 'night', baseNorm: norm, order: U.jalaliDaysSinceEpoch(p.y, p.m, p.d) * 2 };
+    return { type: 'night', baseNorm: prevNorm, order: U.jalaliDaysSinceEpoch(pp.y, pp.m, pp.d) * 2 + 1 };
+  };
+
+  /** مقداردهی یک‌بارهٔ انتخابگر «تعداد شیفت» + رویداد تغییر (ماندگار) */
+  Dashboard.initMetTimeline = function () {
+    const sel = document.getElementById('met-timeline-shifts');
+    if (!sel || sel.dataset.rmBound) return;
+    sel.dataset.rmBound = '1';
+    sel.addEventListener('change', async () => {
+      const v = Number(sel.value);
+      if (!Number.isFinite(v) || v < 1) return;
+      await RM.db.setSetting(Dashboard.MET_TIMELINE_SETTING, v);
+      await Dashboard.renderMetTimeline(Dashboard._state);
+    });
+  };
+
+  /** رندر کامل پنل تایم‌لاین از وضعیت محاسبهٔ مرکزی */
+  Dashboard.renderMetTimeline = async function (state) {
+    const body = document.getElementById('met-timeline-body');
+    const note = document.getElementById('met-timeline-note');
+    if (!body) return;
+    const st = state || Dashboard._state;
+    if (!st) {
+      body.innerHTML = '';
+      if (note) note.hidden = true;
+      return;
+    }
+
+    const emptyState = (title, desc) => {
+      body.innerHTML = `
+        <div class="empty-state">
+          ${UI.icons.alert}
+          <p><b>${title}</b><br>${desc}</p>
+        </div>`;
+      if (note) note.hidden = true;
+    };
+
+    /* --- داده: رول‌های متالایز یونیک (با ویرایش‌های کاربر) --- */
+    let records = st.metallizedUniqueRecords || [];
+    if (!records.length) {
+      emptyState(
+        'رول متالایز برای تایم‌لاین موجود نیست',
+        'فایل «سابقه رول‌ها (آرشیو)» هنوز وارد نشده یا رکوردی با نوع فیلم R ندارد.<br>' +
+        'پس از Import در تب «ورود داده‌ها»، آخرین رول‌های متالایزشدهٔ هر دستگاه در این‌جا بر حسب شیفت نمایش داده می‌شود.'
+      );
+      return;
+    }
+    try {
+      records = await RM.edits.applyToRecords('archived', records);
+    } catch (e) { /* بدون ویرایش ادامه بده */ }
+
+    /* --- نقشهٔ تخصیص: شناسهٔ رول → دستگاه ستاپِ تخصیص‌یافته --- */
+    const allocMachine = new Map();
+    for (const row of (st.setupReport || [])) {
+      if (!row || !row.audit || row.timeStatus === 'expired') continue;
+      for (const id of (row.audit.metRollIds || [])) {
+        if (!allocMachine.has(id)) allocMachine.set(id, row.machineNumber);
+      }
+    }
+
+    /* --- سطل‌بندی شیفت‌ها (فقط رول‌های دارای زمان متالایز معتبر) --- */
+    let noDateCount = 0;
+    const buckets = new Map();   // order → { type, baseNorm, order, rolls: [...] }
+    for (const rec of records) {
+      const p = Dashboard.parseMetDateTime(rec.deleteDate);
+      if (!p) {
+        noDateCount++;
+        continue;
+      }
+      const sh = Dashboard.metShiftOf(p);
+      let b = buckets.get(sh.order);
+      if (!b) {
+        b = { ...sh, rolls: [] };
+        buckets.set(sh.order, b);
+      }
+      const machine = allocMachine.has(rec.id) ? allocMachine.get(rec.id) : null;
+      b.rolls.push({
+        rec,
+        p,
+        machine,
+        tix: U.jalaliDaysSinceEpoch(p.y, p.m, p.d) * 1440 + p.hh * 60 + p.mm,   // ترتیب درون‌شیفت
+      });
+    }
+
+    if (!buckets.size) {
+      emptyState(
+        'هیچ رول متالایزی «تاریخ حذف» ندارد',
+        'زمان متالایز هر رول از ستون «تاریخ حذف» فایل «سابقه رول‌ها (آرشیو)» خوانده می‌شود — این ستون را در ' +
+        '«تنظیمات ← نگاشت ستون‌های اکسل ← سابقه رول‌ها (آرشیو)» تنظیم و ذخیره کنید تا تایم‌لاین ساخته شود.'
+      );
+      return;
+    }
+
+    /* --- بازهٔ نمایش: N شیفت اخیرِ دارای رول (جدید → قدیم) --- */
+    const n = await Dashboard.metTimelineShiftCount();
+    const allShifts = [...buckets.values()].sort((a, b) => b.order - a.order);
+    const win = allShifts.slice(0, n);
+
+    /* --- ردیف‌ها: دستگاه‌های ۱..۳ (همیشه) + دستگاه‌های دیگرِ موجود + «بدون ستاپ» --- */
+    const laneMachines = [1, 2, 3];
+    let hasUnassigned = false;
+    for (const b of win) {
+      for (const r of b.rolls) {
+        if (r.machine === null || r.machine === undefined) {
+          hasUnassigned = true;
+        } else if (!laneMachines.includes(r.machine)) {
+          laneMachines.push(r.machine);
+        }
+      }
+    }
+    laneMachines.sort((a, b) => a - b);
+    const lanes = laneMachines.map((m) => ({ machine: m, label: `دستگاه ${U.faNum(m)}` }));
+    if (hasUnassigned) lanes.push({ machine: null, label: 'بدون ستاپ' });
+
+    /* --- کارت هر رول --- */
+    const two = (v) => String(v).padStart(2, '0');
+    const rollCard = (entry) => {
+      const r = entry.rec;
+      const p = entry.p;
+      const ownNorm = `${String(p.y).padStart(4, '0')}/${two(p.m)}/${two(p.d)}`;
+      /* ساعت با toFaDigits (نه faNum) تا صفرِ پیشین «۰۷:۰۰» حفظ شود */
+      const dt = `${U.faJalali(ownNorm)} ${U.toFaDigits(two(p.hh))}:${U.toFaDigits(two(p.mm))}`;
+      const noWidth = r.width === null || r.width === undefined || r.width === '';
+      const widthTxt = noWidth ? '—' : U.faWidth(r.width);
+      const width = noWidth ? '<span class="muted">—</span>' : widthTxt;
+      const noSetup = r.setupNumber === null || r.setupNumber === undefined;
+      const setupTxt = noSetup ? 'بدون ستاپ' : `ستاپ ${U.faNum(r.setupNumber)}`;
+      const setup = noSetup ? '<span class="muted">بدون ستاپ</span>' : setupTxt;
+      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nعرض: ${widthTxt}\n${setupTxt}\nزمان متالایز: ${dt}`;
+      return `
+        <div class="mt-roll" title="${U.escapeHtml(title)}">
+          <div class="mt-roll-top">
+            <b class="mt-roll-num">${U.escapeHtml(String(r.rollNumber || '—'))}</b>
+            <span class="mt-roll-width">${width}</span>
+          </div>
+          <div class="mt-roll-sub">
+            <span class="mt-roll-setup">${setup}</span>
+            <span class="mt-roll-dt">${dt}</span>
+          </div>
+        </div>`;
+    };
+
+    const iconSun = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+    const iconMoon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
+    /* --- سرستون‌ها: جدیدترین شیفت اول (در RTL = سمت راست) --- */
+    const headCells = win.map((b) => `
+      <th class="mt-shift ${b.type === 'day' ? 'mt-shift-day' : 'mt-shift-night'}">
+        <span class="mt-shift-kind">${b.type === 'day' ? iconSun : iconMoon} شیفت ${b.type === 'day' ? 'روز' : 'شب'}</span>
+        <span class="mt-shift-date">${U.faJalali(b.baseNorm)}</span>
+      </th>`).join('');
+
+    /* --- ردیف هر دستگاه --- */
+    const laneRows = lanes.map((lane) => {
+      let laneTotal = 0;
+      const cells = win.map((b) => {
+        const rolls = b.rolls
+          .filter((r) => (r.machine === null || r.machine === undefined ? lane.machine === null : r.machine === lane.machine))
+          .sort((a, z) => a.tix - z.tix);
+        laneTotal += rolls.length;
+        const inner = rolls.length
+          ? `${rolls.map(rollCard).join('')}`
+          : '<span class="mt-none">—</span>';
+        return `<td class="mt-cell${lane.machine === null ? ' mt-cell-unassigned' : ''}">${inner}</td>`;
+      }).join('');
+      return `
+        <tr>
+          <th class="mt-lane${lane.machine === null ? ' mt-lane-unassigned' : ''}">
+            <span class="mt-lane-name">${lane.label}</span>
+            <span class="mt-lane-count" title="جمع رول‌های این ردیف در بازهٔ نمایش">${U.faNum(laneTotal)}</span>
+          </th>
+          ${cells}
+        </tr>`;
+    }).join('');
+
+    /* --- ردیف جمع هر شیفت --- */
+    const footCells = win.map((b) => `<td class="mt-total">${U.faNum(b.rolls.length)}</td>`).join('');
+
+    body.innerHTML = `
+      <div class="met-timeline-wrap">
+        <table class="met-timeline-table">
+          <thead>
+            <tr>
+              <th class="mt-corner"><span class="mt-corner-lane">دستگاه</span><span class="mt-corner-shift">شیفت</span></th>
+              ${headCells}
+            </tr>
+          </thead>
+          <tbody>${laneRows}</tbody>
+          <tfoot>
+            <tr>
+              <th class="mt-total-head">جمع هر شیفت</th>
+              ${footCells}
+            </tr>
+          </tfoot>
+        </table>
+      </div>`;
+
+    /* --- انتخابگر تعداد شیفت: همگام با مقدار ماندگار --- */
+    const sel = document.getElementById('met-timeline-shifts');
+    if (sel) sel.value = String(n);
+
+    /* --- یادداشت زیر جدول --- */
+    if (note) {
+      const bits = [];
+      if (noDateCount > 0) {
+        bits.push(`${U.faNum(noDateCount)} رول متالایز بدون «تاریخ حذف» است و در تایم‌لاین نمی‌آید.`);
+      }
+      if (hasUnassigned) {
+        bits.push('ردیف «بدون ستاپ» = رول‌های متالایزِ تخصیص‌نیافته به هیچ ستاپی (دستگاه مشخصی ندارند).');
+      }
+      if (allShifts.length > n) {
+        const older = allShifts.slice(n).reduce((s, b) => s + b.rolls.length, 0);
+        bits.push(`${U.faNum(older)} رولِ شیفت‌های قدیمی‌تر خارج از بازهٔ نمایش است.`);
+      }
+      if (bits.length) {
+        note.innerHTML = bits.map((t) => `• ${t}`).join('<br>');
+        note.hidden = false;
+      } else {
+        note.hidden = true;
+      }
+    }
   };
 
   /* ---------- Drill-down دو آمار کارت «رول‌های خام» (نسخهٔ ۳٫۴ — تغییر ۳) ----------

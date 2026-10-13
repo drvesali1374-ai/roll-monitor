@@ -111,6 +111,9 @@
 
     const rollNumberRaw = get('rollNumber');
     const productionDateRaw = get('productionDate');
+    /* ۳٫۳۳ — «تاریخ حذف» آرشیو (تاریخ و ساعت متالایز‌شدن رول) — فیلد
+       اختیاری؛ برای فایل رول‌های موجود همیشه null است (ستونی ندارد). */
+    const deleteDateRaw = get('deleteDate');
 
     const record = {
       rollNumber: String(rollNumberRaw ?? '').trim(),   // شماره رول همیشه String (§97)
@@ -128,6 +131,9 @@
       productionDate:
         productionDateRaw === '' || productionDateRaw === null || productionDateRaw === undefined
           ? null : productionDateRaw,
+      deleteDate:
+        deleteDateRaw === '' || deleteDateRaw === null || deleteDateRaw === undefined
+          ? null : deleteDateRaw,
       netWeight: U.parseNumber(get('netWeight')),
       grade: String(get('grade') ?? '').trim(),
       status: String(get('status') ?? '').trim(),
