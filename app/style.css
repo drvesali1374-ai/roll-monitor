@@ -5949,3 +5949,87 @@ tr.row-expired .status-pill { text-decoration: none; }
   .met-timeline-table .mt-col-shift { width: 100px; }
   .met-timeline-pick-label { display: none; }
 }
+
+/* =========================================================================
+   ۳۶) پنل بازیابی داده‌های نسخه‌های قبلی (۳٫۳۶)
+   وقتی پایگاه‌دادهٔ جاری خالی باشد و هیچ منبع بازیابی خودکاری یافت
+   نشود، این پنل بالای برنامه ظاهر می‌شود (منطق: app/js/recovery.js).
+   ========================================================================= */
+
+.icon-alert { color: var(--metal); background: var(--metal-soft); }
+
+.recovery-panel {
+  border-color: rgba(180, 83, 9, 0.45);
+  margin-bottom: 18px;
+}
+
+.recovery-panel .panel-head { margin-bottom: 10px; }
+
+.recovery-body { display: grid; gap: 12px; }
+
+.recovery-desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 2.1;
+}
+
+.recovery-diag {
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 2;
+  word-break: break-all;
+}
+
+.recovery-diag code {
+  font-size: 0.72rem;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.recovery-hint {
+  margin: 0;
+  background: var(--metal-soft);
+  border: 1px dashed rgba(180, 83, 9, 0.45);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 2.1;
+}
+
+.recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.recovery-note {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 2;
+}
+
+@media (max-width: 720px) {
+  .recovery-actions .btn { flex: 1 1 auto; }
+  .recovery-desc, .recovery-hint, .recovery-diag { font-size: 0.74rem; }
+}
+
+/* ۳٫۳۶ — وضعیت پشتیبان خودکار در تنظیمات ← پشتیبان‌گیری و بازیابی */
+.autosave-info {
+  margin-top: 12px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 2;
+  background: var(--metal-soft);
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}

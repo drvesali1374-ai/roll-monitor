@@ -46,6 +46,17 @@
     importMetadata:    '++id, target, importedAt',
     meta:              'key',
   }).upgrade(async (tx) => {
+    /* ۳٫۳۶ — مقاوم‌سازی مهاجرت v1→v2:
+       · «now» پیش‌تر فقط داخل بلوک ستاپ‌ها تعریف می‌شد و در بخش متا
+         (خارج از آن بلوک) ارجاع می‌شد → اگر رکورد متای قدیمی
+         importedAt نداشته باشد، کل ارتقا با ReferenceError می‌شکست و
+         برنامه اصلاً باز نمی‌شد (داده‌ها «گم» به نظر می‌رسیدند).
+       · هر بخش مهاجرت در try/catch مستقل اجرا می‌شود تا دادهٔ معیوبِ یک
+         بخش، ارتقای کل پایگاه‌داده را متوقف نکند.
+       · متای قدیمی هم به شکل تخت (فیلدها روی خود رکورد — شکل واقعی
+         نسخه‌های ۱) و هم تودرتو (value) خوانده می‌شود. */
+    const now = Date.now();
+
     /* ----- مهاجرت rolls و archivedRolls: نرمال‌سازی مجدد از سطر خام قدیمی ----- */
     const targets = [
       { table: 'rolls', sourceKey: 'rolls' },
@@ -53,78 +64,99 @@
     ];
 
     for (const { table, sourceKey } of targets) {
-      const legacyRows = await tx.table(table).toArray();
-      if (!legacyRows.length) continue;
+      try {
+        const legacyRows = await tx.table(table).toArray();
+        if (!legacyRows.length) continue;
 
-      // بازسازی رکوردهای جدید از سطرهای خام ذخیره‌شده در فیلد data
-      const headers = legacyRows.length ? Object.keys(legacyRows[0].data || {}) : [];
-      const mapping = N.buildFieldMapping(sourceKey, headers);
+        // بازسازی رکوردهای جدید از سطرهای خام ذخیره‌شده در فیلد data
+        const headers = legacyRows.length ? Object.keys(legacyRows[0].data || {}) : [];
+        const mapping = N.buildFieldMapping(sourceKey, headers);
 
-      const records = [];
-      for (const legacy of legacyRows) {
-        const raw = legacy.data || {};
-        const { record } = N.normalizeRow(raw, sourceKey, mapping);
-        records.push(record);
+        const records = [];
+        for (const legacy of legacyRows) {
+          const raw = legacy.data || {};
+          const { record } = N.normalizeRow(raw, sourceKey, mapping);
+          records.push(record);
+        }
+
+        const tableRef = tx.table(table);
+        await tableRef.clear();
+        await tableRef.bulkAdd(records);
+      } catch (err) {
+        console.warn('[MigrateV2:' + table + ']', err);
       }
-
-      const tableRef = tx.table(table);
-      await tableRef.clear();
-      await tableRef.bulkAdd(records);
     }
 
     /* ----- مهاجرت setupRolls: نگاشت فیلدهای قدیمی به مدل جدید ----- */
-    const legacySetups = await tx.table('setupRolls').toArray();
-    if (legacySetups.length) {
-      const now = Date.now();
-      const migrated = legacySetups.map((s) => ({
-        setupNumber: U.parseInt(s.setupNumber) ?? 0,
-        machineNumber: U.parseInt(s.machineNumber) ?? null,
-        width: U.parseNumber(s.rollWidth) ?? null,
-        // مدل جدید ضخامت/متراژ استاندارد دارد؛ رکوردهای قدیمی ناقص علامت‌گذاری می‌شوند
-        thickness: null,
-        standardLength: null,
-        rollCount: U.parseInt(s.rollCount) ?? 0,
-        cuttingPattern: null,
-        legacy: true,          // نشانِ «نیازمند تکمیل توسط کاربر»
-        createdAt: s.createdAt || now,
-        updatedAt: now,
-      }));
+    try {
+      const legacySetups = await tx.table('setupRolls').toArray();
+      if (legacySetups.length) {
+        const migrated = legacySetups.map((s) => ({
+          setupNumber: U.parseInt(s.setupNumber) ?? 0,
+          machineNumber: U.parseInt(s.machineNumber) ?? null,
+          width: U.parseNumber(s.rollWidth) ?? null,
+          // مدل جدید ضخامت/متراژ استاندارد دارد؛ رکوردهای قدیمی ناقص علامت‌گذاری می‌شوند
+          thickness: null,
+          standardLength: null,
+          rollCount: U.parseInt(s.rollCount) ?? 0,
+          cuttingPattern: null,
+          legacy: true,          // نشانِ «نیازمند تکمیل توسط کاربر»
+          createdAt: s.createdAt || now,
+          updatedAt: now,
+        }));
 
-      const setupTable = tx.table('setupRolls');
-      await setupTable.clear();
-      await setupTable.bulkAdd(migrated);
+        const setupTable = tx.table('setupRolls');
+        await setupTable.clear();
+        await setupTable.bulkAdd(migrated);
+      }
+    } catch (err) {
+      console.warn('[MigrateV2:setupRolls]', err);
     }
 
-    /* ----- مهاجرت meta قدیمی → importMetadata ----- */
-    const metaTable = tx.table('meta');
-    const importTable = tx.table('importMetadata');
+    /* ----- مهاجرت meta قدیمی → importMetadata -----
+       رکورد متای قدیمی هم شکل تخت (fileName/… روی خود رکورد — شکل
+       واقعی نسخه‌های ۱) و هم شکل تودرتو (فیلد value) پشتیبانی می‌شود. */
+    try {
+      const metaTable = tx.table('meta');
+      const importTable = tx.table('importMetadata');
 
-    const legacyRollsInfo = await metaTable.get('rollsInfo');
-    if (legacyRollsInfo) {
-      await importTable.add({
-        target: 'rolls',
-        fileName: legacyRollsInfo.fileName || 'rolls.xlsx (قدیمی)',
-        importedAt: legacyRollsInfo.importedAt || now,
-        totalRecords: legacyRollsInfo.totalRows || 0,
-        validRecords: legacyRollsInfo.totalRows || 0,
-        rawRolls: legacyRollsInfo.matchedRows || 0,
-        fileHash: null,
-        datasetVersion: 1,
-      });
-    }
+      const readMeta = async (k) => {
+        const row = await metaTable.get(k);
+        if (!row) return null;
+        return (row && typeof row === 'object' && row.value && typeof row.value === 'object')
+          ? { ...row, ...row.value }
+          : row;
+      };
 
-    const legacyArchivedInfo = await metaTable.get('archivedInfo');
-    if (legacyArchivedInfo) {
-      await importTable.add({
-        target: 'archived',
-        fileName: legacyArchivedInfo.fileName || 'Archived Rolls.xlsx (قدیمی)',
-        importedAt: legacyArchivedInfo.importedAt || now,
-        totalRecords: legacyArchivedInfo.totalRows || 0,
-        validRecords: legacyArchivedInfo.totalRows || 0,
-        rawRolls: 0,
-        fileHash: null,
-        datasetVersion: 1,
-      });
+      const legacyRollsInfo = await readMeta('rollsInfo');
+      if (legacyRollsInfo) {
+        await importTable.add({
+          target: 'rolls',
+          fileName: legacyRollsInfo.fileName || 'rolls.xlsx (قدیمی)',
+          importedAt: legacyRollsInfo.importedAt || now,
+          totalRecords: legacyRollsInfo.totalRows || 0,
+          validRecords: legacyRollsInfo.totalRows || 0,
+          rawRolls: legacyRollsInfo.matchedRows || 0,
+          fileHash: null,
+          datasetVersion: 1,
+        });
+      }
+
+      const legacyArchivedInfo = await readMeta('archivedInfo');
+      if (legacyArchivedInfo) {
+        await importTable.add({
+          target: 'archived',
+          fileName: legacyArchivedInfo.fileName || 'Archived Rolls.xlsx (قدیمی)',
+          importedAt: legacyArchivedInfo.importedAt || now,
+          totalRecords: legacyArchivedInfo.totalRows || 0,
+          validRecords: legacyArchivedInfo.totalRows || 0,
+          rawRolls: 0,
+          fileHash: null,
+          datasetVersion: 1,
+        });
+      }
+    } catch (err) {
+      console.warn('[MigrateV2:meta]', err);
     }
   });
 

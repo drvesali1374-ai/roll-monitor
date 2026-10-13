@@ -60,6 +60,10 @@
       document.getElementById('file-restore').click();
     });
 
+    // ۳٫۳۶ — اسکن داده‌های قدیمی (بازیابی هوشمند) + وضعیت پشتیبان خودکار
+    const scanBtn = document.getElementById('btn-recovery-scan');
+    if (scanBtn) scanBtn.addEventListener('click', () => { RM.recovery.rescan(); });
+
     // مدیریت داده‌ها (عناوین کاربرپسنده — نام فنی فقط برای Audit)
     document.getElementById('btn-clear-rolls').addEventListener('click', () =>
       SettingsView.clearDataset('rolls', 'رول‌های موجود', 'rolls'));
@@ -686,6 +690,15 @@
     );
 
     UI.toast('برنامه به حالت اولیه بازگشت.', 'success');
+
+    /* ۳٫۳۶ — پاک‌سازی کامل عمدی است: آینهٔ پشتیبان خودکار و پرچم‌های
+       بازیابی هم پاک می‌شوند تا دادهٔ عمداً حذف‌شده در شروع بعدی
+       دوباره خودکار برنگردد و پنل بازیابی هم در همین حالت نمایش داده نشود. */
+    try {
+      localStorage.removeItem('rm-autobackup-v1');
+      localStorage.setItem('rm-recovery-dismissed', '1');
+    } catch { /* حالت خصوصی */ }
+
     await RM.refreshAll();
     await SettingsView.renderAll();
   };
@@ -1432,6 +1445,7 @@
     await SettingsView.renderMappingPanel();
     await SettingsView.renderMatchKeysPanel();   // ۳٫۲۶ — پنل کلیدهای تطبیق
     await SettingsView.renderMachineTimeRules();
+    SettingsView.renderAutosaveInfo();   // ۳٫۳۶ — وضعیت پشتیبان خودکار
 
     // به‌روزرسانی دراپ‌داون متراژ فرم زمان با قوانین تازه (§90)
     if (editingTimeRuleId === null) await SettingsView.refreshMachineTimeOptions();
@@ -1444,6 +1458,30 @@
   };
 
   SettingsView.render = SettingsView.renderAll;
+
+  /* ================================================================
+     ۳٫۳۶ — وضعیت پشتیبان خودکار (آینهٔ localStorage)
+     ================================================================ */
+  SettingsView.renderAutosaveInfo = function () {
+    const el = document.getElementById('autosave-info');
+    if (!el) return;
+    let mirror = null;
+    try { mirror = RM.recovery ? RM.recovery.readAutosave() : null; } catch { /* حالت خصوصی */ }
+    if (mirror && mirror.payload) {
+      const c = mirror.payload.counts || {};
+      const total = (c.rolls || 0) + (c.archivedRolls || 0) + (c.setupRolls || 0);
+      el.innerHTML =
+        `<b>پشتیبان خودکار:</b> فعال — آخرین آینه: ${U.faDate(mirror.payload.exportedAt || Date.now())}` +
+        ` (${U.faNum(total)} رکورد — نسخهٔ فشرده بدون سطر خام اکسل)`;
+    } else if (mirror && mirror.tooBig) {
+      el.innerHTML =
+        `<b>پشتیبان خودکار:</b> داده‌ها برای آینهٔ داخلی مرورگر حجیم‌تر از سهمیه‌اند — ` +
+        `برای اطمینان کامل، از «ساخت فایل پشتیبان» استفاده کنید.`;
+    } else {
+      el.innerHTML =
+        `<b>پشتیبان خودکار:</b> هنوز آینه‌ای ساخته نشده — پس از اولین تغییر داده خودکار ساخته می‌شود.`;
+    }
+  };
 
   RM.views = RM.views || {};
   RM.views.settings = SettingsView;

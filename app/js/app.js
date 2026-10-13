@@ -43,6 +43,12 @@
       console.warn('[MigrateSetupIdentity]', err);
     }
 
+    // ۳٫۳۶ — پس از اعمال هر تغییر داده، آینهٔ پشتیبان خودکار (localStorage)
+    // به‌صورت Debounced به‌روز می‌شود؛ اگر برنامه خالی باشد چیزی نوشته نمی‌شود.
+    try {
+      if (RM.recovery) RM.recovery.scheduleAutosave();
+    } catch { /* بی‌صدا */ }
+
     RM.calcEngine.invalidate();
     const state = await RM.calcEngine.getState();
 
@@ -78,17 +84,34 @@
         <article class="panel panel-lib-error" style="margin-top:24px">
           <h3 class="section-title">خطای بارگذاری کتابخانه‌ها</h3>
           <p class="panel-desc" style="line-height:2.2">
-            فایل‌های <code>lib/dexie.min.js</code> یا <code>lib/xlsx.full.min.js</code> کنار
+            فایل‌های <code>app/lib/dexie.min.js</code> یا <code>app/lib/xlsx.full.min.js</code> کنار
             <code>index.html</code> یافت نشدند.<br>
-            لطفاً مطابق راهنمای فایل <code>README.md</code> این دو فایل را در پوشهٔ <code>lib</code> قرار دهید.
+            ساختار پروژه این است که <code>index.html</code> در ریشه و همهٔ فایل‌های برنامه
+            (کدها، استایل و کتابخانه‌ها) داخل پوشهٔ <code>app/</code> قرار دارند.<br>
+            لطفاً فایل ZIP پروژه را کامل و در یک پوشه استخراج کنید تا
+            <code>index.html</code> و پوشهٔ <code>app/</code> کنار هم باشند.
           </p>
         </article>`;
       return;
     }
 
+    /* --- ۱-ب) ۳٫۳۶ — رویدادهای پنل بازیابی داده (پیش از هر چیز فعال می‌شوند) --- */
+    try { RM.recovery.initPanelEvents(); } catch { /* بی‌صدا */ }
+
     try {
       /* --- ۲) بازکردن دیتابیس + مهاجرت امن (§76) --- */
       await RM.db.db.open();
+
+      /* --- ۲-الف) ۳٫۳۶ — بازیابی خودکار داده‌ها (پیش از ارتقا/تنظیمات):
+         اگر پایگاه‌دادهٔ جاری خالی باشد: آینهٔ پشتیبان خودکار → پایگاه‌دادهٔ
+         قدیمی دیگر در همین مبدأ → پنل راهنمای بازیابی. باید قبل از
+         ensureModelFields اجرا شود تا رکوردهای بازیابی‌شدهٔ قدیمی هم
+         به مدل فعلی ارتقا یابند. --- */
+      try {
+        await RM.recovery.runBootRecovery();
+      } catch (err) {
+        console.warn('[BootRecovery]', err);
+      }
 
       /* --- ۲-ب) ارتقای نرم رکوردهای قدیمی به مدل فعلی (فیلد عرض برش‌خورده) --- */
       await RM.db.ensureModelFields();
