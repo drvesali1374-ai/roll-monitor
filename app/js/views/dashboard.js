@@ -270,18 +270,21 @@
   };
 
   /* ================================================================
-     تایم‌لاین رول‌های متالایزشدهٔ اخیر — تفکیک دستگاه (ردیف) × شیفت (ستون)
+     تایم‌لاین رول‌های متالایزشدهٔ اخیر — تفکیک شیفت (ردیف) × دستگاه (ستون)
      -------------------------------------------------------------------------
      · منبع: رکوردهای یونیک فایل «سابقه رول‌ها (آرشیو)» با نوع فیلم R
        (state.metallizedUniqueRecords) — با اعمال ویرایش‌های کاربر.
      · زمان متالایز هر رول = ستون «تاریخ حذف» (deleteDate).
      · دستگاه هر رول = ستاپِ تخصیص‌یافتهٔ آن (audit.metRollIds از گزارش
-       ستاپ‌ها)؛ تخصیص‌نیافته‌ها در ردیف «بدون ستاپ» می‌آیند.
+       ستاپ‌ها)؛ تخصیص‌نیافته‌ها در ستون «بدون ستاپ» می‌آیند.
      · شیفت روز = ۰۷:۰۰–۱۹:۰۰ · شیفت شب = ۱۹:۰۰–۰۷:۰۰ روز بعد
        (ساعت‌های قبل از ۰۷:۰۰ متعلق به شیفت شبِ روز قبل‌اند).
      · بازهٔ نمایش = «N شیفت اخیرِ دارای رول» — N با انتخابگر کنار عنوان
        تعیین و در appSettings (metTimelineShifts) ماندگار می‌شود.
-     · ستون‌ها از جدیدترین (سمت راست — شروع خواندن در RTL) به قدیمی‌تر.
+     · چیدمان (۳٫۳۴ — ترانهاده): دستگاه‌ها ستون‌های افقی‌اند (فقط ۳
+       دستگاه فعال است → در عرض صفحه جا می‌شود) و شیفت‌ها ردیف‌های
+       عمودی از جدیدترین (بالا) به قدیمی‌تر — مرور با اسکرول به پایین؛
+       حتی با ۱۲ شیفت اسکرول افقی لازم نیست.
      ================================================================ */
 
   Dashboard.MET_TIMELINE_SETTING = 'metTimelineShifts';
@@ -375,6 +378,18 @@
     return { type: 'night', baseNorm: prevNorm, order: U.jalaliDaysSinceEpoch(pp.y, pp.m, pp.d) * 2 + 1 };
   };
 
+  /** همگام‌سازی آفست چسبندگی سربرگ دستگاه‌های تایم‌لاین با ارتفاع
+      سربرگ چسبان برنامه (.app-header) — مقدار در متغیر CSS ‎--met-top
+      روی خود جدول تنظیم می‌شود (در نمایش‌های باریک که سربرگ جدول
+      ایستا است بی‌اثر است). */
+  Dashboard.syncMetTimelineTop = function () {
+    const header = document.querySelector('.app-header');
+    const table = document.querySelector('.met-timeline-table');
+    if (!header || !table) return;
+    const h = Math.max(0, Math.round(header.getBoundingClientRect().height));
+    table.style.setProperty('--met-top', `${h}px`);
+  };
+
   /** مقداردهی یک‌بارهٔ انتخابگر «تعداد شیفت» + رویداد تغییر (ماندگار) */
   Dashboard.initMetTimeline = function () {
     const sel = document.getElementById('met-timeline-shifts');
@@ -386,6 +401,9 @@
       await RM.db.setSetting(Dashboard.MET_TIMELINE_SETTING, v);
       await Dashboard.renderMetTimeline(Dashboard._state);
     });
+    /* ارتفاع سربرگ برنامه با جمع‌شدن/باز‌شدن نوار تب‌ها تغییر می‌کند —
+       آفست چسبندگی سربرگ تایم‌لاین با هر تغییر اندازهٔ پنجره تازه شود */
+    window.addEventListener('resize', Dashboard.syncMetTimelineTop);
   };
 
   /** رندر کامل پنل تایم‌لاین از وضعیت محاسبهٔ مرکزی */
@@ -470,7 +488,8 @@
     const allShifts = [...buckets.values()].sort((a, b) => b.order - a.order);
     const win = allShifts.slice(0, n);
 
-    /* --- ردیف‌ها: دستگاه‌های ۱..۳ (همیشه) + دستگاه‌های دیگرِ موجود + «بدون ستاپ» --- */
+    /* --- ستون‌های دستگاه: ۱..۳ (همیشه) + دستگاه‌های دیگرِ موجود + «بدون ستاپ» ---
+       (۳٫۳۴ — ترانهاده: دستگاه‌ها ستون‌های جدول‌اند) */
     const laneMachines = [1, 2, 3];
     let hasUnassigned = false;
     for (const b of win) {
@@ -483,10 +502,19 @@
       }
     }
     laneMachines.sort((a, b) => a - b);
-    const lanes = laneMachines.map((m) => ({ machine: m, label: `دستگاه ${U.faNum(m)}` }));
-    if (hasUnassigned) lanes.push({ machine: null, label: 'بدون ستاپ' });
+    const lanes = laneMachines.map((m) => ({ machine: m, label: `دستگاه ${U.faNum(m)}`, total: 0 }));
+    if (hasUnassigned) lanes.push({ machine: null, label: 'بدون ستاپ', total: 0 });
 
-    /* --- کارت هر رول --- */
+    /* جمع رول‌های هر دستگاه در بازهٔ نمایش (نشان سرستون) */
+    for (const b of win) {
+      for (const r of b.rolls) {
+        const un = r.machine === null || r.machine === undefined;
+        const lane = lanes.find((l) => (un ? l.machine === null : l.machine === r.machine));
+        if (lane) lane.total++;
+      }
+    }
+
+    /* --- کارت هر رول (شماره رول + عرض / نوع خط + متراژ واقعی + ستاپ / زمان متالایز) --- */
     const two = (v) => String(v).padStart(2, '0');
     const rollCard = (entry) => {
       const r = entry.rec;
@@ -500,74 +528,100 @@
       const noSetup = r.setupNumber === null || r.setupNumber === undefined;
       const setupTxt = noSetup ? 'بدون ستاپ' : `ستاپ ${U.faNum(r.setupNumber)}`;
       const setup = noSetup ? '<span class="muted">بدون ستاپ</span>' : setupTxt;
-      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nعرض: ${widthTxt}\n${setupTxt}\nزمان متالایز: ${dt}`;
+      /* نوع خط — از حرف اول شماره رول (F → BOPP · K → CPP؛ همان هویت کیفیت) */
+      const idn = RM.normalize.parseRollIdentity(r.rollNumber);
+      const lineTxt = idn && idn.line ? idn.line : '—';
+      const line = idn && idn.line
+        ? `<span class="line-badge line-${U.escapeHtml(String(idn.line).toLowerCase())}" title="نوع خط — از حرف اول شماره رول">${U.escapeHtml(idn.line)}</span>`
+        : '<span class="mt-roll-muted" title="نوع خط از شماره رول قابل تشخیص نیست">—</span>';
+      /* متراژ واقعی خود رول («متراژ اولیه» فایل آرشیو) — نه متراژ استاندارد */
+      const noLen = r.actualLength === null || r.actualLength === undefined || r.actualLength === '';
+      const lenTxt = noLen ? '—' : `${U.faNum(r.actualLength)} م`;
+      const len = noLen
+        ? '<span class="mt-roll-muted" title="متراژ واقعی رول ثبت نشده">—</span>'
+        : `<span class="mt-roll-len" title="متراژ واقعی رول (نه استاندارد)">${U.escapeHtml(lenTxt)}</span>`;
+      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nنوع خط: ${U.escapeHtml(lineTxt)}\nعرض: ${widthTxt}\nمتراژ واقعی: ${noLen ? '—' : U.faNum(r.actualLength)}\n${setupTxt}\nزمان متالایز: ${dt}`;
       return `
         <div class="mt-roll" title="${U.escapeHtml(title)}">
           <div class="mt-roll-top">
             <b class="mt-roll-num">${U.escapeHtml(String(r.rollNumber || '—'))}</b>
             <span class="mt-roll-width">${width}</span>
           </div>
-          <div class="mt-roll-sub">
+          <div class="mt-roll-meta">
+            ${line}
+            ${len}
             <span class="mt-roll-setup">${setup}</span>
-            <span class="mt-roll-dt">${dt}</span>
           </div>
+          <div class="mt-roll-dt">${dt}</div>
         </div>`;
     };
 
     const iconSun = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
     const iconMoon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
 
-    /* --- سرستون‌ها: جدیدترین شیفت اول (در RTL = سمت راست) --- */
-    const headCells = win.map((b) => `
-      <th class="mt-shift ${b.type === 'day' ? 'mt-shift-day' : 'mt-shift-night'}">
-        <span class="mt-shift-kind">${b.type === 'day' ? iconSun : iconMoon} شیفت ${b.type === 'day' ? 'روز' : 'شب'}</span>
-        <span class="mt-shift-date">${U.faJalali(b.baseNorm)}</span>
+    /* --- سربرگ جدول: یک ستون برای هر دستگاه (+ جمع هر دستگاه در بازه) + ستون «جمع» --- */
+    const headCells = lanes.map((lane) => `
+      <th class="mt-dev${lane.machine === null ? ' mt-dev-unassigned' : ''}">
+        <span class="mt-dev-name">${lane.label}</span>
+        <span class="mt-dev-count" title="جمع رول‌های این دستگاه در بازهٔ نمایش">${U.faNum(lane.total)}</span>
       </th>`).join('');
 
-    /* --- ردیف هر دستگاه --- */
-    const laneRows = lanes.map((lane) => {
-      let laneTotal = 0;
-      const cells = win.map((b) => {
+    /* --- ردیف هر شیفت (جدیدترین در بالا) + نشان جمع‌وجور تعداد در هر سلول --- */
+    const shiftRows = win.map((b) => {
+      const cells = lanes.map((lane) => {
         const rolls = b.rolls
           .filter((r) => (r.machine === null || r.machine === undefined ? lane.machine === null : r.machine === lane.machine))
           .sort((a, z) => a.tix - z.tix);
-        laneTotal += rolls.length;
         const inner = rolls.length
-          ? `${rolls.map(rollCard).join('')}`
+          ? `<span class="mt-count" title="تعداد رول‌های این دستگاه در این شیفت">${U.faNum(rolls.length)} رول</span>` +
+            `${rolls.map(rollCard).join('')}`
           : '<span class="mt-none">—</span>';
         return `<td class="mt-cell${lane.machine === null ? ' mt-cell-unassigned' : ''}">${inner}</td>`;
       }).join('');
       return `
         <tr>
-          <th class="mt-lane${lane.machine === null ? ' mt-lane-unassigned' : ''}">
-            <span class="mt-lane-name">${lane.label}</span>
-            <span class="mt-lane-count" title="جمع رول‌های این ردیف در بازهٔ نمایش">${U.faNum(laneTotal)}</span>
+          <th class="mt-shift ${b.type === 'day' ? 'mt-shift-day' : 'mt-shift-night'}">
+            <span class="mt-shift-kind">${b.type === 'day' ? iconSun : iconMoon} شیفت ${b.type === 'day' ? 'روز' : 'شب'}</span>
+            <span class="mt-shift-date">${U.faJalali(b.baseNorm)}</span>
           </th>
           ${cells}
+          <td class="mt-total" title="جمع رول‌های این شیفت (همهٔ دستگاه‌ها)">${U.faNum(b.rolls.length)}</td>
         </tr>`;
     }).join('');
 
-    /* --- ردیف جمع هر شیفت --- */
-    const footCells = win.map((b) => `<td class="mt-total">${U.faNum(b.rolls.length)}</td>`).join('');
+    /* --- ردیف پایانی: جمع هر دستگاه در بازه + جمع کل --- */
+    const grandTotal = win.reduce((s, b) => s + b.rolls.length, 0);
+    const footCells = lanes.map((lane) =>
+      `<td class="mt-dev-total" title="جمع رول‌های ${U.escapeHtml(lane.label)} در بازهٔ نمایش">${U.faNum(lane.total)}</td>`).join('');
 
     body.innerHTML = `
       <div class="met-timeline-wrap">
         <table class="met-timeline-table">
+          <colgroup>
+            <col class="mt-col-shift">
+            ${lanes.map(() => '<col class="mt-col-dev">').join('')}
+            <col class="mt-col-sum">
+          </colgroup>
           <thead>
             <tr>
-              <th class="mt-corner"><span class="mt-corner-lane">دستگاه</span><span class="mt-corner-shift">شیفت</span></th>
+              <th class="mt-corner"><span class="mt-corner-shift">شیفت</span><span class="mt-corner-lane">دستگاه</span></th>
               ${headCells}
+              <th class="mt-sum-head" title="جمع رول‌های هر شیفت (همهٔ دستگاه‌ها)">جمع</th>
             </tr>
           </thead>
-          <tbody>${laneRows}</tbody>
+          <tbody>${shiftRows}</tbody>
           <tfoot>
             <tr>
-              <th class="mt-total-head">جمع هر شیفت</th>
+              <th class="mt-total-head">جمع دستگاه</th>
               ${footCells}
+              <td class="mt-grand" title="جمع کل رول‌های بازهٔ نمایش">${U.faNum(grandTotal)}</td>
             </tr>
           </tfoot>
         </table>
       </div>`;
+
+    /* آفست چسبندگی سربرگ دستگاه‌ها = ارتفاع فعلی سربرگ برنامه */
+    Dashboard.syncMetTimelineTop();
 
     /* --- انتخابگر تعداد شیفت: همگام با مقدار ماندگار --- */
     const sel = document.getElementById('met-timeline-shifts');
@@ -580,7 +634,7 @@
         bits.push(`${U.faNum(noDateCount)} رول متالایز بدون «تاریخ حذف» است و در تایم‌لاین نمی‌آید.`);
       }
       if (hasUnassigned) {
-        bits.push('ردیف «بدون ستاپ» = رول‌های متالایزِ تخصیص‌نیافته به هیچ ستاپی (دستگاه مشخصی ندارند).');
+        bits.push('ستون «بدون ستاپ» = رول‌های متالایزِ تخصیص‌نیافته به هیچ ستاپی (دستگاه مشخصی ندارند).');
       }
       if (allShifts.length > n) {
         const older = allShifts.slice(n).reduce((s, b) => s + b.rolls.length, 0);

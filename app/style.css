@@ -5665,7 +5665,12 @@ tr.row-expired .status-pill { text-decoration: none; }
 }
 
 /* ================================================================
-   تایم‌لاین رول‌های متالایز اخیر — داشبورد (تفکیک دستگاه × شیفت)
+   تایم‌لاین رول‌های متالایز اخیر — داشبورد (تفکیک شیفت (ردیف) × دستگاه (ستون))
+   ۳٫۳۴ — چیدمان ترانهاده: دستگاه‌ها ستون‌های افقی‌اند (فقط ۳ دستگاه
+   فعال است → جدول همیشه در عرض صفحه جا می‌شود، حتی با ۱۲ شیفت) و
+   شیفت‌ها ردیف‌های عمودی از جدیدترین (بالا) به قدیمی‌تر — مرور با
+   اسکرول عمودی. سربرگ دستگاه‌ها هنگام اسکرول به زیر سربرگ برنامه
+   می‌چسبد (آفست --met-top از dashboard.js همگام می‌شود).
    ================================================================ */
 
 .met-timeline-panel { margin-bottom: 18px; }
@@ -5694,16 +5699,18 @@ tr.row-expired .status-pill { text-decoration: none; }
   outline-offset: 1px;
 }
 
-/* قاب جدول + اسکرول افقی در نمایش‌های باریک */
+/* قاب جدول — بدون ظرف اسکرول (پیش‌فرض) تا چسبندگی سربرگ به صفحه کار
+   کند؛ در نمایش‌های باریک (پایین همین بلوک) قاب اسکرول افقی فعال می‌شود */
 .met-timeline-wrap {
-  overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
 }
+/* چیدمان ثابت: ستون‌ها همیشه در عرض قاب جا می‌شوند — هیچ اسکرول افقی
+   در نمایش‌های معمول (حتی با ۱۲ شیفت که اکنون ردیف‌های عمودی‌اند) */
 .met-timeline-table {
   width: 100%;
-  min-width: 640px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: .78rem;
 }
@@ -5714,15 +5721,31 @@ tr.row-expired .status-pill { text-decoration: none; }
   vertical-align: top;
   text-align: start;
 }
+/* عرض ستون‌ها: برچسب شیفت و «جمع» ثابت — دستگاه‌ها باقیِ عرض را هم‌سهم می‌گیرند */
+.met-timeline-table .mt-col-shift { width: 112px; }
+.met-timeline-table .mt-col-sum   { width: 54px; }
 
-/* گوشهٔ جدول: برچسب «دستگاه / شیفت» */
-.met-timeline-table .mt-corner {
+/* سربرگ دستگاه‌ها — چسبان به زیر سربرگ برنامه هنگام اسکرول عمودی
+   (box-shadow زیرین: خط ثابت هنگام چسبیدن — بردرِ collapse همراه سلول چسبان نمی‌شود) */
+.met-timeline-table thead th {
+  position: sticky;
+  top: var(--met-top, 76px);
+  z-index: 6;
   background: var(--surface-2);
   vertical-align: middle;
   text-align: center;
+  box-shadow: 0 1px 0 var(--border);
 }
-.met-timeline-table .mt-corner-lane,
-.met-timeline-table .mt-corner-shift {
+.met-timeline-table .mt-sum-head {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* گوشهٔ جدول: برچسب «شیفت / دستگاه» */
+.met-timeline-table .mt-corner { padding: 4px 6px; }
+.met-timeline-table .mt-corner-shift,
+.met-timeline-table .mt-corner-lane {
   display: block;
   font-size: .68rem;
   color: var(--text-faint);
@@ -5730,11 +5753,37 @@ tr.row-expired .status-pill { text-decoration: none; }
   line-height: 1.6;
 }
 
-/* سرستون هر شیفت — روز (کهربایی) / شب (فیروزه‌ای) */
+/* سرستون هر دستگاه + نشان جمع رول‌هایش در بازهٔ نمایش */
+.met-timeline-table .mt-dev { padding: 5px 6px; }
+.met-timeline-table .mt-dev-name {
+  display: block;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.met-timeline-table .mt-dev-count {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--metal-soft);
+  color: var(--metal);
+  font-weight: 700;
+  font-size: .66rem;
+}
+.met-timeline-table .mt-dev-unassigned .mt-dev-name { color: var(--text-faint); font-weight: 600; }
+.met-timeline-table .mt-dev-unassigned .mt-dev-count { background: var(--surface); color: var(--text-faint); border: 1px dashed var(--border-strong); }
+
+/* سربرگ ردیف هر شیفت — روز (کهربایی) / شب (فیروزه‌ای)؛ در اسکرول افقی
+   نمایش‌های باریک به لبهٔ راست قاب می‌چسبد */
 .met-timeline-table .mt-shift {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  box-shadow: -7px 0 9px -7px rgba(0, 0, 0, 0.14);
 }
 .met-timeline-table .mt-shift-day   { background: var(--metal-soft); }
 .met-timeline-table .mt-shift-night { background: var(--setup-soft); }
@@ -5750,47 +5799,14 @@ tr.row-expired .status-pill { text-decoration: none; }
 .met-timeline-table .mt-shift-kind svg { width: 14px; height: 14px; flex: none; }
 .met-timeline-table .mt-shift-date {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--text-muted);
-  font-size: .72rem;
+  font-size: .7rem;
   font-weight: 600;
 }
 
-/* ستون ردیف‌ها (دستگاه) — چسبیده به راست در اسکرول افقی */
-.met-timeline-table .mt-lane,
-.met-timeline-table .mt-corner,
-.met-timeline-table .mt-total-head {
-  position: sticky;
-  right: 0;
-  z-index: 2;
-  background: var(--surface-2);
-  box-shadow: -7px 0 9px -7px rgba(0, 0, 0, 0.14);
-}
-.met-timeline-table .mt-lane {
-  min-width: 88px;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-.met-timeline-table .mt-lane-name {
-  display: block;
-  font-weight: 700;
-  color: var(--text);
-}
-.met-timeline-table .mt-lane-count {
-  display: inline-block;
-  margin-top: 4px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--metal-soft);
-  color: var(--metal);
-  font-weight: 700;
-  font-size: .7rem;
-}
-.met-timeline-table .mt-lane-unassigned .mt-lane-name { color: var(--text-faint); font-weight: 600; }
-.met-timeline-table .mt-lane-unassigned .mt-lane-count { background: var(--surface); color: var(--text-faint); border: 1px dashed var(--border-strong); }
-
-/* سلول رول‌ها */
-.met-timeline-table .mt-cell { min-width: 158px; }
+/* سلول رول‌ها + نشان جمع‌وجور تعداد رول‌های دستگاه در همان شیفت */
+.met-timeline-table .mt-cell { vertical-align: top; }
 .met-timeline-table .mt-none {
   display: block;
   text-align: center;
@@ -5798,6 +5814,19 @@ tr.row-expired .status-pill { text-decoration: none; }
   padding: 10px 0;
 }
 .met-timeline-table .mt-cell-unassigned { background: rgba(135, 142, 149, 0.045); }
+.met-timeline-table .mt-count {
+  display: block;
+  width: fit-content;
+  margin-bottom: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: .64rem;
+  line-height: 1.75;
+}
 
 /* کارت هر رول متالایز */
 .mt-roll {
@@ -5826,6 +5855,8 @@ tr.row-expired .status-pill { text-decoration: none; }
   font-size: .76rem;
   color: var(--text);
   letter-spacing: .2px;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .mt-roll-width {
   flex: none;
@@ -5836,33 +5867,61 @@ tr.row-expired .status-pill { text-decoration: none; }
   font-weight: 700;
   font-size: .7rem;
 }
-.mt-roll-sub {
+/* ردیف میانی کارت: نشان نوع خط (BOPP/CPP) + متراژ واقعی + شماره ستاپ */
+.mt-roll-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 3px;
-  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  margin-top: 4px;
   font-size: .68rem;
+  color: var(--text-muted);
 }
+.mt-roll-meta .line-badge { font-size: .6rem; padding: 0 7px; }
+.mt-roll-len { font-weight: 700; color: var(--text); }
+.mt-roll-muted { color: var(--text-faint); }
 .mt-roll-setup { font-weight: 600; }
-.mt-roll-dt { direction: ltr; unicode-bidi: isolate; }
+.mt-roll-dt {
+  margin-top: 3px;
+  color: var(--text-faint);
+  font-size: .66rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 
-/* ردیف جمع هر شیفت */
+/* ستون «جمع» هر شیفت + ردیف پایانی جمع دستگاه‌ها */
+.met-timeline-table .mt-total {
+  text-align: center;
+  font-weight: 800;
+  font-size: .78rem;
+  color: var(--metal);
+  background: var(--metal-soft);
+  vertical-align: middle;
+}
 .met-timeline-table .mt-total-head {
-  font-size: .72rem;
+  font-size: .7rem;
   font-weight: 700;
   color: var(--text-muted);
   vertical-align: middle;
   white-space: nowrap;
+  background: var(--surface-2);
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  box-shadow: -7px 0 9px -7px rgba(0, 0, 0, 0.14);
 }
-.met-timeline-table .mt-total {
+.met-timeline-table .mt-dev-total {
   text-align: center;
   font-weight: 800;
-  font-size: .8rem;
   color: var(--metal);
-  vertical-align: middle;
   background: var(--metal-soft);
+  vertical-align: middle;
+}
+.met-timeline-table .mt-grand {
+  text-align: center;
+  font-weight: 800;
+  background: var(--surface-2);
+  vertical-align: middle;
 }
 
 /* یادداشت زیر تایم‌لاین */
@@ -5877,9 +5936,13 @@ tr.row-expired .status-pill { text-decoration: none; }
   line-height: 2;
 }
 
-/* نمایش‌های باریک: سلول‌ها فشرده‌تر */
+/* نمایش‌های باریک: قاب اسکرول افقی فقط وقتی ستون‌ها جا نشوند فعال
+   می‌شود؛ سربرگ جدول ایستا (چسبندگی داخل ظرف اسکرول بی‌معناست) و
+   ستون برچسب شیفت به لبهٔ راست قاب می‌چسبد */
 @media (max-width: 720px) {
-  .met-timeline-table { font-size: .74rem; }
-  .met-timeline-table .mt-cell { min-width: 140px; }
+  .met-timeline-wrap { overflow-x: auto; }
+  .met-timeline-table { min-width: 600px; font-size: .74rem; }
+  .met-timeline-table thead th { position: static; box-shadow: none; }
+  .met-timeline-table .mt-col-shift { width: 100px; }
   .met-timeline-pick-label { display: none; }
 }
