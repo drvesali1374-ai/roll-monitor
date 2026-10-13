@@ -74,6 +74,18 @@
        (قبلاً تاریخ میلادی بود) */
     const fileName = `RollMonitor-Backup-${U.jalaliFileStamp(payload.exportedAt)}.json`;
 
+    Backup.downloadPayload(payload, fileName);
+
+    return { fileName, counts: payload.counts };
+  };
+
+  /**
+   * ۳٫۳۷ — دانلود یک Payload پشتیبان از پیش ساخته‌شده با نام دلخواه.
+   * همان سازوکار Blob محلی دکمهٔ «ساخت فایل پشتیبان» است که برای
+   * پشتیبان‌گیری خودکار روزانه (دانلود نسخه‌های تاریخچه) به‌صورت مشترک
+   * استفاده می‌شود — خروجی بایت‌به‌بایت با فایل دستی یکسان است.
+   */
+  Backup.downloadPayload = function (payload, fileName) {
     const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
@@ -84,8 +96,6 @@
 
     // آزادسازی حافظهٔ Blob پس از دانلود
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-
-    return { fileName, counts: payload.counts };
   };
 
   /* ---------------- اعتبارسنجی Backup (§72: Backup Corrupted) ---------------- */

@@ -6033,3 +6033,232 @@ tr.row-expired .status-pill { text-decoration: none; }
   border-radius: var(--radius-sm);
   padding: 8px 12px;
 }
+
+/* ---------- ۳٫۳۷) پشتیبان‌گیری خودکار روزانه ---------- */
+
+/* چیدمان تنظیمات: دو ستونه در دسکتاپ، تک‌ستونه در موبایل */
+.autobackup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+/* ردیف سوییچ (کلید روشن/خاموش سفارشی — بدون وابستگی) */
+.ab-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;              /* هدف لمسی راحت */
+  padding: 6px 4px;
+}
+.ab-switch-row input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.ab-switch {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-strong);
+  position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.ab-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;                    /* RTL — دستگیره از راست شروع می‌شود */
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.ab-switch-row input:checked + .ab-switch {
+  background: var(--raw-soft);
+  border-color: var(--raw);
+}
+.ab-switch-row input:checked + .ab-switch::after {
+  transform: translateX(-20px);  /* در RTL به چپ می‌لغزد = روشن */
+  background: var(--raw);
+  border-color: var(--raw);
+}
+.ab-switch-row input:focus-visible + .ab-switch {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.25);
+  border-color: var(--setup);
+}
+.ab-switch-label {
+  font-size: 0.84rem;
+  color: var(--text);
+  line-height: 1.9;
+}
+
+/* فیلدهای ساعت و تعداد نسخه */
+.ab-field { display: flex; flex-direction: column; gap: 8px; }
+.ab-field > label, .ab-field-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.ab-time { display: flex; align-items: center; gap: 8px; }
+.ab-select {
+  font-family: var(--font);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  min-width: 84px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ab-select:hover { border-color: var(--input-hover-border); }
+.ab-select:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+.ab-time-sep { color: var(--text-faint); font-weight: 700; }
+#ab-retention {
+  font-family: var(--font);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  width: 100%;
+  max-width: 180px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#ab-retention:hover { border-color: var(--input-hover-border); }
+#ab-retention:focus {
+  outline: none;
+  border-color: var(--setup);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+/* ردیف دکمهٔ اجرای فوری + نشانگر ذخیره */
+.ab-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ab-save-state {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  transition: color 0.25s ease;
+}
+.ab-save-state.ok { color: var(--raw); font-weight: 700; }
+
+/* وضعیت زندهٔ سامانه (روی زمینهٔ اطلاعاتی فیروزه‌ای) */
+.ab-status.autosave-info {
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.25);
+  color: var(--text-muted);
+}
+.ab-status.autosave-info b { color: var(--text); }
+.ab-status-overdue.autosave-info {
+  background: var(--metal-soft);
+  border-color: rgba(180, 83, 9, 0.35);
+}
+.ab-error {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(220, 38, 38, 0.35);
+  color: var(--danger-text);
+  font-size: 0.74rem;
+  line-height: 1.9;
+}
+
+/* سرتیتر تاریخچه */
+.ab-history-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0 10px;
+  font-size: 0.84rem;
+  color: var(--text);
+}
+.ab-history-meta { font-size: 0.74rem; color: var(--text-faint); }
+
+/* فهرست تاریخچه — ارتفاع محدود با اسکرول */
+.ab-history {
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 4px;             /* جای اسکرول‌بار در RTL */
+}
+.ab-empty {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  line-height: 2;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.ab-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.ab-item:hover { border-color: var(--border-strong); }
+.ab-item-info { min-width: 0; }
+.ab-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.ab-item-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.9;
+}
+.ab-badge {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ab-badge-auto    { background: var(--raw-soft);   color: var(--raw); }
+.ab-badge-catchup { background: var(--metal-soft); color: var(--metal); }
+.ab-badge-manual  { background: var(--setup-soft); color: var(--setup); }
+
+/* موبایل — تک‌ستونه و دکمه‌های تمام‌عرض */
+@media (max-width: 768px) {
+  .autobackup-grid { grid-template-columns: 1fr; gap: 12px; }
+  .ab-item { flex-direction: column; align-items: stretch; }
+  .ab-item .row-actions { justify-content: flex-start; }
+  .ab-time { flex-wrap: wrap; }
+}

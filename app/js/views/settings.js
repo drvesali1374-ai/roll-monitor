@@ -64,6 +64,9 @@
     const scanBtn = document.getElementById('btn-recovery-scan');
     if (scanBtn) scanBtn.addEventListener('click', () => { RM.recovery.rescan(); });
 
+    // ۳٫۳۷ — پشتیبان‌گیری خودکار روزانه (تنظیمات + وضعیت + تاریخچهٔ نسخه‌ها)
+    SettingsView.initAutoBackup();
+
     // مدیریت داده‌ها (عناوین کاربرپسنده — نام فنی فقط برای Audit)
     document.getElementById('btn-clear-rolls').addEventListener('click', () =>
       SettingsView.clearDataset('rolls', 'رول‌های موجود', 'rolls'));
@@ -561,6 +564,8 @@
    * پس از جایگزینی تراکنشی، برنامه یک‌بار دوباره بارگذاری می‌شود تا همهٔ
    * نماها دقیقاً از محتوای فایل ساخته شوند (فلگ rm-restore-reload در
    * sessionStorage → پس از راه‌اندازی: بازگشت به تب تنظیمات + پیام موفقیت).
+   * ۳٫۳۷: هستهٔ جریان به _confirmAndRestorePayload منتقل شد تا «بازیابی از
+   * تاریخچهٔ پشتیبان‌های خودکار» نیز دقیقاً همان مسیر را طی کند.
    */
   SettingsView.restoreBackup = async function (file) {
     try {
@@ -580,58 +585,91 @@
         return;
       }
 
-      const c = payload.counts;
+      await SettingsView._confirmAndRestorePayload(payload);
+    } catch (err) {
+      console.error('[Restore]', err);
+      UI.toast('خطا در خواندن فایل پشتیبان.', 'error');
+    }
+  };
 
-      // تأیید بازیابی (§70 — عملیات خطرناک) + شمارش تنظیمات (۳٫۲۳ بند ۱) +
-      // نسخهٔ سازندهٔ فایل و اطلاع‌رسانی بارگذاری مجدد (۳٫۲۴ بند ۱)
-      const ok = await UI.confirm({
-        title: 'تأیید بازیابی Backup',
-        html: `<div class="confirm-stats">
+  /**
+   * ۳٫۳۷ — هستهٔ مشترک بازیابی: تأیید کاربر → جایگزینی تراکنشی → اعمال تم →
+   * بارگذاری مجدد برنامه. هم «بازیابی از فایل» و هم «بازیابی از تاریخچهٔ
+   * پشتیبان‌های خودکار روزانه» از همین مسیر استفاده می‌کنند.
+   */
+  SettingsView._confirmAndRestorePayload = async function (payload) {
+    const c = payload.counts || {};
+
+    /* ۳٫۳۷ — پیش از جایگزینی، وضعیت «فرصت برآورده‌شده»ٔ پشتیبان‌گیری خودکار
+       یادداشت می‌شود تا بازیابی (که appSettings را با محتوای فایل جایگزین
+       می‌کند و lastSlot داخل فایل مالِ زمانِ ساخت فایل است) آن را به عقب
+       برنگرداند — وگرنه تیک بعدی به‌اشتباه فکر می‌کند پشتیبان روز ساخته
+       نشده و بلافاصله یک نسخهٔ تکراری می‌سازد. */
+    let preRestoreLastSlot = 0;
+    try {
+      if (RM.autoBackup) preRestoreLastSlot = Number(await RM.db.getSetting('autoBackupLastSlot', 0)) || 0;
+    } catch { /* بی‌صدا */ }
+
+    // تأیید بازیابی (§70 — عملیات خطرناک) + شمارش تنظیمات (۳٫۲۳ بند ۱) +
+    // نسخهٔ سازندهٔ فایل و اطلاع‌رسانی بارگذاری مجدد (۳٫۲۴ بند ۱)
+    const ok = await UI.confirm({
+      title: 'تأیید بازیابی Backup',
+      html: `<div class="confirm-stats">
           <div>ستاپ‌ها: <b>${U.faNum(c.setupRolls)}</b> · قوانین: <b>${U.faNum(c.standardLengthRules)}</b></div>
           <div>رکوردهای rolls: <b>${U.faNum(c.rolls)}</b> · آرشیو: <b>${U.faNum(c.archivedRolls)}</b></div>
           <div>تنظیمات و وضعیت‌ها: <b>${U.faNum(c.settings || 0)}</b> مورد · تم: <b>${payload.ui && payload.ui.theme === 'dark' ? 'تاریک' : 'روشن'}</b></div>
           ${payload.appVersion ? `<div>ساخته‌شده با نسخهٔ: <b>${U.faNum(Number(payload.appVersion))}</b></div>` : ''}
           <div>تاریخ پشتیبان: <b>${U.faDate(payload.exportedAt)}</b></div>
         </div>`,
-        message: 'تمام داده‌های فعلی برنامه با محتوای این فایل جایگزین می‌شود و برای اعمال کامل همهٔ داده‌ها و تنظیمات (شامل جزئیات جداول)، برنامه یک‌بار دوباره بارگذاری خواهد شد. ادامه می‌دهید؟',
-        confirmText: 'بله، بازیابی کن',
-        danger: true,
-      });
-      if (!ok) return;
+      message: 'تمام داده‌های فعلی برنامه با محتوای این نسخه جایگزین می‌شود و برای اعمال کامل همهٔ داده‌ها و تنظیمات (شامل جزئیات جداول)، برنامه یک‌بار دوباره بارگذاری خواهد شد. ادامه می‌دهید؟',
+      confirmText: 'بله، بازیابی کن',
+      danger: true,
+    });
+    if (!ok) return;
 
-      const result = await Backup.restore(payload);
-      if (!result.ok) {
-        UI.toast(`بازیابی ناموفق: ${U.escapeHtml(result.errors[0] || '')}`, 'error');
-        return;
-      }
-
-      /* ۳٫۲۳ بند ۱ — تم پشتیبان فوری اعمال می‌شود (فایل‌های قدیمی بدون بخش ui
-         → تم فعلی دست‌نخورده می‌ماند) */
-      if (payload.ui && (payload.ui.theme === 'dark' || payload.ui.theme === 'light')) {
-        SettingsView.applyThemeValue(payload.ui.theme, { persist: true });
-      }
-
-      /* ۳٫۲۴ بند ۱ — بارگذاری مجدد خودکار: تنها راه قطعی اعمالِ «همهٔ»
-         تنظیمات و وضعیت‌های ماندگار (عرض ستون‌ها، ترتیب/پنهان‌سازی،
-         مرتب‌سازی‌ها، وضعیت چارت‌ها و…) که نماها فقط در init() می‌خوانند.
-         فلگ جلسه‌ای → پس از راه‌اندازی: بازگشت به تب تنظیمات + پیام موفقیت. */
-      try { sessionStorage.setItem('rm-restore-reload', '1'); } catch { /* حالت خصوصی */ }
-      UI.toast(
-        'بازیابی با موفقیت انجام شد — برنامه برای اعمال همهٔ داده‌ها و تنظیمات دوباره بارگذاری می‌شود…',
-        'success',
-        3200
-      );
-      setTimeout(() => {
-        try { window.location.reload(); }
-        catch (err) {   // fallback: بارگذاری نرم (مرورگرهای بسیار قدیمی)
-          console.warn('[RestoreReload]', err);
-          RM.refreshAll();
-        }
-      }, 1200);
-    } catch (err) {
-      console.error('[Restore]', err);
-      UI.toast('خطا در خواندن فایل پشتیبان.', 'error');
+    const result = await Backup.restore(payload);
+    if (!result.ok) {
+      UI.toast(`بازیابی ناموفق: ${U.escapeHtml(result.errors[0] || '')}`, 'error');
+      return;
     }
+
+    /* ۳٫۳۷ — بازیابی نباید «فرصت برآورده‌شده»ٔ پشتیبان‌گیری خودکار را به عقب
+       برگرداند (مقدار داخل فایل مالِ زمانِ ساخت فایل است): اگر مقدار فعلیِ
+       پیش از بازیابی جدیدتر بود، همان حفظ می‌شود. */
+    try {
+      if (RM.autoBackup && preRestoreLastSlot > 0) {
+        const post = Number(await RM.db.getSetting('autoBackupLastSlot', 0)) || 0;
+        if (preRestoreLastSlot > post) {
+          await RM.db.setSetting('autoBackupLastSlot', preRestoreLastSlot);
+        }
+      }
+    } catch (err) {
+      console.warn('[Restore:AutoBackupLastSlot]', err);
+    }
+
+    /* ۳٫۲۳ بند ۱ — تم پشتیبان فوری اعمال می‌شود (فایل‌های قدیمی بدون بخش ui
+       → تم فعلی دست‌نخورده می‌ماند) */
+    if (payload.ui && (payload.ui.theme === 'dark' || payload.ui.theme === 'light')) {
+      SettingsView.applyThemeValue(payload.ui.theme, { persist: true });
+    }
+
+    /* ۳٫۲۴ بند ۱ — بارگذاری مجدد خودکار: تنها راه قطعی اعمالِ «همهٔ»
+       تنظیمات و وضعیت‌های ماندگار (عرض ستون‌ها، ترتیب/پنهان‌سازی،
+       مرتب‌سازی‌ها، وضعیت چارت‌ها و…) که نماها فقط در init() می‌خوانند.
+       فلگ جلسه‌ای → پس از راه‌اندازی: بازگشت به تب تنظیمات + پیام موفقیت. */
+    try { sessionStorage.setItem('rm-restore-reload', '1'); } catch { /* حالت خصوصی */ }
+    UI.toast(
+      'بازیابی با موفقیت انجام شد — برنامه برای اعمال همهٔ داده‌ها و تنظیمات دوباره بارگذاری می‌شود…',
+      'success',
+      3200
+    );
+    setTimeout(() => {
+      try { window.location.reload(); }
+      catch (err) {   // fallback: بارگذاری نرم (مرورگرهای بسیار قدیمی)
+        console.warn('[RestoreReload]', err);
+        RM.refreshAll();
+      }
+    }, 1200);
   };
 
   /* ================================================================
@@ -665,7 +703,7 @@
   SettingsView.clearEverything = async function () {
     const ok = await UI.confirm({
       title: 'پاک‌سازی کامل برنامه',
-      html: '<div class="confirm-warn">⚠ تمام داده‌ها (ستاپ‌ها، قوانین، Datasetها، ویرایش رول‌ها و تنظیمات) حذف می‌شوند.</div>',
+      html: '<div class="confirm-warn">⚠ تمام داده‌ها (ستاپ‌ها، قوانین، Datasetها، ویرایش رول‌ها، تنظیمات و تاریخچهٔ پشتیبان‌های خودکار) حذف می‌شوند.</div>',
       message: 'پیش از ادامه، در صورت نیاز Backup تهیه کنید. ادامه می‌دهید؟',
       confirmText: 'بله، همه‌چیز را پاک کن',
       danger: true,
@@ -698,6 +736,15 @@
       localStorage.removeItem('rm-autobackup-v1');
       localStorage.setItem('rm-recovery-dismissed', '1');
     } catch { /* حالت خصوصی */ }
+
+    /* ۳٫۳۷ — تاریخچهٔ پشتیبان‌های خودکار هم پاک می‌شود (تداوم همان فلسفه:
+       دادهٔ عمداً حذف‌شده نباید خودکار برگردد؛ تنظیمات خودکار هم با پاک‌شدن
+       appSettings به حالت پیش‌فرض بازمی‌گردد). */
+    try {
+      if (RM.autoBackup) await RM.autoBackup.clearHistory();
+    } catch (err) {
+      console.warn('[ClearAutoBackupHistory]', err);
+    }
 
     await RM.refreshAll();
     await SettingsView.renderAll();
@@ -1446,6 +1493,7 @@
     await SettingsView.renderMatchKeysPanel();   // ۳٫۲۶ — پنل کلیدهای تطبیق
     await SettingsView.renderMachineTimeRules();
     SettingsView.renderAutosaveInfo();   // ۳٫۳۶ — وضعیت پشتیبان خودکار
+    SettingsView.renderAutoBackupPanel();   // ۳٫۳۷ — پشتیبان‌گیری خودکار روزانه + تاریخچه
 
     // به‌روزرسانی دراپ‌داون متراژ فرم زمان با قوانین تازه (§90)
     if (editingTimeRuleId === null) await SettingsView.refreshMachineTimeOptions();
@@ -1485,4 +1533,344 @@
 
   RM.views = RM.views || {};
   RM.views.settings = SettingsView;
+
+  /* ================================================================
+     ۳٫۳۷ — پشتیبان‌گیری خودکار روزانه (زمان‌بند + جبران عقب‌افتادگی)
+     تنظیمات (اعمال فوری با هر تغییر) + وضعیت زنده + تاریخچهٔ نسخه‌های
+     ذخیره‌شده در IndexedDB (دانلود/بازیابی/حذف) + دکمهٔ اجرای فوری.
+     منطق زمان‌بندی و ذخیره‌سازی در app/js/autobackup.js است.
+     ================================================================ */
+
+  const AB = () => RM.autoBackup;
+
+  /** برچسب فارسی منبع ساخت هر نسخه */
+  const AB_TRIGGER_LABEL = { schedule: 'خودکار روزانه', catchup: 'جبران عقب‌افتاده', manual: 'اجرای فوری' };
+
+  /** نشانگر «ذخیره شد» روی تغییر تنظیمات (محو شونده) */
+  let abSaveStateTimer = null;
+  function abFlashSaveState(text) {
+    const el = document.getElementById('ab-save-state');
+    if (!el) return;
+    el.textContent = text || 'ذخیره شد ✓';
+    el.classList.add('ok');
+    clearTimeout(abSaveStateTimer);
+    abSaveStateTimer = setTimeout(() => {
+      el.textContent = '';
+      el.classList.remove('ok');
+    }, 2600);
+  }
+
+  /** راه‌اندازی کنترل‌ها — گزینه‌های ساعت/دقیقه + بارگذاری تنظیمات ذخیره‌شده */
+  SettingsView.initAutoBackup = async function () {
+    const hourSel = document.getElementById('ab-hour');
+    const minuteSel = document.getElementById('ab-minute');
+    const enabledEl = document.getElementById('ab-enabled');
+    const downloadEl = document.getElementById('ab-download');
+    const retentionEl = document.getElementById('ab-retention');
+    const runBtn = document.getElementById('btn-ab-run');
+    const historyEl = document.getElementById('ab-history');
+    if (!hourSel || !minuteSel || !enabledEl || !downloadEl || !retentionEl || !runBtn || !historyEl) return;
+
+    /* گزینه‌های ساعت (۰۰ تا ۲۳) و دقیقه (پله‌های ۵ دقیقه‌ای) — برچسب فارسی */
+    if (!hourSel.options.length) {
+      for (let h = 0; h <= 23; h++) {
+        const v = String(h).padStart(2, '0');
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = U.faNum(v);
+        hourSel.appendChild(opt);
+      }
+    }
+    if (!minuteSel.options.length) {
+      for (let m = 0; m <= 55; m += 5) {
+        const v = String(m).padStart(2, '0');
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = U.faNum(v);
+        minuteSel.appendChild(opt);
+      }
+    }
+
+    /* بارگذاری تنظیمات فعلی روی کنترل‌ها */
+    try {
+      const s = await AB().loadSettings();
+      const [hh, mm] = s.time.split(':');
+      hourSel.value = String(hh).padStart(2, '0');
+      minuteSel.value = String(mm).padStart(2, '0');
+      enabledEl.checked = s.enabled;
+      downloadEl.checked = s.download;
+      retentionEl.value = U.toFaDigits(String(s.retention));
+    } catch (err) {
+      console.warn('[AutoBackup:Init]', err);
+    }
+
+    /* فعال/غیرفعال — اعمال فوری + بررسی فوری زمان‌بند (جبران احتمالی) */
+    enabledEl.addEventListener('change', async () => {
+      try {
+        await AB().saveSetting('autoBackupEnabled', enabledEl.checked);
+        abFlashSaveState(enabledEl.checked ? 'فعال شد ✓' : 'ذخیره شد ✓');
+        UI.toast(
+          enabledEl.checked
+            ? `پشتیبان‌گیری خودکار روزانه فعال شد — هر روز ساعت ${U.toFaDigits(hourSel.value + ':' + minuteSel.value)}${downloadEl.checked ? ' با دانلود خودکار فایل' : ''}.`
+            : 'پشتیبان‌گیری خودکار روزانه غیرفعال شد.',
+          'info',
+          5000
+        );
+      } catch (err) {
+        console.error('[AutoBackup:Toggle]', err);
+        UI.toast('خطا در ذخیرهٔ تنظیمات.', 'error');
+      }
+    });
+
+    /* ساعت — اعمال فوری */
+    const onTimeChange = async () => {
+      try {
+        await AB().saveSetting('autoBackupTime', `${hourSel.value}:${minuteSel.value}`);
+        abFlashSaveState();
+      } catch (err) {
+        console.error('[AutoBackup:Time]', err);
+        UI.toast('خطا در ذخیرهٔ ساعت پشتیبان‌گیری.', 'error');
+      }
+    };
+    hourSel.addEventListener('change', onTimeChange);
+    minuteSel.addEventListener('change', onTimeChange);
+
+    /* دانلود خودکار — اعمال فوری */
+    downloadEl.addEventListener('change', async () => {
+      try {
+        await AB().saveSetting('autoBackupDownload', downloadEl.checked);
+        abFlashSaveState(downloadEl.checked ? 'دانلود خودکار روشن شد ✓' : 'ذخیره شد ✓');
+      } catch (err) {
+        console.error('[AutoBackup:Download]', err);
+        UI.toast('خطا در ذخیرهٔ تنظیمات دانلود.', 'error');
+      }
+    });
+
+    /* تعداد نسخه‌ها — اعمال فوری با نرمال‌سازی (۱ تا ۳۰) */
+    retentionEl.addEventListener('change', async () => {
+      const v = U.parseInt(retentionEl.value);
+      if (v === null || v < 1 || v > 30) {
+        const cur = await AB().loadSettings();
+        retentionEl.value = U.toFaDigits(String(cur.retention));
+        UI.toast('تعداد نسخه‌ها باید عددی بین ۱ تا ۳۰ باشد.', 'warning');
+        return;
+      }
+      try {
+        await AB().saveSetting('autoBackupRetention', v);
+        retentionEl.value = U.toFaDigits(String(v));
+        abFlashSaveState();
+      } catch (err) {
+        console.error('[AutoBackup:Retention]', err);
+        UI.toast('خطا در ذخیرهٔ تعداد نسخه‌ها.', 'error');
+      }
+    });
+
+    /* اجرای فوری — همان سازوکار زمان‌بند (ساخت + ذخیره در تاریخچه + دانلود) */
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true;
+      try {
+        const res = await AB().runNow();
+        if (res && res.skipped) {
+          UI.toast('نسخهٔ همین فرصت همین حالا ساخته شده — نسخهٔ تازه‌ای لازم نیست.', 'info');
+        }
+      } catch (err) {
+        console.error('[AutoBackup:RunNow]', err);
+        UI.toast('پشتیبان‌گیری ناموفق بود.', 'error');
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+
+    /* تاریخچه — واگذاری رویداد دکمه‌های هر نسخه (دانلود/بازیابی/حذف) */
+    historyEl.addEventListener('click', (e) => {
+      const dl = e.target.closest('[data-ab-dl]');
+      const rs = e.target.closest('[data-ab-restore]');
+      const del = e.target.closest('[data-ab-del]');
+      if (dl) SettingsView.downloadAutoBackup(Number(dl.dataset.abDl));
+      else if (rs) SettingsView.restoreAutoBackup(Number(rs.dataset.abRestore));
+      else if (del) SettingsView.deleteAutoBackup(Number(del.dataset.abDel));
+    });
+
+    await SettingsView.renderAutoBackupPanel();
+  };
+
+  /** همگام‌سازی مقدار کنترل‌ها با تنظیمات (بدون دست‌زدن به کنترلِ در حال تایپ) */
+  SettingsView._syncAutoBackupControls = function (s) {
+    const hourSel = document.getElementById('ab-hour');
+    const minuteSel = document.getElementById('ab-minute');
+    const enabledEl = document.getElementById('ab-enabled');
+    const downloadEl = document.getElementById('ab-download');
+    const retentionEl = document.getElementById('ab-retention');
+    const active = document.activeElement;
+
+    if (hourSel && minuteSel) {
+      const [hh, mm] = s.time.split(':');
+      if (active !== hourSel) hourSel.value = String(hh).padStart(2, '0');
+      if (active !== minuteSel) minuteSel.value = String(mm).padStart(2, '0');
+    }
+    if (enabledEl && active !== enabledEl) enabledEl.checked = s.enabled;
+    if (downloadEl && active !== downloadEl) downloadEl.checked = s.download;
+    if (retentionEl && active !== retentionEl) retentionEl.value = U.toFaDigits(String(s.retention));
+  };
+
+  /** رندر وضعیت زنده + تاریخچهٔ نسخه‌ها */
+  SettingsView.renderAutoBackupPanel = async function () {
+    const statusEl = document.getElementById('ab-status');
+    const historyEl = document.getElementById('ab-history');
+    const metaEl = document.getElementById('ab-history-meta');
+    if (!statusEl || !historyEl || !RM.autoBackup) return;
+
+    let s, list;
+    try {
+      [s, list] = await Promise.all([AB().loadSettings(), AB().listBackups()]);
+    } catch (err) {
+      console.warn('[AutoBackup:Render]', err);
+      return;
+    }
+
+    SettingsView._syncAutoBackupControls(s);
+
+    /* ----- وضعیت ----- */
+    const now = Date.now();
+    const due = AB().latestDueSlot(now, s.time);
+    const newest = list[0] || null;
+    const newestSlot = newest ? (Number(newest.scheduledFor) || 0) : 0;
+    const fulfilled = Math.max(Math.min(s.lastSlot, now), newestSlot);
+    let hasData = false;
+    try { hasData = await AB().hasAnyData(); } catch { /* بی‌صدا */ }
+    const overdue = s.enabled && hasData && fulfilled < due;
+    const nextSlot = AB().nextSlotAfter(now, s.time);
+
+    let html = '';
+    if (!s.enabled) {
+      html = '<b>وضعیت:</b> غیرفعال — برای فعال‌سازی، کلید بالا را روشن کنید.';
+    } else {
+      const parts = [];
+      parts.push(`<b>وضعیت:</b> فعال — هر روز ساعت <b>${U.toFaDigits(s.time)}</b>`);
+      parts.push(
+        overdue
+          ? '⏳ فرصت امروز هنوز برآورده نشده — در اولین بررسی (حداکثر ۳۰ ثانیه) جبران می‌شود'
+          : `اجرای بعدی: <b>${U.faDate(nextSlot)}</b>`
+      );
+      if (newest) {
+        parts.push(`آخرین نسخهٔ موفق: <b>${U.faDate(newest.createdAt)}</b>`);
+      } else {
+        parts.push('هنوز نسخه‌ای ساخته نشده');
+      }
+      if (!hasData) {
+        parts.push('پایگاه‌داده خالی است — با نخستین داده، پشتیبان‌گیری آغاز می‌شود');
+      }
+      html = parts.join(' · ');
+    }
+    if (s.lastError && s.lastError.message) {
+      html += `<div class="ab-error" role="alert">⚠ آخرین خطا (${U.faDate(s.lastError.at)}): ${U.escapeHtml(String(s.lastError.message).slice(0, 120))} — تلاش خودکار هر ۳۰ ثانیه ادامه دارد.</div>`;
+    }
+    statusEl.innerHTML = html;
+    statusEl.classList.toggle('ab-status-overdue', overdue);
+
+    /* ----- تاریخچه ----- */
+    if (!list.length) {
+      historyEl.innerHTML =
+        '<div class="ab-empty">هنوز نسخه‌ای ذخیره نشده — پس از اولین پشتیبان‌گیری خودکار (یا «اجرای فوری»)، نسخه‌ها این‌جا فهرست می‌شوند.</div>';
+      if (metaEl) metaEl.textContent = '';
+      return;
+    }
+
+    const totalBytes = list.reduce((sum, b) => sum + (Number(b.sizeBytes) || 0), 0);
+    if (metaEl) {
+      metaEl.textContent = `(${U.faNum(list.length)} نسخه · مجموع ${AB().formatSize(totalBytes)})`;
+    }
+
+    historyEl.innerHTML = list.map((b) => {
+      const c = b.counts || {};
+      const excel = (c.rolls || 0) + (c.archivedRolls || 0);
+      const scheduledNote = (Number(b.scheduledFor) && b.scheduledFor !== b.createdAt)
+        ? ` · موعد مقرر: ${U.faDate(b.scheduledFor)}`
+        : '';
+      const label = AB_TRIGGER_LABEL[b.trigger] || 'خودکار روزانه';
+      const badgeCls = b.trigger === 'catchup' ? 'ab-badge-catchup' : (b.trigger === 'manual' ? 'ab-badge-manual' : 'ab-badge-auto');
+      return `
+        <div class="ab-item">
+          <div class="ab-item-info">
+            <div class="ab-item-title">
+              <b>${U.faDate(b.createdAt)}</b>
+              <span class="ab-badge ${badgeCls}">${label}</span>
+            </div>
+            <div class="ab-item-meta">
+              ${U.faNum(c.setupRolls || 0)} ستاپ · ${U.faNum(excel)} رکورد اکسل · ${AB().formatSize(b.sizeBytes)}${scheduledNote}
+            </div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-ghost btn-icon" data-ab-dl="${b.id}" title="دانلود فایل" aria-label="دانلود این نسخه">${UI.icons.download}</button>
+            <button type="button" class="btn btn-ghost btn-icon" data-ab-restore="${b.id}" title="بازیابی این نسخه" aria-label="بازیابی این نسخه">${UI.icons.restore}</button>
+            <button type="button" class="btn btn-icon" data-ab-del="${b.id}" title="حذف از تاریخچه" aria-label="حذف از تاریخچه">${UI.icons.trash}</button>
+          </div>
+        </div>`;
+    }).join('');
+  };
+
+  /** دانلود یک نسخه از تاریخچه — همان فایل دکمهٔ دستی (محتوا + نام یکسان) */
+  SettingsView.downloadAutoBackup = async function (id) {
+    try {
+      const rec = await db.backups.get(id);
+      const payload = await AB().getBackupPayload(id);
+      if (!rec || !payload) {
+        UI.toast('این نسخه یافت نشد.', 'error');
+        return;
+      }
+      RM.backupEngine.downloadPayload(payload, rec.fileName);
+      UI.toast(`فایل «${U.escapeHtml(rec.fileName)}» دانلود شد.`, 'success');
+    } catch (err) {
+      console.error('[AutoBackup:Download]', err);
+      UI.toast('خطا در دانلود نسخه.', 'error');
+    }
+  };
+
+  /** بازیابی یک نسخه از تاریخچه — همان جریان تأیید/بازیابی فایل پشتیبان */
+  SettingsView.restoreAutoBackup = async function (id) {
+    try {
+      const payload = await AB().getBackupPayload(id);
+      if (!payload) {
+        UI.toast('محتوای این نسخه یافت نشد.', 'error');
+        return;
+      }
+      const check = Backup.validate(payload);
+      if (!check.ok) {
+        UI.toast(`این نسخه معتبر نیست: ${U.escapeHtml(check.errors[0] || '')}`, 'error', 7000);
+        return;
+      }
+      await SettingsView._confirmAndRestorePayload(payload);
+    } catch (err) {
+      console.error('[AutoBackup:Restore]', err);
+      UI.toast('خطا در بازیابی نسخه از تاریخچه.', 'error');
+    }
+  };
+
+  /** حذف یک نسخه از تاریخچه (فایل‌های دانلود‌شده روی دیسک می‌مانند) */
+  SettingsView.deleteAutoBackup = async function (id) {
+    try {
+      const rec = await db.backups.get(id);
+      if (!rec) return;
+      const c = rec.counts || {};
+      const ok = await UI.confirm({
+        title: 'حذف نسخه از تاریخچه',
+        html: `<div class="confirm-stats">
+            <div>تاریخ نسخه: <b>${U.faDate(rec.createdAt)}</b> · حجم: <b>${AB().formatSize(rec.sizeBytes)}</b></div>
+            <div>${U.faNum(c.setupRolls || 0)} ستاپ · ${U.faNum((c.rolls || 0) + (c.archivedRolls || 0))} رکورد اکسل</div>
+          </div>
+          <div class="confirm-warn">⚠ این نسخه فقط از حافظهٔ داخلی مرورگر حذف می‌شود — فایل‌های دانلود‌شده روی دیسک شما دست‌نخورده می‌مانند.</div>`,
+        message: 'حذف ادامه یابد؟',
+        confirmText: 'بله، حذف کن',
+        danger: true,
+      });
+      if (!ok) return;
+
+      await AB().deleteBackup(id);
+      UI.toast('نسخه از تاریخچه حذف شد.', 'success');
+      await SettingsView.renderAutoBackupPanel();
+    } catch (err) {
+      console.error('[AutoBackup:Delete]', err);
+      UI.toast('خطا در حذف نسخه.', 'error');
+    }
+  };
 })();
