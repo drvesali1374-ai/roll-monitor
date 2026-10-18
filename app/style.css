@@ -544,6 +544,21 @@ code {
 /* پنل تمام‌عرض در Settings (Mapping) */
 .panel-wide { grid-column: 1 / -1; }
 
+/* ---------- ۳٫۳۸ — ستون پایانی تنظیمات ----------
+   «مدیریت داده‌ها» و «سابقهٔ Importها (نسخه‌بندی Dataset)» به‌صورت عمودی
+   در یک ستون (سابقهٔ Importها در زیر مدیریت داده‌ها) چیده می‌شوند:
+   این دو پنل داخل یک ظرف واحد قرار گرفته‌اند تا در گرید تنظیمات
+   (auto-fit با ۲ یا ۳ ستون در نمایش‌های پهن) به‌صورت پراکنده در
+   ستون‌های جدا نیفتند و خانه‌های خالی انتهای صفحه به‌وجود نیاید. */
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;            /* همان فاصلهٔ گرید تنظیمات */
+  min-width: 0;         /* هم‌ارز قاعدهٔ settings-grid > * */
+  align-items: stretch; /* پنل‌ها هم‌عرضِ ستون بمانند */
+}
+.settings-stack > .panel { margin-bottom: 0; } /* فاصله از gap تأمین می‌شود */
+
 .panel-head { margin-bottom: 14px; }
 .panel-head-row {
   display: flex;
