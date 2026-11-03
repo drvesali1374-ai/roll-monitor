@@ -46,6 +46,10 @@
     download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>',
     /* ۳٫۳۷ — تاریخچهٔ پشتیبان‌های خودکار: بازیابی نسخه (پیکان رو به بالا) */
     restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>',
+    /* ۳٫۳۹ — «انتخاب همه» (فهرست با علامت تأیید — فقط رکوردهای فیلترنشده) */
+    selectAll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 7 2 2 4-4"/><path d="M13 7h8"/><path d="m3 17 2 2 4-4"/><path d="M13 17h8"/></svg>',
+    /* ۳٫۳۹ — پیکان بازشوندهٔ دکمهٔ «عملیات گروهی» */
+    chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
   };
 
   /* ---------------- Toast ---------------- */

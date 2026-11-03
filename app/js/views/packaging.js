@@ -55,6 +55,7 @@
       graphEdits: { spec: {}, rollRemoved: {}, rollAdded: {}, palletAdded: {} },
       graphOrient: 'portrait', // جهت برگهٔ خروجی: 'portrait' | 'landscape' (ماندگار — ۳٫۱۸ بند ۳)
       graphCols: 2,            // تعداد ستون کارت‌ها در برگهٔ خروجی (ماندگار — ۳٫۱۸ بند ۳)
+      graphQuality: null,      // کیفیت خروجی PNG/PDF — ضریب رندر ۳..۷ (۳٫۳۹ — تغییر ۲؛ ماندگار)
       separateExport: true, // تفکیک پالت‌های صادراتی (ماندگار — بند ۵)
     },
     ctls: {},             // کنترل جدول‌ها: { plan, pallets, rolls, graph }
@@ -92,12 +93,24 @@
   const GRAPH_GAP = 12;        // فاصلهٔ کارت‌ها در گرید (همان gap فعلی)
   const GRAPH_PAD_X = 24;      // حاشیهٔ افقی برگهٔ استیج (padding .pg-page)
   const GRAPH_PAD_Y = 20;      // حاشیهٔ عمودی برگهٔ استیج
-  /* ۳٫۲۰ بند ۲ — چگالی رندر خروجی (PNG و PDF): ضریب ۳ یعنی برگهٔ A4 با
-     ۲۸۸dpi معادل (۲۳۸۲×۳۳۷۰ برای عمودی) رندر می‌شود — متن‌ها و کادرها
-     به‌مراتب واضح‌تر از ۲x؛ زمان رندر هر برگه اندازه‌گیری شد و در عتبهٔ
-     قابل‌قبول (زیر ~۱٫۵ برابرِ حالت قبلی) باقی ماند، وگرنه به ۲.۵ یا ۲
-     برمی‌گشت */
-  const GRAPH_RENDER_X = 3;
+  /* ۳٫۲۰ بند ۲ — چگالی رندر خروجی (PNG و PDF): GRAPH_RENDER_X ضریب رندر
+     هر برگهٔ A4 است (۹۶dpi × ضریب).
+     ۳٫۳۹ (تغییر ۲ کاربر) — کیفیت خروجی دیگر ثابت نیست: کاربر از کنار عنوان
+     پنل یکی از پنج درجه را انتخاب می‌کند — «خیلی پایین» (۳) / «پایین» (۴) /
+     «متوسط» (۵ — پیش‌فرض) / «بالا» (۶) / «خیلی بالا» (۷): بین هر دو درجهٔ
+     مجاور دقیقاً ۱ واحد اختلاف است و در کیفیت «متوسط» ضریب ۵ است (معادل
+     ۴۸۰dpi). انتخاب در appSettings (packGraphQuality) ماندگار است و در
+     graphRenderPageToA4 به کار می‌رود (هر دو خروجی PNG و PDF). */
+  const GRAPH_RENDER_X_MIN = 3;
+  const GRAPH_RENDER_X_MAX = 7;
+  const GRAPH_RENDER_X_DEFAULT = 5;   // کیفیت «متوسط»
+  const GRAPH_QUALITY_LEVELS = [
+    { x: 3, label: 'خیلی پایین' },
+    { x: 4, label: 'پایین' },
+    { x: 5, label: 'متوسط' },
+    { x: 6, label: 'بالا' },
+    { x: 7, label: 'خیلی بالا' },
+  ];
 
   /** دو تم رنگی کارت‌ها، یک ردیف در میان (۳٫۱۷ بند ۳): هر «ردیف» از
       کارت‌ها (بر اساس ستون‌های واقعی گرید در لحظهٔ رندر) یکی از این دو
@@ -493,6 +506,30 @@
       };
       colsInput.addEventListener('change', applyCols);
       colsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyCols(); } });
+    }
+
+    /* --- کیفیت خروجی PNG/PDF (۳٫۳۹ — تغییر ۲ کاربر؛ ماندگار) --- */
+    const savedQuality = Number(await RM.db.getSetting('packGraphQuality', 0));
+    PackagingView.state.graphQuality = Number.isFinite(savedQuality)
+      && savedQuality >= GRAPH_RENDER_X_MIN && savedQuality <= GRAPH_RENDER_X_MAX
+      ? Math.round(savedQuality) : GRAPH_RENDER_X_DEFAULT;
+
+    const qualitySel = document.getElementById('pack-graph-quality');
+    if (qualitySel) {
+      qualitySel.value = String(PackagingView.state.graphQuality);
+      qualitySel.addEventListener('change', async () => {
+        const v = Math.round(Number(qualitySel.value));
+        if (!Number.isFinite(v) || v < GRAPH_RENDER_X_MIN || v > GRAPH_RENDER_X_MAX) {
+          qualitySel.value = String(PackagingView.state.graphQuality);
+          UI.toast('کیفیت خروجی معتبر نیست — یکی از پنج درجه را انتخاب کنید.', 'warning');
+          return;
+        }
+        if (v === PackagingView.state.graphQuality) return;
+        PackagingView.state.graphQuality = v;
+        await RM.db.setSetting('packGraphQuality', v);
+        const lvl = PackagingView.graphQualityLabel(v);
+        UI.toast(`کیفیت خروجی تصویر/PDF «${lvl}» شد (ضریب رندر ${U.faNum(v)} — معادل ${U.faNum(v * 96)}dpi).`, 'info');
+      });
     }
 
     /* --- ویرایش‌های نمایشی هر بسته (۳٫۱۵ بند ۳ — مودال ویرایش، ماندگار) --- */
@@ -3198,16 +3235,34 @@
     return stage;
   };
 
+  /** ۳٫۳۹ (تغییر ۲ کاربر) — ضریب رندر فعلی خروجی (GRAPH_RENDER_X):
+      از انتخابگر «کیفیت خروجی» کنار عنوان پنل (۳..۷ — پیش‌فرض ۵)؛
+      مقدار ذخیره‌شدهٔ نامعتبر به پیش‌فرض برمی‌گردد. */
+  PackagingView.graphRenderX = function () {
+    const q = Number(PackagingView.state.graphQuality);
+    if (!Number.isFinite(q) || q < GRAPH_RENDER_X_MIN || q > GRAPH_RENDER_X_MAX) {
+      return GRAPH_RENDER_X_DEFAULT;
+    }
+    return Math.round(q);
+  };
+
+  /** برچسب فارسی یک درجهٔ کیفیت (۳٫۳۹) — «متوسط» و … */
+  PackagingView.graphQualityLabel = function (x) {
+    const lvl = GRAPH_QUALITY_LEVELS.find((l) => l.x === Math.round(Number(x)));
+    return lvl ? lvl.label : 'متوسط';
+  };
+
   /** رندر یک برگهٔ استیج روی «بوم دقیق A4» (۳٫۱۸ بند ۳): برگه با ابعاد
    *  طراحی (عرض طراحی × ارتفاع طبیعی محتوا) رندر می‌شود و سپس یکنواخت —
    *  با حفظ کامل نسبت‌های کارت/فونت/کادرهای داخلی — روی بوم A4 با چگالی
-   *  GRAPH_RENDER_X (۳٫۲۰ بند ۲ — ۲۸۸dpi معادل؛ قبلاً ۲x/۱۹۲dpi) نقش
-   *  می‌بندد: مقیاس فقط کوچک می‌شود (هرگز بزرگ‌نمایی نمی‌شود)، از بالای
-   *  برگه چسبیده و افقی وسط‌چین؛ قسمت بدون کارت سفید می‌ماند.
+   *  GRAPH_RENDER_X (۳٫۳۹ تغییر ۲ — قابل انتخاب کاربر: ۳..۷؛ «متوسط» = ۵
+   *  معادل ۴۸۰dpi) نقش می‌بندد: مقیاس فقط کوچک می‌شود (هرگز بزرگ‌نمایی
+   *  نمی‌شود)، از بالای برگه چسبیده و افقی وسط‌چین؛ قسمت بدون کارت سفید
+   *  می‌ماند.
    *  اگر ردیفی تنهایی از ارتفاع برگه بلندتر باشد، همان ضریبِ ارتفاعیِ
    *  کوچک‌تر ملاک است و کل برگه یکجا کوچک می‌شود. */
   PackagingView.graphRenderPageToA4 = async function (pageEl, layout) {
-    const rx = GRAPH_RENDER_X;
+    const rx = PackagingView.graphRenderX();   // ۳٫۳۹ — کیفیت انتخابی کاربر
     const scale = Math.max(1, Math.min(rx, rx * layout.kw));
     const canvas = await window.html2canvas(pageEl, {
       scale,
@@ -3309,6 +3364,7 @@
       const indices = target ? [target - 1] : pageEls.map((_, i) => i);
 
       const stamp = PackagingView.graphJalaliStamp();
+      const qualityTxt = `کیفیت ${PackagingView.graphQualityLabel(PackagingView.graphRenderX())}`;
       for (let k = 0; k < indices.length; k++) {
         const idx = indices[k];
         const canvas = await PackagingView.graphRenderPageToA4(pageEls[idx], layout);
@@ -3327,8 +3383,8 @@
 
       UI.toast(
         target
-          ? `خروجی تصویر ساخته شد — برگهٔ ${U.faNum(target)} از ${U.faNum(totalPages)} · برگهٔ کامل A4 ${layout.orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون · تاریخ شمسی روی تصویر درج شد.`
-          : `خروجی تصویر ساخته شد — همهٔ ${U.faNum(totalPages)} برگه (هر برگه یک تصویر کامل A4 ${layout.orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون · تاریخ شمسی روی هر تصویر درج شد). برای تصویر یک برگهٔ خاص، شماره‌اش را در «برگهٔ تصویر» وارد کنید.`,
+          ? `خروجی تصویر ساخته شد — برگهٔ ${U.faNum(target)} از ${U.faNum(totalPages)} · برگهٔ کامل A4 ${layout.orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون · ${qualityTxt} · تاریخ شمسی روی تصویر درج شد.`
+          : `خروجی تصویر ساخته شد — همهٔ ${U.faNum(totalPages)} برگه (هر برگه یک تصویر کامل A4 ${layout.orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون · ${qualityTxt} · تاریخ شمسی روی هر تصویر درج شد). برای تصویر یک برگهٔ خاص، شماره‌اش را در «برگهٔ تصویر» وارد کنید.`,
         'success', 6800
       );
     } catch (err) {
@@ -3387,7 +3443,7 @@
          هم در سربرگ استیج به شمسی درج شده است) */
       pdf.save(`نمایش-گرافیکی-بسته-بندی_${PackagingView.graphJalaliStamp()}.pdf`);
       UI.toast(
-        `خروجی PDF ساخته شد — ${U.faNum(pkgs.length)} بسته در ${U.faNum(layout.pages.length)} برگهٔ کامل A4 (${orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون)؛ هیچ کارتی در میانهٔ برگه نشکسته است.`,
+        `خروجی PDF ساخته شد — ${U.faNum(pkgs.length)} بسته در ${U.faNum(layout.pages.length)} برگهٔ کامل A4 (${orient === 'landscape' ? 'افقی' : 'عمودی'} · ${U.faNum(layout.cols)} ستون · کیفیت ${PackagingView.graphQualityLabel(PackagingView.graphRenderX())})؛ هیچ کارتی در میانهٔ برگه نشکسته است.`,
         'success', 6500
       );
     } catch (err) {

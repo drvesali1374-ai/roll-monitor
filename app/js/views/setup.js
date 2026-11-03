@@ -12,9 +12,13 @@
      - یک دکمهٔ «عملیات» (⋮) با منوی بازشوندهٔ سه‌گزینه‌ای (محاسبه جزئیات /
        ویرایش / حذف) — دیگر عرض ستون را سه دکمه اشغال نمی‌کند
      - چک‌باکس کوچک انتخاب در همان ستون کنار دکمهٔ عملیات
-     - سه دکمهٔ عملیات گروهی «حذف انتخاب شده‌ها» / «انقضاء انتخاب شده‌ها» /
-       «لغو انتخاب‌ها» در بالای جدول (سمت چپ، کنار آمار رکوردها) — پیش‌فرض
-       خاموش؛ با اولین تیک روشن می‌شوند
+     - نوار عملیات گروهی بالای جدول (سمت چپ، کنار آمار رکوردها):
+       ۳٫۳۹ (تغییر ۵+۶ کاربر) — دکمهٔ «انتخاب همه» (فقط رکوردهای فیلترنشده)
+       + دکمهٔ بازشوندهٔ «عملیات گروهی» با منوی «حذف انتخاب شده‌ها» /
+       «انقضاء انتخاب شده‌ها» / «خروج از انقضای انتخاب شده‌ها» / «لغو
+       انتخاب‌ها» (با شمارنده‌های هر عملیات)
+     - ۳٫۳۹ (تغییر ۱ کاربر): پس از انجام هر عملیات گروهی، انتخاب‌ها
+       بلافاصله پاک می‌شوند (رکوردها از حالت انتخاب خارج می‌شوند)
      - «انقضاء» → وضعیت رکوردهای انتخاب‌شده «منقضی شده» می‌شود (جای «باقی
        مانده»/«تمام شده») و زمان‌هایش از همهٔ محاسبات پروژه خارج می‌شود
    ========================================================================= */
@@ -2129,8 +2133,8 @@
       ارتفاع ۵۰ رکورد + فیلتر «شامل بودن» زیر سرستون‌ها + دکمهٔ «≠» +
       حفظ فوکوس + ترتیب ستون‌های قابل تغییر — از موتور محاسبه (§79)
       ۳٫۳۱ (تغییر ۲ کاربر): نوار عملیات گروهی سمت چپِ بالای جدول (کنار آمار
-      رکوردها) — «حذف انتخاب شده‌ها» / «انقضاء انتخاب شده‌ها» / «لغو انتخاب‌ها»؛
-      پیش‌فرض خاموش و با اولین تیکِ چک‌باکس ستون عملیات روشن می‌شوند. */
+      رکوردها)؛ ۳٫۳۹ (تغییر ۵+۶ کاربر): «انتخاب همه» (فقط فیلترنشده‌ها) +
+      دکمهٔ بازشوندهٔ «عملیات گروهی» با همهٔ عملیات‌ها در یک منو. */
   SetupView.renderReportTable = async function () {
     const state = await RM.calcEngine.getState();
     const report = state.setupReport;
@@ -2157,63 +2161,94 @@
       .filter(Boolean)
       .filter((c) => !hiddenSet.has(c.key));   // ستون‌های مخفی از پنل ترتیب (چشم)
 
-    /* ۳٫۳۱/۳٫۳۲ — نوار عملیات گروهی (سمت چپ بالای جدول، کنار آمار رکوردها):
-       حذف / انقضاء (با تأیید) / خروج از انقضا / لغو انتخاب‌ها */
+    /* ۳٫۳۹ (تغییر ۵+۶ کاربر) — نوار عملیات گروهی (سمت چپ بالای جدول، کنار
+       آمار رکوردها): دکمهٔ مستقل «انتخاب همه» (فقط رکوردهای فیلترنشده) +
+       دکمهٔ بازشوندهٔ «عملیات گروهی» که در منوی خود همهٔ عملیات‌های گروهی
+       را با شمارندهٔ هرکدام جای داده است (حذف/انقضاء/خروج از انقضا/لغو). */
     const bulkBarHtml = `
-      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-del" id="bulk-del-btn"
-              title="حذف همهٔ ردیف‌های انتخاب‌شده (با تأیید) — عملیات گروهی" disabled>
-        ${UI.icons.trashSel}<span>حذف انتخاب شده‌ها</span><b class="bulk-count" id="bulk-del-count" hidden></b>
+      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-selectall" id="bulk-selectall-btn"
+              title="انتخاب همهٔ رکوردهای فیلترنشده — همهٔ ردیف‌هایی که با فیلترهای فعلی مطابقت دارند (رکوردهای فیلترشده انتخاب نمی‌شوند)">
+        ${UI.icons.selectAll}<span>انتخاب همه</span>
       </button>
-      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-expire" id="bulk-expire-btn"
-              title="تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند" disabled>
-        ${UI.icons.expire}<span>انقضاء انتخاب شده‌ها</span><b class="bulk-count" id="bulk-expire-count" hidden></b>
-      </button>
-      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-unexpire" id="bulk-unexpire-btn"
-              title="خروج از انقضای ردیف‌های «منقضی شده»ٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)" disabled>
-        ${UI.icons.unexpire}<span>خروج از انقضای انتخاب شده‌ها</span><b class="bulk-count" id="bulk-unexpire-count" hidden></b>
-      </button>
-      <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-clear" id="bulk-clear-btn"
-              title="برداشتن تیک همهٔ ردیف‌های انتخاب‌شده" disabled>
-        ${UI.icons.unselect}<span>لغو انتخاب‌ها</span>
-      </button>`;
+      <span class="row-menu ft-bulk-menu" id="bulk-menu-root">
+        <button type="button" class="btn btn-ghost btn-sm ft-bulk-btn ft-bulk-main row-menu-btn" id="bulk-main-btn"
+                aria-haspopup="menu" aria-expanded="false" disabled
+                title="عملیات گروهی ردیف‌های انتخاب‌شده — منوی بازشونده: حذف / انقضاء / خروج از انقضا / لغو انتخاب‌ها؛ ابتدا رکوردها را با چک‌باکس ستون «عملیات» یا دکمهٔ «انتخاب همه» انتخاب کنید">
+          ${UI.icons.dots}<span>عملیات گروهی</span><b class="bulk-count" id="bulk-main-count" hidden></b>${UI.icons.chevron}
+        </button>
+        <div class="row-menu-pop ft-bulk-pop" role="menu" aria-label="عملیات گروهی ردیف‌های انتخاب‌شده" hidden>
+          <button type="button" role="menuitem" class="row-menu-item row-menu-danger" id="bulk-del-item" disabled
+                  title="حذف همهٔ ردیف‌های انتخاب‌شده (با تأیید) — عملیات گروهی">
+            ${UI.icons.trashSel}<span>حذف انتخاب شده‌ها</span><b class="bulk-count" id="bulk-del-count" hidden></b>
+          </button>
+          <button type="button" role="menuitem" class="row-menu-item row-menu-expire" id="bulk-expire-item" disabled
+                  title="تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند">
+            ${UI.icons.expire}<span>انقضاء انتخاب شده‌ها</span><b class="bulk-count" id="bulk-expire-count" hidden></b>
+          </button>
+          <button type="button" role="menuitem" class="row-menu-item row-menu-unexpire" id="bulk-unexpire-item" disabled
+                  title="خروج از انقضای ردیف‌های «منقضی شده»ٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)">
+            ${UI.icons.unexpire}<span>خروج از انقضای انتخاب شده‌ها</span><b class="bulk-count" id="bulk-unexpire-count" hidden></b>
+          </button>
+          <span class="row-menu-sep" role="separator"></span>
+          <button type="button" role="menuitem" class="row-menu-item" id="bulk-clear-item" disabled
+                  title="برداشتن تیک همهٔ ردیف‌های انتخاب‌شده">
+            ${UI.icons.unselect}<span>لغو انتخاب‌ها</span>
+          </button>
+        </div>
+      </span>`;
 
-    /** به‌روزرسانی وضعیت دکمه‌های گروهی از روی Selection (فعال/غیرفعال + شمارنده)
-        ۳٫۳۲ — «خروج از انقضا» فقط وقتی فعال است که دست‌کم یک رکورد «منقضی
-        شده» در انتخاب‌ها باشد (شمارندهٔ آن = تعداد منقضی‌های انتخاب‌شده). */
+    /** به‌روزرسانی وضعیت نوار عملیات گروهی از روی Selection (۳٫۳۹ —
+        دکمهٔ بازشوندهٔ «عملیات گروهی» + آیتم‌های منو):
+        · دکمهٔ اصلی: فعال/غیرفعال + شمارندهٔ کل انتخاب‌ها
+        · «حذف»/«انقضاء»/«لغو»: با دست‌کم یک انتخاب فعال
+        · «خروج از انقضا» (۳٫۳۲): فقط وقتی دست‌کم یک رکورد «منقضی
+          شده» در انتخاب‌ها باشد (شمارندهٔ آن = تعداد منقضی‌های انتخاب‌شده). */
     const updateBulkButtons = () => {
       const n = SetupView.selection.size;
       const expiredSel = [...SetupView.selection].filter((id) =>
         (SetupView._reportById && SetupView._reportById.get(id) || {}).expired === true).length;
-      const delBtn = document.getElementById('bulk-del-btn');
-      const expBtn = document.getElementById('bulk-expire-btn');
-      const unexpBtn = document.getElementById('bulk-unexpire-btn');
-      const clrBtn = document.getElementById('bulk-clear-btn');
+      const mainBtn = document.getElementById('bulk-main-btn');
+      const mainCnt = document.getElementById('bulk-main-count');
+      const delItem = document.getElementById('bulk-del-item');
+      const expItem = document.getElementById('bulk-expire-item');
+      const unexpItem = document.getElementById('bulk-unexpire-item');
+      const clrItem = document.getElementById('bulk-clear-item');
       const delCnt = document.getElementById('bulk-del-count');
       const expCnt = document.getElementById('bulk-expire-count');
       const unexpCnt = document.getElementById('bulk-unexpire-count');
-      if (delBtn) {
-        delBtn.disabled = n === 0;
-        delBtn.title = n === 0
+      if (mainBtn) {
+        mainBtn.disabled = n === 0;
+        mainBtn.title = n === 0
+          ? 'عملیات گروهی ردیف‌های انتخاب‌شده — منوی بازشونده: حذف / انقضاء / خروج از انقضا / لغو انتخاب‌ها؛ ابتدا رکوردها را با چک‌باکس ستون «عملیات» یا دکمهٔ «انتخاب همه» انتخاب کنید'
+          : `عملیات گروهی ${U.faNum(n)} ردیف انتخاب‌شده — منوی بازشونده: حذف / انقضاء / خروج از انقضا / لغو انتخاب‌ها`;
+      }
+      if (delItem) {
+        delItem.disabled = n === 0;
+        delItem.title = n === 0
           ? 'حذف همهٔ ردیف‌های انتخاب‌شده (با تأیید) — عملیات گروهی'
           : `حذف ${U.faNum(n)} ردیف انتخاب‌شده (با تأیید) — عملیات گروهی`;
       }
-      if (expBtn) {
-        expBtn.disabled = n === 0;
-        expBtn.title = n === 0
+      if (expItem) {
+        expItem.disabled = n === 0;
+        expItem.title = n === 0
           ? 'تغییر وضعیت ردیف‌های انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند'
           : `تغییر وضعیت ${U.faNum(n)} ردیف انتخاب‌شده به «منقضی شده» (با تأیید) — کلاً از همهٔ محاسبات پروژه خارج می‌شوند`;
       }
-      if (unexpBtn) {
-        unexpBtn.disabled = expiredSel === 0;
-        unexpBtn.title = expiredSel === 0
+      if (unexpItem) {
+        unexpItem.disabled = expiredSel === 0;
+        unexpItem.title = expiredSel === 0
           ? 'خروج از انقضای ردیف‌های «منقضی شده»ٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)'
           : `خروج از انقضای ${U.faNum(expiredSel)} رکورد منقضی‌شدهٔ انتخاب‌شده — دوباره در محاسبات شرکت می‌کنند (Undo)`;
       }
-      if (clrBtn) clrBtn.disabled = n === 0;
+      if (clrItem) clrItem.disabled = n === 0;
+      if (mainCnt) { mainCnt.textContent = U.faNum(n); mainCnt.hidden = n === 0; }
       if (delCnt) { delCnt.textContent = U.faNum(n); delCnt.hidden = n === 0; }
       if (expCnt) { expCnt.textContent = U.faNum(n); expCnt.hidden = n === 0; }
       if (unexpCnt) { unexpCnt.textContent = U.faNum(expiredSel); unexpCnt.hidden = expiredSel === 0; }
     };
+    /* ۳٫۳۹ — برای «انتخاب همه» (دکمهٔ بیرون از این رندر): به‌روزرسانی نوار
+       عملیات گروهی از بیرونِ renderReportTable قابل فراخواندن است. */
+    SetupView._updateBulkUI = updateBulkButtons;
 
     UI.filterTable(wrap, columns, rows, {
       state: SetupView,                      // filters + visibleRows (ماندگار)
@@ -2236,17 +2271,21 @@
           SetupView.applyPanelVisibility();
         }
       },
-      /* ۳٫۳۱ — نوار سمت چپ: دکمه‌های عملیات گروهی (کنار آمار رکوردها) */
+      /* ۳٫۳۹ — نوار سمت چپ: «انتخاب همه» + دکمهٔ بازشوندهٔ «عملیات گروهی» */
       leftBarHtml: bulkBarHtml,
       onLeftBarMount: () => {
-        const delBtn = document.getElementById('bulk-del-btn');
-        const expBtn = document.getElementById('bulk-expire-btn');
-        const unexpBtn = document.getElementById('bulk-unexpire-btn');
-        const clrBtn = document.getElementById('bulk-clear-btn');
-        if (delBtn) delBtn.addEventListener('click', () => SetupView.bulkDeleteSelected());
-        if (expBtn) expBtn.addEventListener('click', () => SetupView.bulkExpireSelected());
-        if (unexpBtn) unexpBtn.addEventListener('click', () => SetupView.bulkUnexpireSelected());
-        if (clrBtn) clrBtn.addEventListener('click', () => SetupView.clearSelection());
+        const selAllBtn = document.getElementById('bulk-selectall-btn');
+        const mainBtn = document.getElementById('bulk-main-btn');
+        const delItem = document.getElementById('bulk-del-item');
+        const expItem = document.getElementById('bulk-expire-item');
+        const unexpItem = document.getElementById('bulk-unexpire-item');
+        const clrItem = document.getElementById('bulk-clear-item');
+        if (selAllBtn) selAllBtn.addEventListener('click', () => SetupView.selectAllVisible());
+        if (mainBtn) mainBtn.addEventListener('click', (e) => { e.stopPropagation(); SetupView.toggleBulkMenu(); });
+        if (delItem) delItem.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.bulkDeleteSelected(); });
+        if (expItem) expItem.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.bulkExpireSelected(); });
+        if (unexpItem) unexpItem.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.bulkUnexpireSelected(); });
+        if (clrItem) clrItem.addEventListener('click', () => { SetupView.closeAllRowMenus(); SetupView.clearSelection(); });
         updateBulkButtons();
       },
       /* ۳٫۳۲ — ردیف‌های «منقضی شده» کم‌رنگ/خط‌خورده دیده می‌شوند (وجود ندارند) */
@@ -2269,8 +2308,10 @@
       sumsSkip: (r) => r.expired === true,
       // نسخهٔ ۲٫۴: باکس تعداد ردیف + ماندگاری مقدار
       onRowsChange: (n) => RM.db.setSetting('setupVisibleRows', n),
-      // رویدادهای ردیف پس از هر رندر بدنه
-      onRendered: () => {
+      // رویدادهای ردیف پس از هر رندر بدنه — ۳٫۳۹: ردیف‌های فیلترنشده برای
+      // «انتخاب همه» به‌روز می‌شوند (اولین آرگومان onRendered)
+      onRendered: (visibleRows) => {
+        SetupView._filteredRows = Array.isArray(visibleRows) ? visibleRows : [];
         /* ۳٫۳۱ — چک‌باکس انتخاب هر ردیف (عملیات گروهی) */
         wrap.querySelectorAll('[data-select]').forEach((cb) => {
           cb.addEventListener('change', () => {
@@ -2429,20 +2470,88 @@
     /* چک‌باکس‌های DOM بدون رندر کامل جدول به‌روز می‌شوند (فوکوس/فیلتر حفظ می‌شود) */
     const wrap = document.getElementById('setup-table-wrap');
     if (wrap) wrap.querySelectorAll('[data-select]').forEach((cb) => { cb.checked = false; });
-    /* دکمه‌های گروهی خاموش (۳٫۳۲ — چهار دکمه: حذف/انقضاء/خروج از انقضا/لغو) */
-    const btns = ['bulk-del-btn', 'bulk-expire-btn', 'bulk-unexpire-btn', 'bulk-clear-btn'];
+    /* ۳٫۳۹ — نوار عملیات گروهی خاموش: دکمهٔ «عملیات گروهی» + همهٔ آیتم‌های منو */
+    const btns = ['bulk-main-btn', 'bulk-del-item', 'bulk-expire-item', 'bulk-unexpire-item', 'bulk-clear-item'];
     btns.forEach((bid) => {
       const el = document.getElementById(bid);
       if (el) el.disabled = true;
     });
-    ['bulk-del-count', 'bulk-expire-count', 'bulk-unexpire-count'].forEach((cid) => {
+    ['bulk-main-count', 'bulk-del-count', 'bulk-expire-count', 'bulk-unexpire-count'].forEach((cid) => {
       const el = document.getElementById(cid);
       if (el) { el.hidden = true; el.textContent = ''; }
     });
     if (n) UI.toast(`${U.faNum(n)} انتخاب لغو شد.`, 'info');
   };
 
-  /** «حذف انتخاب شده‌ها» — حذف گروهی با تأیید کاربر (تعداد + هشدار بازگشت‌ناپذیری) */
+  /** ۳٫۳۹ (تغییر ۵ کاربر) — «انتخاب همه»:
+      همهٔ رکوردهای «فیلترنشده» (ردیف‌هایی که با فیلترهای فعلی مطابقت دارند و
+      در جدول قابل‌مشاهده‌اند) انتخاب می‌شوند — رکوردهای فیلترشده (مخفی)
+      هرگز انتخاب نمی‌شوند. چک‌باکس‌های DOM بلافاصله تیک می‌خورند و نوار
+      عملیات گروهی با شمارندهٔ کل به‌روز می‌شود. */
+  SetupView.selectAllVisible = function () {
+    const rows = Array.isArray(SetupView._filteredRows) ? SetupView._filteredRows : [];
+    if (!rows.length) {
+      UI.toast('رکورد قابل‌انتخابی در جدول نیست (همهٔ رکوردها فیلتر شده‌اند).', 'info');
+      return;
+    }
+    /* «فقط» ردیف‌های فیلترنشده انتخاب می‌شوند: انتخاب‌های قبلی (به‌ویژه
+       ردیف‌های مخفیِ فیلترشده) پاک می‌شوند تا عملیات گروهی فقط رکوردهای
+       قابل‌مشاهدهٔ فعلی را در بر بگیرد. */
+    SetupView.selection.clear();
+    for (const r of rows) {
+      if (r && r.id !== null && r.id !== undefined) SetupView.selection.add(r.id);
+    }
+    /* چک‌باکس‌های DOM — بدون رندر کامل (فوکوس/فیلتر حفظ می‌شود) */
+    const wrap = document.getElementById('setup-table-wrap');
+    if (wrap) wrap.querySelectorAll('[data-select]').forEach((cb) => {
+      cb.checked = SetupView.selection.has(Number(cb.dataset.select));
+    });
+    if (typeof SetupView._updateBulkUI === 'function') SetupView._updateBulkUI();
+    UI.toast(`${U.faNum(SetupView.selection.size)} رکورد (فقط فیلترنشده‌ها) انتخاب شد.`, 'success');
+  };
+
+  /** ۳٫۳۹ (تغییر ۶ کاربر) — باز/بستن منوی بازشوندهٔ «عملیات گروهی»:
+      همان سازوکار منوی ردیف‌ها (position:fixed + جای‌گذاری پویا از دکمه +
+      جابه‌جایی زنده با اسکرول/تغییر اندازه + بستن با کلیک بیرون/Escape از
+      طریق closeAllRowMenus) — فقط یک منو هم‌زمان باز است. */
+  SetupView.toggleBulkMenu = function () {
+    const root = document.getElementById('bulk-menu-root');
+    if (!root) return;
+    const pop = root.querySelector('.row-menu-pop');
+    const btn = document.getElementById('bulk-main-btn');
+    const isOpen = root.classList.contains('open');
+    SetupView.closeAllRowMenus();
+    if (isOpen) return;   // فقط بسته شد
+
+    root.classList.add('open');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+
+    const ctl = { menu: root, pop, btn, cleanup: null };
+    SetupView._openMenuCtl = ctl;
+
+    /* نمایش بدون سوسو: مخفی → اندازه‌گیری/جای‌گذاری fixed → مرئی */
+    if (pop) {
+      pop.hidden = false;
+      pop.style.visibility = 'hidden';
+      SetupView._placeRowMenuPop(ctl);
+      pop.style.visibility = '';
+    }
+
+    const place = () => {
+      if (!btn || !btn.isConnected || !pop || !pop.isConnected) { SetupView.closeAllRowMenus(); return; }
+      SetupView._placeRowMenuPop(ctl);
+    };
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    ctl.cleanup = () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  };
+
+  /** «حذف انتخاب شده‌ها» — حذف گروهی با تأیید کاربر (تعداد + هشدار بازگشت‌ناپذیری).
+      ۳٫۳۹ (تغییر ۱ کاربر): پس از انجام عملیات، انتخاب‌ها بلافاصله پاک
+      می‌شوند (رکوردها از حالت انتخاب خارج می‌شوند). */
   SetupView.bulkDeleteSelected = async function () {
     const ids = [...SetupView.selection];
     if (!ids.length) return;
@@ -2457,7 +2566,7 @@
     if (!ok) return;
 
     const removed = await Setups.bulkRemove(ids);
-    SetupView.selection.clear();
+    SetupView.selection.clear();   // ۳٫۳۹ — رکوردها از حالت انتخاب خارج شوند
     UI.toast(`${U.faNum(removed)} رکورد ستاپ حذف شد.`, 'success');
     await RM.refreshAll();
     await SetupView.render();
@@ -2468,7 +2577,8 @@
       (درخواست صریح کاربر — با شرح کامل عواقب) و (۲) منقضی‌شدن دیگر فقط
       «زمان‌ها» را خارج نمی‌کند: کلاً باید تصور شود رکورد در جدول ستاپ‌ها
       وجود ندارد (همهٔ مقادیر از همهٔ محاسبات خارج + رول‌های تخصیص‌یافته آزاد).
-      انتخاب‌ها پس از عملیات حفظ می‌شوند. */
+      ۳٫۳۹ (تغییر ۱ کاربر): انتخاب‌ها پس از انجام عملیات بلافاصله پاک
+      می‌شوند (رکوردها از حالت انتخاب خارج می‌شوند). */
   SetupView.bulkExpireSelected = async function () {
     const ids = [...SetupView.selection];
     if (!ids.length) return;
@@ -2497,6 +2607,10 @@
     } else if (changed) {
       UI.toast(`${U.faNum(changed)} رکورد «منقضی شده» شد — کلاً از همهٔ محاسبات پروژه خارج شد (رول‌های تخصیص‌یافته‌اش آزاد شد).`, 'success', 5600);
     }
+    /* ۳٫۳۹ (تغییر ۱ کاربر) — پس از انجام عملیات، رکوردهای انتخاب‌شده
+       بلافاصله از حالت انتخاب خارج می‌شوند (رندر مجدد جدول، چک‌باکس‌های
+       تازهٔ بدون تیک می‌سازد و نوار عملیات گروهی خاموش می‌شود). */
+    SetupView.selection.clear();
     await RM.refreshAll();
     await SetupView.render();
   };
@@ -2505,11 +2619,12 @@
       «منقضی شده»ٔ انتخاب‌شده دوباره فعال می‌شوند و به همهٔ محاسبات پروژه
       برمی‌گردند (تخصیص رول‌ها، زمان‌ها، جمع‌ها، هشدارها — Undo انقضاء).
       بدون پنجرهٔ تأیید: عملیات «بازگرداندن» است (برعکسِ انقضاء که تأیید
-      می‌گیرد). idsParam از آیتم منوی ردیفِ منقضی می‌آید (تک‌رکوردی). */
+      می‌گیرد). idsParam از آیتم منوی ردیفِ منقضی می‌آید (تک‌رکوردی — در
+      آن حالت انتخاب‌ها دست‌نخورده می‌مانند؛ ۳٫۳۹ تغییر ۱: فقط در عملیات
+      گروهیِ مبتنی بر انتخاب، پس از انجام عملیات انتخاب‌ها پاک می‌شوند). */
   SetupView.bulkUnexpireSelected = async function (idsParam = null) {
-    const ids = (Array.isArray(idsParam) && idsParam.length)
-      ? idsParam
-      : [...SetupView.selection];
+    const fromSelection = !(Array.isArray(idsParam) && idsParam.length);
+    const ids = fromSelection ? [...SetupView.selection] : idsParam;
     if (!ids.length) return;
 
     const { changed, skipped } = await Setups.setExpired(ids, false);
@@ -2520,6 +2635,9 @@
     } else if (changed) {
       UI.toast(`${U.faNum(changed)} رکورد از انقضا خارج شد — دوباره در همهٔ محاسبات پروژه (تخصیص رول‌ها، زمان‌ها، جمع‌ها، هشدارها) شرکت می‌کند.`, 'success', 5600);
     }
+    /* ۳٫۳۹ (تغییر ۱ کاربر) — عملیات گروهیِ مبتنی بر انتخاب: پس از انجام
+       عملیات، رکوردهای انتخاب‌شده از حالت انتخاب خارج می‌شوند. */
+    if (fromSelection) SetupView.selection.clear();
     await RM.refreshAll();
     await SetupView.render();
   };

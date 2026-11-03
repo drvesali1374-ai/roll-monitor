@@ -276,7 +276,16 @@
        (state.metallizedUniqueRecords) — با اعمال ویرایش‌های کاربر.
      · زمان متالایز هر رول = ستون «تاریخ حذف» (deleteDate).
      · دستگاه هر رول = ستاپِ تخصیص‌یافتهٔ آن (audit.metRollIds از گزارش
-       ستاپ‌ها)؛ تخصیص‌نیافته‌ها در ستون «بدون ستاپ» می‌آیند.
+       ستاپ‌ها)؛ ۳٫۳۹ (تغییر ۳ کاربر): تخصیص‌نیافته‌ها دیگر ستون «بدون
+       ستاپ» نمی‌گیرند — دستگاهشان از «شماره ستاپ + هویت + عرض» خودِ
+       رکوردهای ستاپ استخراج و در ستون همان دستگاه قرار می‌گیرند (رول
+       ستاپ ندارد ولی دستگاهی که متالایزش کرده مشخص است)؛ فقط رول‌هایی
+       که دستگاهشان به هیچ وجه قابل استخراج نیست در ستون «دستگاه
+       نامشخص» می‌مانند.
+     · ۳٫۳۹ (تغییر ۸ کاربر): داخل کارت هر رول نشان «دستگاه N» آمده —
+       سبز = دارای تخصیص ستاپ (متالایز روی دستگاه ستاپش — مطابق برنامه)؛
+       قرمز = بدون تطبیق ستاپ (متالایز خارج از برنامهٔ ستاپ — عملکرد
+       اشتباه تولید؛ دستگاهِ نمایش‌داده از شماره ستاپ/عرض خود رول است).
      · شیفت روز = ۰۷:۰۰–۱۹:۰۰ · شیفت شب = ۱۹:۰۰–۰۷:۰۰ روز بعد
        (ساعت‌های قبل از ۰۷:۰۰ متعلق به شیفت شبِ روز قبل‌اند).
      · بازهٔ نمایش = «N شیفت اخیرِ دارای رول» — N با انتخابگر کنار عنوان
@@ -450,6 +459,55 @@
       }
     }
 
+    /* --- ۳٫۳۹ (تغییر ۳+۸ کاربر) — نمایهٔ استخراج دستگاه از رکوردهای ستاپ:
+       دستگاهِ رول‌های «بدون ستاپِ تخصیص‌یافته» از رکوردهای ستاپِ هم‌شماره
+       استخراج می‌شود — سلسله‌مراتب تطبیق (از دقیق‌ترین):
+         ۱) شماره ستاپ + هویت (خط/سالن/سال از شمارهٔ رول ↔ فیلدهای ستاپ) + عرض
+         ۲) شماره ستاپ + عرض        (عرض‌ها در هر شمارهٔ ستاپ اغلب یکتا هستند)
+         ۳) شماره ستاپ + هویت
+         ۴) شماره ستاپ تنها
+       هر مرحله فقط با «دستگاه یکتا» پاس می‌دهد (چند دستگاه = ابهام → مرحلهٔ
+       نرم‌تر)؛ بی‌پاسخ = دستگاه نامشخص. رکوردهای منقضی هم هویت ستاپ‌شان
+       معتبر است و در استخراج شرکت می‌کنند. --- */
+    const claimIndex = new Map();   // setupNumber → [rows]
+    for (const row of (st.setupReport || [])) {
+      if (!row || row.setupNumber === null || row.setupNumber === undefined) continue;
+      const sn = Number(row.setupNumber);
+      if (!Number.isFinite(sn)) continue;
+      if (!claimIndex.has(sn)) claimIndex.set(sn, []);
+      claimIndex.get(sn).push(row);
+    }
+    const uniqueMachineOf = (rows) => {
+      const machines = new Set();
+      for (const row of rows) {
+        if (row.machineNumber === null || row.machineNumber === undefined) continue;
+        const m = Number(row.machineNumber);
+        if (Number.isFinite(m)) machines.add(m);
+      }
+      return machines.size === 1 ? [...machines][0] : null;
+    };
+    /** دستگاه استخراج‌شدهٔ یک رول بی‌تخصیص از رکوردهای ستاپ (یا null) */
+    const deriveMachineFor = (rec) => {
+      const sn = Number(rec.setupNumber);
+      if (!Number.isFinite(sn)) return null;
+      const cands = claimIndex.get(sn);
+      if (!cands || !cands.length) return null;
+      const idn = RM.normalize.parseRollIdentity(rec.rollNumber);
+      const withIdentity = (rows) => rows.filter((row) => {
+        if (!idn || idn.line === null || idn.hall === null || idn.yearDigit === null) return false;
+        const sid = RM.normalize.setupIdentity(row);
+        return sid.line !== null && sid.hall !== null && sid.yearDigit !== null &&
+          sid.line === idn.line && sid.hall === idn.hall && sid.yearDigit === idn.yearDigit;
+      });
+      const withWidth = (rows) => rows.filter((row) =>
+        Number.isFinite(Number(rec.width)) && Number(row.width) === Number(rec.width));
+      let m = uniqueMachineOf(withWidth(withIdentity(cands)));   // ۱) ستاپ + هویت + عرض
+      if (m === null) m = uniqueMachineOf(withWidth(cands));      // ۲) ستاپ + عرض
+      if (m === null) m = uniqueMachineOf(withIdentity(cands));  // ۳) ستاپ + هویت
+      if (m === null) m = uniqueMachineOf(cands);                // ۴) ستاپ تنها
+      return m;
+    };
+
     /* --- سطل‌بندی شیفت‌ها (فقط رول‌های دارای زمان متالایز معتبر) --- */
     let noDateCount = 0;
     const buckets = new Map();   // order → { type, baseNorm, order, rolls: [...] }
@@ -465,11 +523,19 @@
         b = { ...sh, rolls: [] };
         buckets.set(sh.order, b);
       }
-      const machine = allocMachine.has(rec.id) ? allocMachine.get(rec.id) : null;
+      /* ۳٫۳۹ — دستگاه نهایی: تخصیص ستاپ (دقیق) یا استخراج از رکوردهای ستاپ؛
+         matched = تخصیص ستاپ دارد (نشان سبز کارت) در برابر استخراج‌شده (قرمز) */
+      const assigned = allocMachine.has(rec.id) ? allocMachine.get(rec.id) : null;
+      const matched = assigned !== null && assigned !== undefined && Number.isFinite(Number(assigned));
+      const machineNum = matched ? Number(assigned) : deriveMachineFor(rec);
+      const machine = (machineNum !== null && machineNum !== undefined && Number.isFinite(Number(machineNum)))
+        ? Number(machineNum)
+        : null;
       b.rolls.push({
         rec,
         p,
         machine,
+        matched,
         tix: U.jalaliDaysSinceEpoch(p.y, p.m, p.d) * 1440 + p.hh * 60 + p.mm,   // ترتیب درون‌شیفت
       });
     }
@@ -488,14 +554,18 @@
     const allShifts = [...buckets.values()].sort((a, b) => b.order - a.order);
     const win = allShifts.slice(0, n);
 
-    /* --- ستون‌های دستگاه: ۱..۳ (همیشه) + دستگاه‌های دیگرِ موجود + «بدون ستاپ» ---
-       (۳٫۳۴ — ترانهاده: دستگاه‌ها ستون‌های جدول‌اند) */
+    /* --- ستون‌های دستگاه: ۱..۳ (همیشه) + دستگاه‌های دیگرِ موجود ---
+       (۳٫۳۴ — ترانهاده: دستگاه‌ها ستون‌های جدول‌اند)
+       ۳٫۳۹ (تغییر ۳ کاربر): رول‌های بی‌تخصیص هم دستگاهِ استخرج‌شدهٔ خود را
+       می‌گیرند و در ستون همان دستگاه می‌آیند — ستون جداگانهٔ «بدون ستاپ»
+       حذف شد؛ فقط رول‌های با دستگاهِ غیرقابل‌استخراج در ستون پایانی
+       «دستگاه نامشخص» می‌مانند. */
     const laneMachines = [1, 2, 3];
-    let hasUnassigned = false;
+    let hasUnknown = false;
     for (const b of win) {
       for (const r of b.rolls) {
         if (r.machine === null || r.machine === undefined) {
-          hasUnassigned = true;
+          hasUnknown = true;
         } else if (!laneMachines.includes(r.machine)) {
           laneMachines.push(r.machine);
         }
@@ -503,7 +573,7 @@
     }
     laneMachines.sort((a, b) => a - b);
     const lanes = laneMachines.map((m) => ({ machine: m, label: `دستگاه ${U.faNum(m)}`, total: 0 }));
-    if (hasUnassigned) lanes.push({ machine: null, label: 'بدون ستاپ', total: 0 });
+    if (hasUnknown) lanes.push({ machine: null, label: 'دستگاه نامشخص', total: 0 });
 
     /* جمع رول‌های هر دستگاه در بازهٔ نمایش (نشان سرستون) */
     for (const b of win) {
@@ -528,6 +598,16 @@
       const noSetup = r.setupNumber === null || r.setupNumber === undefined;
       const setupTxt = noSetup ? 'بدون ستاپ' : `ستاپ ${U.faNum(r.setupNumber)}`;
       const setup = noSetup ? '<span class="muted">بدون ستاپ</span>' : setupTxt;
+      /* ۳٫۳۹ (تغییر ۸ کاربر) — نشان دستگاه داخل کارت: دستگاهِ تخصیص‌یافته
+         در ستاپ. سبز = رول ستاپِ تخصیص‌یافته دارد و روی همان دستگاه متالایز
+         شده (مطابق برنامه)؛ قرمز = رول با هیچ ستاپی تطبیق داده نشد و متالایز
+         خارج از برنامه انجام شده (عملکرد اشتباه تولید) — دستگاهِ نمایش‌داده
+         از شماره ستاپ/عرض خود رول استخراج شده است. */
+      const hasMachine = entry.machine !== null && entry.machine !== undefined;
+      const machineTxt = hasMachine ? `دستگاه ${U.faNum(entry.machine)}` : '';
+      const machineBadge = !hasMachine ? '' : (entry.matched
+        ? `<span class="mt-roll-machine mt-machine-ok" title="${U.escapeHtml(`متالایز روی دستگاه ${U.faNum(entry.machine)} — طبق ستاپِ تخصیص‌یافته (مطابق برنامه) · ${setupTxt}`)}">${U.escapeHtml(machineTxt)}</span>`
+        : `<span class="mt-roll-machine mt-machine-bad" title="${U.escapeHtml(`بدون تطبیق ستاپ — متالایز خارج از برنامهٔ ستاپ (عملکرد اشتباه تولید)؛ دستگاهِ نمایش‌داده از شماره ستاپ/عرض خود رول استخراج شده · ${setupTxt}`)}">${U.escapeHtml(machineTxt)}</span>`);
       /* نوع خط — از حرف اول شماره رول (F → BOPP · K → CPP؛ همان هویت کیفیت) */
       const idn = RM.normalize.parseRollIdentity(r.rollNumber);
       const lineTxt = idn && idn.line ? idn.line : '—';
@@ -541,7 +621,10 @@
       const len = noLen
         ? '<span class="mt-roll-muted" title="متراژ واقعی رول ثبت نشده">—</span>'
         : `<span class="mt-roll-len" title="متراژ واقعی رول (نه استاندارد)">${U.escapeHtml(lenTxt)}</span>`;
-      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nنوع خط: ${U.escapeHtml(lineTxt)}\nعرض: ${widthTxt}\nمتراژ واقعی: ${noLen ? '—' : `${U.faNum(r.actualLength)} متر`}\n${setupTxt}\nزمان متالایز: ${dt}`;
+      const machineTitleLine = hasMachine
+        ? `دستگاه متالایز: ${U.faNum(entry.machine)} — ${entry.matched ? 'مطابق ستاپِ تخصیص‌یافته (سبز)' : 'بدون تطبیق ستاپ — خارج از برنامه (قرمز)'}`
+        : 'دستگاه متالایز: نامشخص (از رکوردهای ستاپ قابل استخراج نیست)';
+      const title = `شماره رول: ${U.escapeHtml(String(r.rollNumber || '—'))}\nنوع خط: ${U.escapeHtml(lineTxt)}\nعرض: ${widthTxt}\nمتراژ واقعی: ${noLen ? '—' : `${U.faNum(r.actualLength)} متر`}\n${setupTxt}\n${machineTitleLine}\nزمان متالایز: ${dt}`;
       return `
         <div class="mt-roll" title="${U.escapeHtml(title)}">
           <div class="mt-roll-top">
@@ -552,6 +635,7 @@
             ${line}
             ${len}
             <span class="mt-roll-setup">${setup}</span>
+            ${machineBadge}
           </div>
           <div class="mt-roll-dt">${dt}</div>
         </div>`;
@@ -562,7 +646,8 @@
 
     /* --- سربرگ جدول: یک ستون برای هر دستگاه (+ جمع هر دستگاه در بازه) + ستون «جمع» --- */
     const headCells = lanes.map((lane) => `
-      <th class="mt-dev${lane.machine === null ? ' mt-dev-unassigned' : ''}">
+      <th class="mt-dev${lane.machine === null ? ' mt-dev-unassigned' : ''}"${lane.machine === null
+        ? ' title="دستگاهِ متالایزکنندهٔ این رول‌ها از رکوردهای ستاپ قابل استخراج نیست (شماره ستاپ ثبت نشده یا رکورد ستاپی با آن شماره وجود ندارد)"' : ''}>
         <span class="mt-dev-name">${lane.label}</span>
         <span class="mt-dev-count" title="جمع رول‌های این دستگاه در بازهٔ نمایش">${U.faNum(lane.total)}</span>
       </th>`).join('');
@@ -634,8 +719,13 @@
       if (noDateCount > 0) {
         bits.push(`${U.faNum(noDateCount)} رول متالایز بدون «تاریخ حذف» است و در تایم‌لاین نمی‌آید.`);
       }
-      if (hasUnassigned) {
-        bits.push('ستون «بدون ستاپ» = رول‌های متالایزِ تخصیص‌نیافته به هیچ ستاپی (دستگاه مشخصی ندارند).');
+      /* ۳٫۳۹ (تغییر ۳+۸) — یادداشت‌های ستون «دستگاه نامشخص» و کارت‌های قرمز */
+      const derivedRed = win.reduce((s, b) => s + b.rolls.filter((r) => !r.matched && r.machine !== null).length, 0);
+      if (hasUnknown) {
+        bits.push('ستون «دستگاه نامشخص» = رول‌های متالایزی که دستگاهِ متالایزکنندهٔ آنها از رکوردهای ستاپ قابل استخراج نیست (شماره ستاپ ثبت نشده یا رکورد ستاپی با آن شماره وجود ندارد).');
+      }
+      if (derivedRed > 0) {
+        bits.push(`${U.faNum(derivedRed)} رول با نشان قرمز = بدون تطبیق ستاپ (متالایز خارج از برنامهٔ ستاپ)؛ دستگاهشان از «شماره ستاپ + عرض» خودِ رول استخراج و در ستون همان دستگاه قرار گرفت — نشان سبز = تطبیق ستاپ و متالایز مطابق برنامه.`);
       }
       if (allShifts.length > n) {
         const older = allShifts.slice(n).reduce((s, b) => s + b.rolls.length, 0);
@@ -1364,11 +1454,23 @@
     const values = groups.map((g) => g.total);
     const setupValues = groups.map((g) => g.setupTotal);
 
+    /* ۳٫۳۹ (تغییر ۷ کاربر) — فرمت جمع‌وجور ساعت برای دیتالیبل‌ها: فقط «جمع
+       ساعت‌ها» با یک عدد و بدون اعشار (۲۳۸ به‌جای ۲۳۸:۰۸)؛ مقادیر کوچکتر
+       از ۱ ساعت با یک رقم اعشار (۰٫۴). */
+    const fmtHoursCompact = (minutes) => {
+      const m = Math.max(0, Math.round(Number(minutes) || 0));
+      const h = m / 60;
+      return h < 1 ? U.faNum(Math.round(h * 10) / 10) : U.faNumPlain(Math.round(h));
+    };
+
     if (!Dashboard.hasECharts()) {
       // Fallback: فهرست متنی — یک ردیف برای هر ستاپ (مجموع)
       el.innerHTML = `
         <div class="mt-rows" style="padding:12px; max-height:320px; overflow:auto">
-          ${groups.map((g) => `<div class="mt-row"><div class="mt-label"><b>ستاپ ${U.faNum(g.setupNumber)}</b> · ${U.faNum(g.records.length)} رکورد</div><b>${U.faHMM(g.total)} / ${U.faHMM(g.setupTotal)}</b></div>`).join('')}
+          ${groups.map((g) => {
+            const fc = (min) => (min ? fmtHoursCompact(min) : '—');
+            return `<div class="mt-row"><div class="mt-label"><b>ستاپ ${U.faNum(g.setupNumber)}</b> · ${U.faNum(g.records.length)} رکورد</div><b>${fc(g.total)} / ${fc(g.setupTotal)} ساعت</b></div>`;
+          }).join('')}
         </div>`;
       return;
     }
@@ -1377,7 +1479,8 @@
     const showLabels = groups.length <= 14;
     const labelColor = P.dark ? '#ffffff' : '#000000';
 
-    /* دیتالیبل هر ستون — کمی بزرگ‌تر، بولد، مطلق (تغییر ۵؛ برای دو سری کوچک‌تر) */
+    /* ۳٫۳۹ (تغییر ۷) — دیتالیبل جمع‌وجور (fmtHoursCompact بالا)؛ تولتیپ
+       همچنان مقدار دقیق [H]:mm را نشان می‌دهد. */
     const barLabel = {
       show: showLabels,
       position: 'top',
@@ -1385,7 +1488,7 @@
       fontFamily: P.fontFamily,
       fontSize: 10.5,
       fontWeight: 700,
-      formatter: (p) => (p.value ? U.faHMM(p.value) : ''),
+      formatter: (p) => (p.value ? fmtHoursCompact(p.value) : ''),
     };
 
     const option = {
@@ -2240,6 +2343,13 @@
         // رول‌های متالایزشدهٔ برش‌نشده از مهلت گذشته (نسخهٔ ۳٫۵ — تغییر ۹):
         // شناسه‌ها از موتور محاسبه — M دارد ولی بازوی برش (R/L) ندارد و از
         // «تاریخ تولید» بیش از مهلت مجاز (تنظیمات) گذشته‌اند.
+        const ids = Array.isArray(d.ids) ? d.ids : [];
+        const got = ids.length ? await db.rolls.bulkGet(ids) : [];
+        records = await RM.edits.applyToRecords('rolls', got.filter(Boolean));
+      } else if (d.filter === 'sold-before-cut') {
+        /* --- ۳٫۳۹ (تغییر ۴ کاربر) — هشدار «فروش رول قبل از برش»:
+           رول‌های M بدون بازوی R/L که «موقعیت فعلی» (فیلد وضعیت) آنها
+           شامل «فروش» است — شناسه‌ها از موتور محاسبه. --- */
         const ids = Array.isArray(d.ids) ? d.ids : [];
         const got = ids.length ? await db.rolls.bulkGet(ids) : [];
         records = await RM.edits.applyToRecords('rolls', got.filter(Boolean));

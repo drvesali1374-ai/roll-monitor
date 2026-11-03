@@ -4632,6 +4632,19 @@ button.status-row, .status-row-link {
 .pg-perpage input::-webkit-outer-spin-button,
 .pg-perpage input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pg-perpage input:focus-visible { outline: 2px solid var(--setup); }
+/* ۳٫۳۹ (تغییر ۲ کاربر) — انتخابگر «کیفیت خروجی» (خیلی پایین تا خیلی بالا) */
+.pg-perpage select {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px 4px 2px 6px;
+  cursor: pointer;
+}
+.pg-perpage select:focus-visible { outline: 2px solid var(--setup); }
 
 /* --- جدول «لیست بسته های قابل نمایش» (۳٫۱۵ بند ۳) — الگوی سایر جدول‌ها --- */
 .pge-ord { display: inline-flex; align-items: center; gap: 3px; }
@@ -5490,6 +5503,12 @@ tr.pk-mixed-row td {
   border: 1px solid var(--border);
   color: var(--text-muted);
 }
+/* ۳٫۳۹ — شمارندهٔ دکمهٔ بازشوندهٔ «عملیات گروهی» (فیروزه‌ای) */
+.ft-bulk-main .bulk-count {
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.3);
+  color: var(--setup);
+}
 .ft-bulk-del .bulk-count {
   background: rgba(220, 38, 38, 0.09);
   border-color: rgba(220, 38, 38, 0.3);
@@ -5506,6 +5525,40 @@ tr.pk-mixed-row td {
   border-color: rgba(5, 150, 105, 0.3);
   color: var(--raw);
 }
+
+/* ---------- ۳٫۳۹ (تغییر ۵+۶ کاربر) — «انتخاب همه» + منوی بازشوندهٔ
+   «عملیات گروهی»: دکمهٔ اصلی همیشه فعال است (فیروزه‌ای) و منو همان
+   سازوکار منوی ردیف‌ها (position:fixed + جای‌گذاری پویا) را دارد ---------- */
+.ft-bulk-selectall:not(:disabled) { color: var(--setup); }
+.ft-bulk-selectall:not(:disabled):hover {
+  background: var(--setup-soft);
+  border-color: rgba(15, 118, 110, 0.35);
+}
+.ft-bulk-menu { display: inline-flex; }
+.ft-bulk-menu .row-menu-btn .bulk-count { flex: none; }
+.ft-bulk-pop { min-width: 208px; }
+/* شمارندهٔ داخل آیتم‌های منو — هم‌راستای انتهای آیتم */
+.row-menu-item .bulk-count { margin-inline-start: auto; flex: none; }
+.row-menu-item:disabled { opacity: 0.45; cursor: default; }
+.row-menu-item:disabled:hover { background: transparent; color: var(--text); }
+.row-menu-item:disabled:hover svg { color: var(--text-muted); }
+.row-menu-danger:disabled,
+.row-menu-danger:disabled svg { color: var(--danger-text); }
+.row-menu-danger:disabled:hover { background: transparent; color: var(--danger-text); }
+.row-menu-expire:disabled,
+.row-menu-expire:disabled svg { color: var(--metal); }
+/* جداکنندهٔ خطی بین گروه‌های آیتم‌های منو */
+.row-menu-sep {
+  display: block;
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+/* ۳٫۳۹ — آیتم کهربایی «انقضاء» (هم‌رنگ دکمهٔ سابق) */
+.row-menu-expire { color: var(--metal); }
+.row-menu-expire svg { color: var(--metal); }
+.row-menu-expire:hover { background: var(--metal-soft); color: var(--metal); }
+.row-menu-expire:hover svg { color: var(--metal); }
 
 /* ---------- ۲) ستون عملیات: چک‌باکس انتخاب + دکمهٔ منو ---------- */
 .row-actions-331 {
@@ -5652,31 +5705,25 @@ tr.row-expired .status-pill { text-decoration: none; }
   cursor: help;
 }
 
-/* موبایل: نوار عملیات گروهی زیر دکمه‌های ابزار جمع می‌شود (wrap طبیعی) */
+/* موبایل: نوار عملیات گروهی زیر دکمه‌های ابزار جمع می‌شود (wrap طبیعی) —
+   ۳٫۳۹: فقط دو دکمه «انتخاب همه» و «عملیات گروهی» مانده‌اند (عملیات‌ها
+   در منوی بازشونده‌اند)؛ برچسب با آیکون جایگزین می‌شود */
 @media (max-width: 640px) {
   .ft-bulk-btn span { display: none; }   /* فقط آیکون + شمارنده — صرفه‌جویی عرض */
   .ft-bulk-btn::after { content: ''; }
   .ft-bulk-btn { padding: 4px 8px; }
-  .ft-bulk-del:not(:disabled)::before {
-    content: 'حذف';
+  .ft-bulk-selectall:not(:disabled)::before {
+    content: 'انتخاب همه';
     font-size: 0.7rem;
     font-weight: 600;
   }
-  .ft-bulk-expire:not(:disabled)::before {
-    content: 'انقضاء';
+  .ft-bulk-main:not(:disabled)::before {
+    content: 'عملیات گروهی';
     font-size: 0.7rem;
     font-weight: 600;
   }
-  .ft-bulk-clear:not(:disabled)::before {
-    content: 'لغو';
-    font-size: 0.7rem;
-    font-weight: 600;
-  }
-  .ft-bulk-unexpire:not(:disabled)::before {
-    content: 'خروج از انقضا';
-    font-size: 0.7rem;
-    font-weight: 600;
-  }
+  /* منوی بازشونده: برچسب آیتم‌ها در موبایل کامل می‌ماند (منو روی صفحه‌است) */
+  .ft-bulk-pop .row-menu-item span { display: inline; }
 }
 
 /* ================================================================
@@ -5899,6 +5946,34 @@ tr.row-expired .status-pill { text-decoration: none; }
 .mt-roll-len { font-weight: 700; color: var(--text); }
 .mt-roll-muted { color: var(--text-faint); }
 .mt-roll-setup { font-weight: 600; }
+
+/* ---------- ۳٫۳۹ (تغییر ۸ کاربر) — نشان «دستگاه N» داخل کارت هر رول ----------
+   سبز = رول ستاپِ تخصیص‌یافته دارد و روی همان دستگاه متالایز شده (مطابق
+   برنامه)؛ قرمز = بدون تطبیق ستاپ — متالایز خارج از برنامهٔ ستاپ (عملکرد
+   اشتباه تولید)؛ دستگاهِ نمایش‌داده از شماره ستاپ/عرض خود رول استخراج شده. */
+.mt-roll-machine {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: .64rem;
+  font-weight: 800;
+  line-height: 1.55;
+  white-space: nowrap;
+  cursor: help;
+}
+.mt-machine-ok {
+  background: var(--raw-soft);
+  border: 1px solid rgba(5, 150, 105, 0.38);
+  color: var(--raw);
+}
+.mt-machine-bad {
+  background: rgba(220, 38, 38, 0.09);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: var(--danger-text);
+}
 .mt-roll-dt {
   margin-top: 3px;
   color: var(--text-faint);
