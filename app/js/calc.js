@@ -1336,6 +1336,11 @@
     return {
       rawRollGroups,
       unmatchedGroups,
+      /* ۳٫۴۱ — تایم‌لاین رول‌های متالایز اخیر: منبع رول‌ها = رکوردهای
+         «رول‌های موجود» (دارای M) و نمایهٔ زمان متالایز = «تاریخ حذف»
+         رکوردهای آرشیو (نوع فیلم R) — هر دو با ویرایش‌های کاربر. */
+      rolls,
+      archivedRolls,
       metallizedGroups: metallized.groups,
       metallizedUniqueCount: metallized.uniqueCount,
       metallizedUniqueRecords: metallized.uniqueRecords,   // برای Drill-down مازاد متالایز
